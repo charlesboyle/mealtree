@@ -7,11 +7,11 @@ import { useToast } from "@/components/providers";
 import { Card, CardTitle, Switch } from "@/components/ui";
 import { cn, formatPrice } from "@/lib/format";
 import { parseQuery, scoreItem } from "@/lib/search";
-import { type Overrides, useOverrides } from "@/lib/store";
+import { menuActions, type Overrides, useOverrides } from "@/lib/store";
 import type { MenuItem, Restaurant } from "@/lib/types";
 
-export function MenuEditor({ restaurant: r }: { restaurant: Restaurant }) {
-  const [overrides, update] = useOverrides(r.slug);
+export function MenuEditor({ restaurant: r, canEdit }: { restaurant: Restaurant; canEdit: boolean }) {
+  const overrides = useOverrides(r.slug);
   const [query, setQuery] = useState("");
   const toast = useToast();
 
@@ -35,12 +35,15 @@ export function MenuEditor({ restaurant: r }: { restaurant: Restaurant }) {
       <div className="p-5 pb-3">
         <CardTitle
           action={
+            canEdit &&
             edits > 0 && (
               <button
-                onClick={() => {
-                  update((o) => ({ ...o, soldOut: {}, price: {} }));
-                  toast("Menu reset to original");
-                }}
+                onClick={() =>
+                  menuActions
+                    .reset(r.slug)
+                    .then(() => toast("Menu reset to original"))
+                    .catch((e: Error) => toast(e.message))
+                }
                 className="text-[12.5px] font-medium text-ink-3 hover:text-ink"
               >
                 Reset {edits} {edits === 1 ? "edit" : "edits"}
@@ -67,7 +70,7 @@ export function MenuEditor({ restaurant: r }: { restaurant: Restaurant }) {
             <h3 className="py-1 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">{s.name}</h3>
             <ul className="divide-y divide-line">
               {s.items.map((item) => (
-                <EditorRow key={item.id} item={item} overrides={overrides} update={update} />
+                <EditorRow key={item.id} slug={r.slug} item={item} overrides={overrides} canEdit={canEdit} />
               ))}
             </ul>
           </div>
@@ -79,13 +82,15 @@ export function MenuEditor({ restaurant: r }: { restaurant: Restaurant }) {
 }
 
 function EditorRow({
+  slug,
   item,
   overrides,
-  update,
+  canEdit,
 }: {
+  slug: string;
   item: MenuItem;
   overrides: Overrides;
-  update: (fn: (o: Overrides) => Overrides) => void;
+  canEdit: boolean;
 }) {
   const toast = useToast();
   const soldOut = overrides.soldOut[item.id] ?? !!item.soldOut;
@@ -99,8 +104,10 @@ function EditorRow({
     setDraft(null);
     if (!draft.trim() || !Number.isFinite(n) || n <= 0 || n === price) return;
     const rounded = Math.round(n * 100) / 100;
-    update((o) => ({ ...o, price: { ...o.price, [item.id]: rounded } }));
-    toast(`${item.name} is now ${formatPrice(rounded)}`);
+    menuActions
+      .setPrice(slug, item.id, rounded)
+      .then(() => toast(`${item.name} is now ${formatPrice(rounded)}`))
+      .catch((e: Error) => toast(e.message));
   };
 
   return (
@@ -129,7 +136,7 @@ function EditorRow({
       {price !== null && (
         <label
           className={cn(
-            "flex h-9 w-[84px] items-center rounded-xl bg-surface-2 px-2.5 text-[14px] ring-1 ring-transparent transition-shadow focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent",
+            "flex h-9 w-[84px] items-center rounded-xl bg-surface-2 px-2.5 text-[14px] ring-1 ring-transparent transition-shadow focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent has-[:disabled]:opacity-50",
             edited && item.id in overrides.price && "ring-accent-line",
           )}
         >
@@ -150,6 +157,7 @@ function EditorRow({
               }
             }}
             inputMode="decimal"
+            disabled={!canEdit}
             aria-label={`Price for ${item.name}`}
             className="tabular h-full w-full min-w-0 bg-transparent pl-1 text-right font-medium outline-none"
           />
@@ -157,11 +165,14 @@ function EditorRow({
       )}
       <Switch
         checked={!soldOut}
+        disabled={!canEdit}
         label={`${item.name} available`}
-        onChange={(available) => {
-          update((o) => ({ ...o, soldOut: { ...o.soldOut, [item.id]: !available } }));
-          toast(available ? `${item.name} is back on` : `${item.name} marked sold out`);
-        }}
+        onChange={(available) =>
+          menuActions
+            .setSoldOut(slug, item.id, !available)
+            .then(() => toast(available ? `${item.name} is back on` : `${item.name} marked sold out`))
+            .catch((e: Error) => toast(e.message))
+        }
       />
     </li>
   );

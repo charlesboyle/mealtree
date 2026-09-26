@@ -8,7 +8,7 @@ import { useToast } from "@/components/providers";
 import { Card, CardTitle } from "@/components/ui";
 import { accentStyle } from "@/lib/accent";
 import { cn, formatVerified } from "@/lib/format";
-import { useHydrated, useOverrides } from "@/lib/store";
+import { menuActions, useHydrated, useOverrides } from "@/lib/store";
 import type { Restaurant } from "@/lib/types";
 import { AreaChart, Sparkline } from "./area-chart";
 import { MenuEditor } from "./menu-editor";
@@ -43,9 +43,10 @@ function dayLabels(n: number) {
 
 export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
-  const [overrides, update] = useOverrides(r.slug);
+  const overrides = useOverrides(r.slug);
   const toast = useToast();
-  const claimed = r.claimed || !!overrides.claimed;
+  const claimed = r.claimed || overrides.claimed;
+  const canEdit = overrides.isOwner;
   // Dates depend on the viewer's clock, so they're filled in after hydration.
   const hydrated = useHydrated();
   const n = r.stats.daily.length;
@@ -82,14 +83,22 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
       </header>
 
       <main className="mx-auto max-w-6xl px-5 pb-16 pt-6">
-        {!claimed && (
+        {overrides.ready && !canEdit && (
           <div className="mb-5 flex animate-rise flex-wrap items-center gap-3 rounded-2xl bg-accent-soft px-4 py-3 text-[13.5px] text-ink-2 ring-1 ring-accent-line">
-            <span className="min-w-0 flex-1">
-              <span className="font-medium text-ink">Preview.</span> Claim {r.name} to publish edits for everyone.
-            </span>
-            <Link href={`/claim/${r.slug}`} className="pressable rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-on-accent">
-              Claim now
-            </Link>
+            {claimed ? (
+              <span className="min-w-0 flex-1">
+                <span className="font-medium text-ink">View only.</span> {r.name} is managed by its verified owner.
+              </span>
+            ) : (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="font-medium text-ink">Preview.</span> Claim {r.name} to edit the menu.
+                </span>
+                <Link href={`/claim/${r.slug}`} className="pressable rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-on-accent">
+                  Claim now
+                </Link>
+              </>
+            )}
           </div>
         )}
 
@@ -126,10 +135,15 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
           <GoogleTile
             linked={googleLinked}
             index={3}
-            onAdd={() => {
-              update((o) => ({ ...o, googleOptIn: true }));
-              toast("Requested — usually live on Google within a day");
-            }}
+            onAdd={
+              canEdit
+                ? () =>
+                    menuActions
+                      .requestGoogleLink(r.slug)
+                      .then(() => toast("Requested — usually live on Google within a day"))
+                      .catch((e: Error) => toast(e.message))
+                : undefined
+            }
           />
         </div>
 
@@ -139,7 +153,7 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
               <CardTitle>Menu views per day</CardTitle>
               <AreaChart data={r.stats.daily} labels={labels} valueLabel="views" />
             </Card>
-            <MenuEditor restaurant={r} />
+            <MenuEditor restaurant={r} canEdit={canEdit} />
           </div>
           <div className="grid min-w-0 content-start gap-3">
             <Card>
@@ -171,7 +185,7 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
   );
 }
 
-function GoogleTile({ linked, index, onAdd }: { linked: boolean; index: number; onAdd: () => void }) {
+function GoogleTile({ linked, index, onAdd }: { linked: boolean; index: number; onAdd?: () => void }) {
   return (
     <div
       className="col-span-2 animate-rise rounded-[22px] bg-surface p-4 ring-1 ring-line lg:col-span-1"
@@ -187,9 +201,11 @@ function GoogleTile({ linked, index, onAdd }: { linked: boolean; index: number; 
           <p className="flex items-center gap-1.5 text-[15px] font-semibold text-warning">
             <AlertTriangle className="size-[18px]" strokeWidth={2.2} /> Missing
           </p>
-          <button onClick={onAdd} className="pressable rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-semibold text-bg">
-            Add to Google
-          </button>
+          {onAdd && (
+            <button onClick={onAdd} className="pressable rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-semibold text-bg">
+              Add to Google
+            </button>
+          )}
         </div>
       )}
     </div>

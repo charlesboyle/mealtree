@@ -32,8 +32,8 @@ type ViewSection = MenuSection & { key: string; label: string };
 
 export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
-  const [overrides] = useOverrides(r.slug);
-  const claimed = r.claimed || !!overrides.claimed;
+  const overrides = useOverrides(r.slug);
+  const claimed = r.claimed || overrides.claimed;
 
   const [menuId, setMenuId] = useState(r.menus[0].id);
   const [query, setQuery] = useState("");

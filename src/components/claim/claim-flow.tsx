@@ -23,7 +23,7 @@ import { Photo } from "@/components/photo";
 import { Button, Switch } from "@/components/ui";
 import { accentStyle } from "@/lib/accent";
 import { cn } from "@/lib/format";
-import { useOverrides } from "@/lib/store";
+import { menuActions, useOverrides } from "@/lib/store";
 import type { Restaurant } from "@/lib/types";
 import { OtpInput } from "./otp-input";
 
@@ -36,7 +36,7 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
   const [step, setStep] = useState<Step>("pitch");
   const [dir, setDir] = useState(1);
   const [method, setMethod] = useState<Method>("phone");
-  const [, update] = useOverrides(r.slug);
+  const live = useOverrides(r.slug);
   const [name, setName] = useState("");
 
   const go = (next: Step) => {
@@ -47,7 +47,9 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
   const back = () => go(STEPS[Math.max(0, STEPS.indexOf(step) - 1)]);
   const progress = STEPS.indexOf(step) / (STEPS.length - 1);
 
-  if (r.claimed) return <AlreadyClaimed restaurant={r} style={style} />;
+  // Server data can be a few minutes old, so also trust the live claim state.
+  const claimedByOther = r.claimed || (live.claimed && !live.isOwner);
+  if (claimedByOther && step !== "done") return <AlreadyClaimed restaurant={r} style={style} />;
 
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg">
@@ -94,8 +96,8 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
                 restaurant={r}
                 name={name}
                 setName={setName}
-                onNext={(googleLink) => {
-                  update((o) => ({ ...o, claimed: true, ownerName: name.trim(), googleOptIn: googleLink }));
+                onNext={async (googleOptIn, role) => {
+                  await menuActions.claim(r.slug, { name: name.trim(), role, method, googleOptIn });
                   go("done");
                 }}
               />
@@ -346,10 +348,22 @@ function DetailsStep({
   restaurant: Restaurant;
   name: string;
   setName: (v: string) => void;
-  onNext: (googleLink: boolean) => void;
+  onNext: (googleLink: boolean, role: string) => Promise<void>;
 }) {
   const [role, setRole] = useState("Owner");
   const [google, setGoogle] = useState(!r.googleMenuLink);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const finish = async () => {
+    setPending(true);
+    setError(null);
+    try {
+      await onNext(google, role);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setPending(false);
+    }
+  };
   return (
     <div>
       <StepTitle eyebrow="Step 3 of 3" title="Almost done" sub="Tell us who's managing the page." />
@@ -394,8 +408,21 @@ function DetailsStep({
         </div>
       )}
 
-      <Button variant="accent" className="mt-8 w-full" disabled={!name.trim()} onClick={() => onNext(google)}>
-        Finish setup
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            role="alert"
+            className="mt-6 rounded-2xl bg-danger/10 px-4 py-3 text-[13.5px] text-danger"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+      <Button variant="accent" className="mt-8 w-full" disabled={!name.trim() || pending} onClick={finish}>
+        {pending ? <Loader2 className="size-5 animate-spin" /> : "Finish setup"}
       </Button>
     </div>
   );

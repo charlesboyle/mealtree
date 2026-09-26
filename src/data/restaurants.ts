@@ -733,6 +733,3 @@ export const restaurants: Restaurant[] = [
   },
 ];
 
-export function getRestaurant(slug: string) {
-  return restaurants.find((r) => r.slug === slug);
-}

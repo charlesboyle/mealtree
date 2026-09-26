@@ -8,11 +8,13 @@ export function Switch({
   onChange,
   label,
   className,
+  disabled,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -20,9 +22,10 @@ export function Switch({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative flex h-[26px] w-[44px] shrink-0 items-center rounded-full p-[3px] transition-colors duration-200",
+        "relative flex h-[26px] w-[44px] shrink-0 items-center rounded-full p-[3px] transition-[background-color,opacity] duration-200 disabled:opacity-40",
         checked ? "justify-end bg-accent" : "justify-start bg-surface-3",
         className,
       )}

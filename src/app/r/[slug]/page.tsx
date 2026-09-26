@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MenuPage } from "@/components/menu/menu-page";
-import { getRestaurant, restaurants } from "@/data/restaurants";
+import { findRestaurant, listRestaurants } from "@/lib/data";
 import { photoUrl, priceLevelLabel } from "@/lib/format";
 import type { Restaurant } from "@/lib/types";
 
-export function generateStaticParams() {
-  return restaurants.map((r) => ({ slug: r.slug }));
+// Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return (await listRestaurants()).map((r) => ({ slug: r.slug }));
 }
 
 export async function generateMetadata(props: PageProps<"/r/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
-  const r = getRestaurant(slug);
+  const r = await findRestaurant(slug);
   if (!r) return {};
   const title = `${r.name} menu & prices`;
   const description = `${r.tagline} See the full ${r.name} menu with prices${r.cover ? " and photos" : ""} — ${r.neighborhood}.`;
@@ -67,7 +70,7 @@ function jsonLd(r: Restaurant) {
 
 export default async function RestaurantPage(props: PageProps<"/r/[slug]">) {
   const { slug } = await props.params;
-  const r = getRestaurant(slug);
+  const r = await findRestaurant(slug);
   if (!r) notFound();
   return (
     <>

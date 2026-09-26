@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { FindRestaurant } from "@/components/claim/find-restaurant";
-import { restaurants } from "@/data/restaurants";
+import { listRestaurants } from "@/lib/data";
 
 export const metadata: Metadata = { title: "For restaurants" };
 
-export default function ClaimIndex() {
-  return <FindRestaurant restaurants={restaurants} />;
+// Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
+export const revalidate = 300;
+
+export default async function ClaimIndex() {
+  return <FindRestaurant restaurants={await listRestaurants()} />;
 }

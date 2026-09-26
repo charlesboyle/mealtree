@@ -1,6 +1,9 @@
 import { DiscoverPage } from "@/components/discover/discover-page";
-import { restaurants } from "@/data/restaurants";
+import { listRestaurants } from "@/lib/data";
 
-export default function Home() {
-  return <DiscoverPage restaurants={restaurants} />;
+// Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
+export const revalidate = 300;
+
+export default async function Home() {
+  return <DiscoverPage restaurants={await listRestaurants()} />;
 }
