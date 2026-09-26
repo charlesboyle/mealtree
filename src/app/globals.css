@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f7f5f1;
+  --surface: #ffffff;
+  --surface-2: #f0ede7;
+  --surface-3: #e7e3db;
+  --ink: #17140f;
+  --ink-2: #5e574d;
+  --ink-3: #8f877b;
+  --line: rgb(23 20 15 / 0.08);
+  --line-strong: rgb(23 20 15 / 0.15);
+  --brand: #1e6b47;
+  --brand-soft: #e3efe8;
+  --on-brand: #ffffff;
+  --positive: #1f8a55;
+  --warning: #b86e00;
+  --danger: #c2412d;
+  --scrim: rgb(15 13 10 / 0.42);
+  --shadow-sm: 0 1px 2px rgb(23 20 15 / 0.06), 0 1px 1px rgb(23 20 15 / 0.03);
+  --shadow-md: 0 8px 24px -8px rgb(23 20 15 / 0.16), 0 2px 6px -2px rgb(23 20 15 / 0.06);
+  --shadow-lg: 0 24px 64px -16px rgb(23 20 15 / 0.28), 0 8px 20px -8px rgb(23 20 15 / 0.1);
+
+  /* Per-restaurant accent, overridden inline on menu pages. */
+  --accent-light: #1e6b47;
+  --accent-dark: #4cc38a;
+  --on-accent-light: #ffffff;
+  --on-accent-dark: #0f0e0c;
+
+  color-scheme: light;
+}
+
+/* Re-declared on [data-accent] so an inline brand color re-resolves there. */
+:root,
+[data-accent] {
+  --accent: var(--accent-light);
+  --on-accent: var(--on-accent-light);
+  --accent-soft: color-mix(in oklab, var(--accent) 9%, var(--surface));
+  --accent-line: color-mix(in oklab, var(--accent) 22%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0d0b;
+    --surface: #171614;
+    --surface-2: #201e1b;
+    --surface-3: #2a2824;
+    --ink: #f4f1eb;
+    --ink-2: #b4ada2;
+    --ink-3: #7f786d;
+    --line: rgb(255 255 255 / 0.08);
+    --line-strong: rgb(255 255 255 / 0.14);
+    --brand: #4cc38a;
+    --brand-soft: #16271e;
+    --on-brand: #0b120e;
+    --positive: #4cc38a;
+    --warning: #f0a53a;
+    --danger: #f07560;
+    --scrim: rgb(0 0 0 / 0.6);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 24px 64px -16px rgb(0 0 0 / 0.75);
+    color-scheme: dark;
+  }
+  :root,
+  [data-accent] {
+    --accent: var(--accent-dark);
+    --on-accent: var(--on-accent-dark);
+    --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-positive: var(--positive);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-scrim: var(--scrim);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-display-serif), ui-serif, Georgia, serif;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-rise: rise 520ms var(--ease-out-expo) both;
+  --animate-fade: fade 360ms ease-out both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-pulse-dot: pulse-dot 2s ease-out infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+/* Base styles live in a layer so utilities (e.g. outline-none) can override them. */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pressable {
+  transition:
+    transform 160ms var(--ease-out-expo),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 200ms ease,
+    opacity 160ms ease;
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--surface-3) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
