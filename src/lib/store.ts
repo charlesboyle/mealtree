@@ -30,6 +30,17 @@ export type ClaimInput = {
   googleOptIn: boolean;
 };
 
+/** Turn Supabase/network errors into messages an owner can act on. */
+function friendlyError(error: unknown): Error {
+  const message = String((error as { message?: string })?.message ?? error);
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message))
+    return new Error("Couldn't reach mealtree. Check your connection and try again.");
+  if (message === "already_claimed") return new Error("This restaurant was already claimed.");
+  if (message === "not_authorized") return new Error("Only the verified owner can edit this menu.");
+  if (message === "item_not_found") return new Error("That dish isn't on this menu anymore.");
+  return new Error("Something went wrong. Please try again.");
+}
+
 const EMPTY: Overrides = { ready: false, claimed: false, isOwner: false, soldOut: {}, price: {} };
 
 const localKey = (slug: string) => `mealtree:overrides:${slug}`;
@@ -153,7 +164,7 @@ async function mutate(slug: string, patch: (o: Overrides) => Overrides, remote?:
   const { error } = await remote(token);
   if (error) {
     emit(slug, before);
-    throw error instanceof Error ? error : new Error(String((error as { message?: string }).message ?? error));
+    throw friendlyError(error);
   }
 }
 
@@ -168,7 +179,7 @@ export const menuActions = {
         p_method: input.method,
         p_google_opt_in: input.googleOptIn,
       });
-      if (error) throw new Error(error.message === "already_claimed" ? "This restaurant was already claimed." : error.message);
+      if (error) throw friendlyError(error);
       storageSet(tokenKey(slug), data);
     }
     const before = state.get(slug) ?? (db ? { ...EMPTY, ready: true } : readLocal(slug));
