@@ -75,3 +75,39 @@ function closing(remaining: number, close: string): OpenStatus {
   const soon = remaining <= 45;
   return { open: true, soon, headline: soon ? "Closing soon" : "Open", detail: `until ${formatTime(close)}` };
 }
+
+/**
+ * Parses "11:30-15:00, 5pm-10:30pm" or "closed" into [open, close] pairs.
+ * Returns null when the text can't be understood.
+ */
+export function parseRanges(text: string): [string, string][] | null {
+  const t = text.trim().toLowerCase();
+  if (!t || t === "closed" || t === "-") return [];
+  const out: [string, string][] = [];
+  for (const part of t.split(/[,;]+/).map((p) => p.trim()).filter(Boolean)) {
+    const m = part.split(/\s*(?:-|–|—|to)\s*/);
+    if (m.length !== 2) return null;
+    const open = parseTime(m[0]);
+    const close = parseTime(m[1]);
+    if (!open || !close) return null;
+    out.push([open, close]);
+  }
+  return out;
+}
+
+function parseTime(s: string): string | null {
+  const m = s.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm|a|p)?$/);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2] ?? 0);
+  const ap = m[3]?.[0];
+  if (ap === "p" && h < 12) h += 12;
+  if (ap === "a" && h === 12) h = 0;
+  if (h > 23 || min > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
+/** Inverse of parseRanges, for editing. */
+export function rangesToText(ranges: [string, string][]) {
+  return ranges.length ? ranges.map(([o, c]) => `${o}-${c}`).join(", ") : "Closed";
+}

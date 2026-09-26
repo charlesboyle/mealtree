@@ -22,7 +22,10 @@ The Supabase URL and publishable key are committed in `.env`, so a fresh clone c
 | `/claim` | Owner-side search: find your restaurant. |
 | `/claim/[slug]` | Claim flow: pitch (real view count) → choose verification method → 6-digit code → name/role, plus opt-in to add the menu link to Google Business Profile → done. |
 | `/dashboard/[slug]` | Owner dashboard: views, QR scans, link clicks, a daily-views chart, most-viewed dishes, inline price edits, sold-out switches, a downloadable table QR code, and share links tagged by channel. |
-| `/ops` | Internal GTM pipeline: claim status, Google menu-link status, stale menus, and a one-click "copy pitch" outreach message per restaurant. |
+| `/ops` | **Admin only** (sign in at `/ops/login`). Outreach pipeline (claim and Google-link status, stale menus, one-click pitch), **claim review** (call the listed number, then approve/reject), and **takedown requests**. |
+| `/ops/new`, `/ops/edit/[slug]` | **Admin only.** Restaurant editor: read a menu from photos with Claude, review and fix every dish, set hours, links and brand color, then publish or save a hidden draft. |
+| `/remove` | Public takedown form for restaurants that don't want a page. |
+| `/terms`, `/privacy` | Plain-language terms and privacy. |
 
 ## How it's put together
 
@@ -52,11 +55,29 @@ All writes go through `SECURITY DEFINER` functions: `claim_restaurant`, `owner_s
 
 **One-time setup (done):** `mealtree` has been added to Ketticho → *Project Settings → Data API → Exposed schemas*. If it's ever removed, the API returns "schema must be one of…" errors.
 
-**Before real outreach:** verification in the claim flow is still a demo (any 6-digit code works), so anyone could claim an unclaimed restaurant first. Add real phone or email OTP inside `claim_restaurant` before you send restaurants the claim link.
+### Claims and admin (migration `20260927090000_admin_and_claim_review.sql`)
+
+- **Claims start as `pending`.** The 6-digit code step is still a demo, so a claim does nothing until an admin approves it in `/ops` → Claims. Before approving, call the number on the restaurant's Google listing (not one the claimant gave you). Only approved owners can edit.
+- **Admin access** uses one secret, `MEALTREE_ADMIN_TOKEN` (a server-side env var on Vercel and in `.env.local` locally, never committed). You type it at `/ops/login`, and the server sets a signed, httpOnly cookie that lasts 14 days. `src/proxy.ts` gates every `/ops` route, and each admin action checks the session again. Admin database functions (`admin_*`) require the token too; `mealtree.admin_keys` stores only its SHA-256 hash. To rotate the key: insert a new hash, update the env var, delete the old row.
+- **Publishing:** `restaurants.published` hides a page everywhere; hidden pages return 404. Takedown requests land in `mealtree.removal_requests`, and resolving one with "Hide page" unpublishes it.
+
+### Menu photos → Claude
+
+`src/app/ops/extract-action.ts` sends up to 8 photos (downscaled in the browser to 1600px) to `claude-opus-5`. It uses structured outputs (zod schema), adaptive thinking at `medium` effort, and server-side refusal fallbacks (`fallbacks: "default"`). The result is a draft; nothing is published until you save. It needs `ANTHROPIC_API_KEY` set on the server. Without it the editor still works, and the photo button shows a clear error.
+
+| Env var | Where | Secret? |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | committed `.env` | no (public by design) |
+| `MEALTREE_ADMIN_TOKEN` | Vercel (production) + `.env.local` | **yes** |
+| `ANTHROPIC_API_KEY` | Vercel (production) + `.env.local` | **yes** |
+| `NEXT_PUBLIC_SITE_URL` | Vercel | no |
+
+**Known gaps:** there's no rate limiting on claims or takedown requests yet. Someone could file junk claims, which would block the real owner until you reject them in `/ops`. Add rate limiting, and real SMS/email codes, before scaling up outreach.
 
 ## Not built yet (next steps)
 
-- Real owner verification (SMS/email OTP), multiple owners per restaurant, and an audit log of edits.
+- Automated owner verification (SMS/email codes) to replace calling each restaurant, multiple owners per restaurant, an audit log of edits, and rate limits on public endpoints.
+- Uploading your own photos to storage (the editor takes image URLs for now).
 - An ingestion pipeline: menu photo → OCR/LLM extraction → human QA → publish, with a `verifiedAt` date per menu.
 - Real view and QR-scan analytics (`utm_source` is already on every share/QR link).
 - Google Business Profile integration for owners who opt in during the claim flow.

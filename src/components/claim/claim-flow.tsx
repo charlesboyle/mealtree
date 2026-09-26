@@ -49,7 +49,10 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
 
   // Server data can be a few minutes old, so also trust the live claim state.
   const claimedByOther = r.claimed || (live.claimed && !live.isOwner);
-  if (claimedByOther && step !== "done") return <AlreadyClaimed restaurant={r} style={style} />;
+  if (step !== "done") {
+    if (live.pendingReview) return <AlreadyClaimed restaurant={r} style={style} pending />;
+    if (claimedByOther && !live.isOwner) return <AlreadyClaimed restaurant={r} style={style} />;
+  }
 
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg">
@@ -102,7 +105,7 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
                 }}
               />
             )}
-            {step === "done" && <Done restaurant={r} name={name} />}
+            {step === "done" && <Done restaurant={r} name={name} pending={live.pendingReview} />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -121,6 +124,13 @@ function StepTitle({ eyebrow, title, sub }: { eyebrow?: string; title: React.Rea
     </div>
   );
 }
+
+const SOURCE_PHRASE: Record<Restaurant["source"], string> = {
+  visit: "an in-person visit",
+  photos: "photos of your menu",
+  website: "your website",
+  owner: "details you shared",
+};
 
 const BENEFITS = [
   { icon: Pencil, title: "Fix prices in seconds", body: "Edit any dish from your phone. Changes go live instantly." },
@@ -142,23 +152,29 @@ function Pitch({ restaurant: r, onNext }: { restaurant: Restaurant; onNext: () =
 
       <StepTitle
         title={
-          <>
-            <span className="tabular text-accent">{r.stats.views30d.toLocaleString()}</span> people looked at your
-            menu this month.
-          </>
+          r.stats.views30d > 0 ? (
+            <>
+              <span className="tabular text-accent">{r.stats.views30d.toLocaleString()}</span> people looked at your
+              menu this month.
+            </>
+          ) : (
+            <>Your menu is live on mealtree.</>
+          )
         }
-        sub="We built this page from an in-person visit and public photos so guests could find your prices. Claim it to keep it accurate — it's free."
+        sub={`We built this page from ${SOURCE_PHRASE[r.source]} so guests can check your dishes and prices. Claim it to keep it accurate — it's free.`}
       />
 
-      <div className="mt-5 rounded-2xl bg-surface p-4 ring-1 ring-line">
-        <div className="flex items-baseline justify-between text-[12.5px] text-ink-3">
-          <span>Views, last 30 days</span>
-          <span className={cn("font-medium", r.stats.trendPct >= 0 ? "text-positive" : "text-ink-2")}>
-            {r.stats.trendPct >= 0 ? "↑" : "↓"} {Math.abs(r.stats.trendPct)}% in 2 weeks
-          </span>
+      {r.stats.views30d > 0 && (
+        <div className="mt-5 rounded-2xl bg-surface p-4 ring-1 ring-line">
+          <div className="flex items-baseline justify-between text-[12.5px] text-ink-3">
+            <span>Views, last 30 days</span>
+            <span className={cn("font-medium", r.stats.trendPct >= 0 ? "text-positive" : "text-ink-2")}>
+              {r.stats.trendPct >= 0 ? "↑" : "↓"} {Math.abs(r.stats.trendPct)}% in 2 weeks
+            </span>
+          </div>
+          <Sparkline data={r.stats.daily} className="mt-2 h-14 w-full" />
         </div>
-        <Sparkline data={r.stats.daily} className="mt-2 h-14 w-full" />
-      </div>
+      )}
 
       <ul className="mt-6 space-y-4">
         {BENEFITS.map((b, i) => (
@@ -428,7 +444,12 @@ function DetailsStep({
   );
 }
 
-function Done({ restaurant: r, name }: { restaurant: Restaurant; name: string }) {
+function maskedPhone(e164: string) {
+  const m = e164.match(/^\+1(\d{3})\d{3}(\d{4})$/);
+  return m ? `(${m[1]}) •••-${m[2]}` : "the restaurant's listed number";
+}
+
+function Done({ restaurant: r, name, pending }: { restaurant: Restaurant; name: string; pending: boolean }) {
   const router = useRouter();
   return (
     <div className="flex flex-col items-center pt-16 text-center">
@@ -449,14 +470,22 @@ function Done({ restaurant: r, name }: { restaurant: Restaurant; name: string })
         </svg>
       </motion.div>
       <h1 className="mt-8 font-display text-[36px] leading-tight tracking-[-0.02em] [font-variation-settings:'opsz'_60]">
-        You&apos;re in{name.trim() ? `, ${name.trim().split(" ")[0]}` : ""}.
+        {pending ? "Thanks" : "You're in"}
+        {name.trim() ? `, ${name.trim().split(" ")[0]}` : ""}.
       </h1>
       <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-ink-2">
-        {r.name} is now verified. Guests will see a checkmark, and you can update the menu anytime.
+        {pending ? (
+          <>
+            We&apos;ll call {maskedPhone(r.phone)} to confirm you manage {r.name}, usually within a day. Once
+            that&apos;s done you can edit the menu from this browser.
+          </>
+        ) : (
+          <>{r.name} is now verified. Guests will see a checkmark, and you can update the menu anytime.</>
+        )}
       </p>
       <div className="mt-8 flex w-full flex-col gap-2.5">
         <Button variant="accent" onClick={() => router.push(`/dashboard/${r.slug}`)}>
-          Open your dashboard
+          {pending ? "Preview your dashboard" : "Open your dashboard"}
         </Button>
         <Button variant="secondary" onClick={() => router.push(`/r/${r.slug}`)}>
           View your menu page
@@ -466,20 +495,32 @@ function Done({ restaurant: r, name }: { restaurant: Restaurant; name: string })
   );
 }
 
-function AlreadyClaimed({ restaurant: r, style }: { restaurant: Restaurant; style: React.CSSProperties }) {
+function AlreadyClaimed({
+  restaurant: r,
+  style,
+  pending,
+}: {
+  restaurant: Restaurant;
+  style: React.CSSProperties;
+  pending?: boolean;
+}) {
   return (
     <div data-accent style={style} className="grid min-h-dvh place-items-center bg-bg px-6 text-center">
       <div className="max-w-sm animate-rise">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent">
           <ShieldCheck className="size-6" strokeWidth={2} />
         </div>
-        <h1 className="mt-6 font-display text-[32px] leading-tight tracking-[-0.02em]">{r.name} is already claimed</h1>
+        <h1 className="mt-6 font-display text-[32px] leading-tight tracking-[-0.02em]">
+          {pending ? "We're verifying your claim" : `${r.name} is already claimed`}
+        </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          If you work there and need access, ask the current manager to invite you, or contact support.
+          {pending
+            ? `We'll call ${r.name}'s listed number to confirm, usually within a day. After that you can edit the menu from this browser.`
+            : "If you work there and need access, ask the current manager to invite you, or reply to our message and we'll help."}
         </p>
         <div className="mt-8 flex flex-col gap-2.5">
           <Link href={`/dashboard/${r.slug}`} className="pressable inline-flex h-12 items-center justify-center rounded-full bg-accent px-6 text-[15px] font-semibold text-on-accent">
-            Open dashboard (demo)
+            {pending ? "Preview your dashboard" : "View dashboard"}
           </Link>
           <Link href={`/r/${r.slug}`} className="pressable inline-flex h-12 items-center justify-center rounded-full bg-surface-2 px-6 text-[15px] font-semibold">
             Back to menu

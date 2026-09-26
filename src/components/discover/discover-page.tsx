@@ -179,6 +179,11 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-[13px] text-ink-3 sm:flex-row sm:items-center sm:justify-between">
           <Logo className="text-ink" />
           <p>Menus are collected from in-person visits, photos, and owners. Prices may change.</p>
+          <nav className="flex gap-4">
+            <Link href="/terms" className="hover:text-ink">Terms</Link>
+            <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+            <Link href="/remove" className="hover:text-ink">Remove a page</Link>
+          </nav>
         </div>
       </footer>
     </div>

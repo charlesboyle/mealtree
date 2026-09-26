@@ -29,12 +29,34 @@ export function itemMinPrice(item: MenuItem) {
   return item.price;
 }
 
+/** Photos are either full https URLs or Unsplash photo ids (placeholder data). */
 export function photoUrl(id: string, width: number) {
+  if (/^https?:\/\//.test(id)) return id;
   return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${width}&q=70`;
 }
 
 export function photoSrcSet(id: string, width: number) {
+  if (/^https?:\/\//.test(id)) return undefined;
   return [1, 2, 3].map((d) => `${photoUrl(id, width * d)} ${d}x`).join(", ");
+}
+
+/** US numbers become E.164 (+14155550142); anything else is kept as typed. */
+export function normalizePhone(input: string) {
+  const digits = input.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return input.trim();
+}
+
+export function slugify(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
 }
 
 export function priceLevelLabel(level: number) {

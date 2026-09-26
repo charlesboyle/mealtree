@@ -15,8 +15,10 @@ export type Overrides = {
   /** False until the first load finishes (or immediately in local mode). */
   ready: boolean;
   claimed: boolean;
-  /** This browser holds the owner token for the restaurant. */
+  /** This browser holds an approved owner token for the restaurant. */
   isOwner: boolean;
+  /** This browser submitted a claim that is waiting for review. */
+  pendingReview: boolean;
   ownerName?: string;
   googleOptIn?: boolean;
   soldOut: Record<string, boolean>;
@@ -36,12 +38,13 @@ function friendlyError(error: unknown): Error {
   if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message))
     return new Error("Couldn't reach mealtree. Check your connection and try again.");
   if (message === "already_claimed") return new Error("This restaurant was already claimed.");
+  if (message === "claim_pending") return new Error("Someone already asked to claim this restaurant. We're verifying it now.");
   if (message === "not_authorized") return new Error("Only the verified owner can edit this menu.");
   if (message === "item_not_found") return new Error("That dish isn't on this menu anymore.");
   return new Error("Something went wrong. Please try again.");
 }
 
-const EMPTY: Overrides = { ready: false, claimed: false, isOwner: false, soldOut: {}, price: {} };
+const EMPTY: Overrides = { ready: false, claimed: false, isOwner: false, pendingReview: false, soldOut: {}, price: {} };
 
 const localKey = (slug: string) => `mealtree:overrides:${slug}`;
 const tokenKey = (slug: string) => `mealtree:owner-token:${slug}`;
@@ -107,7 +110,8 @@ async function loadRemote(slug: string) {
   return {
     ready: true,
     claimed: restaurant.data?.claimed_at != null,
-    isOwner: !!owner,
+    isOwner: owner?.status === "approved",
+    pendingReview: owner?.status === "pending",
     ownerName: owner?.name,
     googleOptIn: owner?.google_opt_in,
     soldOut,
@@ -183,7 +187,17 @@ export const menuActions = {
       storageSet(tokenKey(slug), data);
     }
     const before = state.get(slug) ?? (db ? { ...EMPTY, ready: true } : readLocal(slug));
-    emit(slug, { ...before, ready: true, claimed: true, isOwner: true, ownerName: input.name, googleOptIn: input.googleOptIn });
+    // With a backend, claims wait for manual verification; the local demo approves instantly.
+    const reviewed = !db;
+    emit(slug, {
+      ...before,
+      ready: true,
+      claimed: reviewed,
+      isOwner: reviewed,
+      pendingReview: !reviewed,
+      ownerName: input.name,
+      googleOptIn: input.googleOptIn,
+    });
   },
 
   setSoldOut(slug: string, itemId: string, soldOut: boolean) {

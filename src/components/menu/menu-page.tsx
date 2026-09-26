@@ -532,12 +532,21 @@ function Footer({ restaurant: r, claimed }: { restaurant: Restaurant; claimed: b
           Is this your restaurant?{" "}
           <Link href={`/claim/${r.slug}`} className="font-medium text-accent underline-offset-2 hover:underline">
             Claim this page for free
+          </Link>{" "}
+          or{" "}
+          <Link href={`/remove?r=${r.slug}`} className="underline-offset-2 hover:underline">
+            ask us to remove it
           </Link>
+          .
         </p>
       )}
       <Link href="/" className="pressable mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-ink-2 hover:bg-surface-2">
         <LogoMark className="size-4" /> Menus by <span className="font-semibold text-ink">mealtree</span>
       </Link>
+      <nav className="mt-2 flex justify-center gap-4 text-[12px]">
+        <Link href="/terms" className="hover:text-ink">Terms</Link>
+        <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+      </nav>
     </footer>
   );
 }

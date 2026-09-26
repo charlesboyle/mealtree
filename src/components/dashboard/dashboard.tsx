@@ -85,7 +85,12 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
       <main className="mx-auto max-w-6xl px-5 pb-16 pt-6">
         {overrides.ready && !canEdit && (
           <div className="mb-5 flex animate-rise flex-wrap items-center gap-3 rounded-2xl bg-accent-soft px-4 py-3 text-[13.5px] text-ink-2 ring-1 ring-accent-line">
-            {claimed ? (
+            {overrides.pendingReview ? (
+              <span className="min-w-0 flex-1">
+                <span className="font-medium text-ink">Verification pending.</span> We&apos;ll call {r.name}&apos;s listed
+                number to confirm your claim. Editing unlocks right after.
+              </span>
+            ) : claimed ? (
               <span className="min-w-0 flex-1">
                 <span className="font-medium text-ink">View only.</span> {r.name} is managed by its verified owner.
               </span>
@@ -169,7 +174,7 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-accent-soft">
                       <div
                         className="h-full origin-left animate-[grow_900ms_var(--ease-out-expo)_both] rounded-full bg-accent"
-                        style={{ width: `${(views / dishes[0].views) * 100}%` }}
+                        style={{ width: `${(views / (dishes[0].views || 1)) * 100}%` }}
                       />
                     </div>
                   </li>

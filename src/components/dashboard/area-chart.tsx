@@ -6,6 +6,7 @@ import { useId, useMemo, useRef, useState } from "react";
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 
 function niceMax(v: number) {
+  if (!(v > 0)) return 10;
   const pow = 10 ** Math.floor(Math.log10(v));
   const n = v / pow;
   return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
