@@ -2,6 +2,8 @@
 
 Menu pages for restaurants, like Linktree but for menus: mobile-first, searchable, with prices and photos. The MVP runs on placeholder data for 8 fictional restaurants in SF's Mission District.
 
+**Live:** https://mealtree-zeta.vercel.app (Vercel project `mealtree`, deploys from this repo; admin at `/ops`).
+
 ## Run it
 
 ```bash
