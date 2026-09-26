@@ -11,7 +11,7 @@ npm run build      # every page is prerendered as static HTML
 npm run lint
 ```
 
-Without environment variables the app runs on the bundled placeholder data, and owner edits are saved in the browser. To use Supabase, `cp .env.example .env.local` (see [Backend](#backend-supabase)). Set `NEXT_PUBLIC_SITE_URL` in production so canonical and Open Graph URLs resolve.
+The Supabase URL and publishable key are committed in `.env`, so a fresh clone connects to the database with no setup. Both are public values that ship to the browser anyway, and the database rules decide what they can do. To run offline on the bundled placeholder data instead, set both to empty in `.env.local` (see `.env.example`). Never commit a `service_role` or other secret key. Set `NEXT_PUBLIC_SITE_URL` in production so canonical and Open Graph URLs resolve. The build loads data from Supabase, so it fails if Supabase can't be reached.
 
 ## Pages
 
@@ -50,7 +50,7 @@ All writes go through `SECURITY DEFINER` functions: `claim_restaurant`, `owner_s
 - **Seed:** `supabase/seed.sql`, regenerated with `npm run db:seed-sql` from `src/data/restaurants.ts`. It's re-runnable (upsert by slug).
 - The migration is deliberately **not** recorded in Ketticho's `supabase_migrations` history. Recording it there would make Ketticho's own `supabase db push` complain about unknown remote migrations. Apply mealtree SQL changes manually, or move to a dedicated project later.
 
-**One-time setup:** in the Supabase dashboard, open Ketticho → *Project Settings → Data API → Exposed schemas* and add `mealtree`. Until then, the API returns "schema must be one of…" errors.
+**One-time setup (done):** `mealtree` has been added to Ketticho → *Project Settings → Data API → Exposed schemas*. If it's ever removed, the API returns "schema must be one of…" errors.
 
 **Before real outreach:** verification in the claim flow is still a demo (any 6-digit code works), so anyone could claim an unclaimed restaurant first. Add real phone or email OTP inside `claim_restaurant` before you send restaurants the claim link.
 
