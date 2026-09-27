@@ -8,13 +8,18 @@ export type RestaurantRow = {
   id: string;
   slug: string;
   name: string;
+  name_ar: string | null;
   tagline: string;
+  tagline_ar: string | null;
   cuisine: string[];
   price_level: number;
   neighborhood: string;
+  neighborhood_ar: string | null;
   address: string;
+  address_ar: string | null;
   phone: string;
   timezone: string;
+  currency: string;
   accent: string;
   cover: string | null;
   hours: Hours;
@@ -138,13 +143,18 @@ export type RestaurantInput = Pick<
   RestaurantRow,
   | "slug"
   | "name"
+  | "name_ar"
   | "tagline"
+  | "tagline_ar"
   | "cuisine"
   | "price_level"
   | "neighborhood"
+  | "neighborhood_ar"
   | "address"
+  | "address_ar"
   | "phone"
   | "timezone"
+  | "currency"
   | "accent"
   | "cover"
   | "hours"
@@ -160,13 +170,18 @@ export function restaurantToInput(r: Restaurant, published = true): RestaurantIn
   return {
     slug: r.slug,
     name: r.name,
+    name_ar: r.nameAr?.trim() || null,
     tagline: r.tagline,
+    tagline_ar: r.taglineAr?.trim() || null,
     cuisine: r.cuisine,
     price_level: r.priceLevel,
     neighborhood: r.neighborhood,
+    neighborhood_ar: r.neighborhoodAr?.trim() || null,
     address: r.address,
+    address_ar: r.addressAr?.trim() || null,
     phone: r.phone,
     timezone: r.timezone,
+    currency: r.currency,
     accent: r.accent,
     cover: r.cover ?? null,
     hours: r.hours,
@@ -197,13 +212,18 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
   return {
     slug: row.slug,
     name: row.name,
+    nameAr: row.name_ar ?? undefined,
     tagline: row.tagline,
+    taglineAr: row.tagline_ar ?? undefined,
     cuisine: row.cuisine,
     priceLevel: row.price_level as Restaurant["priceLevel"],
     neighborhood: row.neighborhood,
+    neighborhoodAr: row.neighborhood_ar ?? undefined,
     address: row.address,
+    addressAr: row.address_ar ?? undefined,
     phone: row.phone,
     timezone: row.timezone,
+    currency: row.currency ?? "AED",
     accent: row.accent,
     cover: row.cover ?? undefined,
     hours: row.hours,

@@ -1,58 +1,52 @@
 "use client";
 
-import { BadgeCheck, Camera } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import Link from "next/link";
+import { CuisineGlyph } from "@/components/icons";
 import { OpenStatus } from "@/components/open-status";
 import { Photo } from "@/components/photo";
+import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
-import { cn, priceLevelLabel } from "@/lib/format";
-import { countItems, countPhotos } from "@/lib/search";
+import { cn } from "@/lib/format";
+import { countItems } from "@/lib/search";
 import type { Restaurant } from "@/lib/types";
 
-export function RestaurantCard({
-  restaurant: r,
-  index = 0,
-  className,
-}: {
-  restaurant: Restaurant;
-  index?: number;
-  className?: string;
-}) {
-  const photos = countPhotos(r);
+/** A list row on phones (thumbnail + text), a photo card from `sm` up. */
+export function RestaurantCard({ restaurant: r, priority }: { restaurant: Restaurant; priority?: boolean }) {
+  const { t, pick, cuisines, priceLevel, href } = useI18n();
+  const name = pick(r.name, r.nameAr);
   return (
     <Link
       data-accent
-      href={`/r/${r.slug}`}
-      style={{ ...accentStyle(r.accent), animationDelay: `${Math.min(index, 8) * 45}ms` }}
-      className={cn("group block animate-rise rounded-[26px] outline-offset-4", className)}
+      href={href(`/r/${r.slug}`)}
+      style={accentStyle(r.accent)}
+      className="group flex items-center gap-4 py-3 outline-offset-4 sm:block sm:rounded-xl sm:py-0"
     >
-      <div className="relative overflow-hidden rounded-[22px] ring-1 ring-line">
-        <Photo
-          id={r.cover}
-          alt={r.name}
-          width={480}
-          priority={index < 2}
-          className="aspect-[16/10] w-full transition-transform duration-700 ease-out-expo group-hover:scale-[1.03]"
-          iconSize={32}
-        />
-        <div className="absolute left-3 top-3 flex gap-1.5">
-          {photos > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-md">
-              <Camera className="size-3" strokeWidth={2.2} /> {photos}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="px-1 pt-3">
-        <div className="flex items-center gap-1.5">
-          <h3 className="truncate text-[16px] font-semibold tracking-[-0.01em] text-ink">{r.name}</h3>
-          {r.claimed && <BadgeCheck className="size-4 shrink-0 fill-accent text-bg" strokeWidth={2} aria-label="Verified" />}
-        </div>
-        <p className="mt-0.5 truncate text-[13.5px] text-ink-2">
-          {r.cuisine.join(" · ")} <span className="text-ink-3">·</span> {priceLevelLabel(r.priceLevel)}{" "}
-          <span className="text-ink-3">·</span> {countItems(r)} dishes
+      <Photo
+        id={r.cover}
+        alt=""
+        width={400}
+        priority={priority}
+        fallback={<CuisineGlyph cuisine={r.cuisine} className="size-6 opacity-70 sm:size-9" strokeWidth={1.6} />}
+        className={cn(
+          "size-18 shrink-0 rounded-lg sm:aspect-[3/2] sm:size-auto sm:w-full sm:rounded-xl",
+          "transition-opacity duration-300 group-hover:opacity-90",
+        )}
+      />
+      <div className="min-w-0 flex-1 sm:pt-3">
+        <h3 className="flex items-center gap-1.5 text-md font-semibold text-ink">
+          <span className="truncate">{name}</span>
+          {r.claimed && <BadgeCheck className="size-4 shrink-0 fill-accent text-bg" strokeWidth={2} aria-label={t.card.verified} />}
+        </h3>
+        <p className="truncate text-sm text-ink-2">
+          {cuisines(r.cuisine)} <span className="text-ink-3">·</span> {pick(r.neighborhood, r.neighborhoodAr)}
         </p>
-        <OpenStatus hours={r.hours} timezone={r.timezone} className="mt-1.5 text-[12.5px]" />
+        <p className="mt-0.5 flex items-center gap-2 truncate text-sm">
+          <OpenStatus hours={r.hours} timezone={r.timezone} />
+          <span className="text-ink-3">·</span>
+          <span className="text-ink-3">{priceLevel(r.priceLevel)}</span>
+          <span className="hidden text-ink-3 sm:inline">· {t.card.dishes(countItems(r))}</span>
+        </p>
       </div>
     </Link>
   );

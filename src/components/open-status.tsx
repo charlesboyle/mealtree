@@ -1,8 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/format";
-import { openStatus } from "@/lib/hours";
+import { describeStatus, openStatus } from "@/lib/hours";
 import type { Hours } from "@/lib/types";
 
 // One shared minute ticker for every badge on the page.
@@ -40,39 +41,18 @@ export function useOpenStatus(hours: Hours, timezone: string) {
   return m ? openStatus(hours, timezone, new Date(m * 60000)) : null;
 }
 
-/** Rendered client-side only: open/closed depends on the viewer's clock. */
-export function OpenStatus({
-  hours,
-  timezone,
-  className,
-  tone = "default",
-}: {
-  hours: Hours;
-  timezone: string;
-  className?: string;
-  tone?: "default" | "onImage";
-}) {
+/** "Open · until 2 AM". Rendered client-side only: it depends on the viewer's clock. */
+export function OpenStatus({ hours, timezone, className }: { hours: Hours; timezone: string; className?: string }) {
+  const i18n = useI18n();
   const status = useOpenStatus(hours, timezone);
-  if (!status) {
-    return <span className={cn("skeleton inline-block h-4 w-28 rounded-full", className)} />;
-  }
+  if (!status) return <span className={cn("skeleton inline-block h-3.5 w-24 rounded", className)} />;
+  const { headline, detail } = describeStatus(status, i18n);
   const color = !status.open ? "text-danger" : status.soon ? "text-warning" : "text-positive";
   return (
-    <span className={cn("inline-flex animate-fade items-center gap-1.5 whitespace-nowrap", className)}>
-      <span
-        className={cn(
-          "size-1.5 rounded-full bg-current",
-          tone === "onImage" ? (status.open ? "text-[#6ee7a8]" : "text-[#ff9c8a]") : color,
-          status.open && "animate-pulse-dot",
-        )}
-      />
-      <span className={tone === "onImage" ? "text-white/90" : "text-ink-2"}>
-        <span className={cn("font-medium", tone === "onImage" ? "text-white" : color)}>
-          {status.headline}
-        </span>
-        <span className="mx-1 opacity-50">·</span>
-        {status.detail}
-      </span>
+    <span className={cn("animate-fade whitespace-nowrap text-ink-2", className)}>
+      <span className={cn("font-medium", color)}>{headline}</span>
+      <span className="mx-1 text-ink-3">·</span>
+      {detail}
     </span>
   );
 }

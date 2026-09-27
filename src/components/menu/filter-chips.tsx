@@ -1,9 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
-import { Check, Sparkles } from "lucide-react";
-import { dietIcon } from "@/components/icons";
-import { cn, dietLabel } from "@/lib/format";
+import { useI18n } from "@/i18n/client";
+import { cn } from "@/lib/format";
 import type { DietTag } from "@/lib/types";
 
 export type Filter = DietTag | "popular";
@@ -21,52 +19,31 @@ export function FilterChips({
   onToggle: (f: Filter) => void;
   className?: string;
 }) {
+  const { t } = useI18n();
   const chips = ORDER.filter((f) => available.has(f));
   if (!chips.length) return null;
   return (
-    <div className={cn("no-scrollbar -mx-5 flex gap-1.5 overflow-x-auto px-5", className)}>
-      {chips.map((f) => {
-        const on = active.includes(f);
-        const Icon = f === "popular" ? Sparkles : dietIcon[f];
-        return (
-          <button
-            key={f}
-            onClick={() => onToggle(f)}
-            aria-pressed={on}
-            className={cn(
-              "pressable flex h-8 shrink-0 items-center gap-1.5 rounded-full pl-2.5 pr-3 text-[13px] font-medium",
-              on
-                ? "bg-accent text-on-accent shadow-sm"
-                : "bg-surface text-ink-2 ring-1 ring-line hover:text-ink hover:ring-line-strong",
-            )}
-          >
-            <span className="relative grid size-3.5 place-items-center">
-              <AnimatePresence initial={false} mode="popLayout">
-                {on ? (
-                  <motion.span
-                    key="on"
-                    initial={{ scale: 0.4, opacity: 0, rotate: -30 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 0.4, opacity: 0 }}
-                  >
-                    <Check className="size-3.5" strokeWidth={2.8} />
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="off"
-                    initial={{ scale: 0.4, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.4, opacity: 0 }}
-                  >
-                    <Icon className="size-3.5" strokeWidth={2.2} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </span>
-            {f === "popular" ? "Popular" : dietLabel[f]}
-          </button>
-        );
-      })}
+    <div className={cn("no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:-mx-5 sm:px-5", className)}>
+      {chips.map((f) => (
+        <Chip key={f} on={active.includes(f)} onClick={() => onToggle(f)}>
+          {f === "popular" ? t.menu.popular : t.diet[f]}
+        </Chip>
+      ))}
     </div>
+  );
+}
+
+export function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        "pressable h-8 shrink-0 rounded-full border px-3.5 text-sm font-medium",
+        on ? "border-ink bg-ink text-bg" : "border-line-strong text-ink-2 hover:border-ink-3 hover:text-ink",
+      )}
+    >
+      {children}
+    </button>
   );
 }

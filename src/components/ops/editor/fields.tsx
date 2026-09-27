@@ -3,7 +3,7 @@
 import { cn } from "@/lib/format";
 
 export const inputClass =
-  "h-11 w-full rounded-xl bg-surface-2/70 px-3.5 text-[14.5px] text-ink ring-1 ring-transparent outline-none transition-[box-shadow,background-color] placeholder:text-ink-3 focus:bg-surface focus:ring-2 focus:ring-brand aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-danger";
+  "h-11 w-full rounded-lg border border-line-strong bg-surface px-3.5 text-base text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-3 focus:border-brand focus:ring-2 focus:ring-brand/20 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-danger/20";
 
 export function Field({
   label,
@@ -20,7 +20,7 @@ export function Field({
 }) {
   return (
     <label className={cn("block min-w-0", className)}>
-      <span className="mb-1.5 flex items-baseline justify-between gap-3 text-[12.5px] font-medium text-ink-2">
+      <span className="mb-1.5 flex items-baseline justify-between gap-3 text-sm font-medium text-ink-2">
         {label}
         {hint && !error && <span className="font-normal text-ink-3">{hint}</span>}
         {error && <span className="font-medium text-danger">{error}</span>}
@@ -39,7 +39,7 @@ export function TextInput({
 }
 
 export function TextArea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={cn(inputClass, "h-auto min-h-[76px] resize-y py-2.5 leading-relaxed", className)} />;
+  return <textarea {...props} className={cn(inputClass, "h-auto min-h-19 resize-y py-2.5", className)} />;
 }
 
 export function Section({
@@ -56,11 +56,11 @@ export function Section({
   id?: string;
 }) {
   return (
-    <section id={id} className="scroll-mt-20 rounded-[24px] bg-surface p-5 ring-1 ring-line sm:p-6">
+    <section id={id} className="scroll-mt-20 rounded-xl border border-line bg-surface p-5 sm:p-6">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[16px] font-semibold tracking-[-0.01em]">{title}</h2>
-          {description && <p className="mt-1 text-[13px] leading-relaxed text-ink-3">{description}</p>}
+          <h2 className="text-md font-semibold">{title}</h2>
+          {description && <p className="mt-1 text-sm leading-relaxed text-ink-3">{description}</p>}
         </div>
         {action}
       </div>
@@ -90,7 +90,7 @@ export function Segmented<T extends string | number>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "h-9 flex-1 rounded-lg text-[13.5px] font-semibold transition-[background-color,color,box-shadow]",
+            "h-9 flex-1 rounded-lg text-sm font-semibold transition-[background-color,color,box-shadow]",
             value === o.value ? "bg-surface text-ink shadow-sm" : "text-ink-3 hover:text-ink-2",
           )}
         >

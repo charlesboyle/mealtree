@@ -1,25 +1,15 @@
+import type { I18n } from "@/i18n";
 import type { Hours } from "./types";
 
 type Day = keyof Hours;
 
+/** English day names for the admin tools; public pages use the dictionary. */
 export const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const toMin = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 };
-
-export function formatTime(hhmm: string) {
-  const [h, m] = hhmm.split(":").map(Number);
-  const suffix = h >= 12 && h < 24 ? "PM" : "AM";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return m === 0 ? `${h12} ${suffix}` : `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
-}
-
-export function formatRanges(ranges: [string, string][]) {
-  if (!ranges.length) return "Closed";
-  return ranges.map(([o, c]) => `${formatTime(o)} – ${formatTime(c)}`).join(", ");
-}
 
 /** Current weekday and minutes-past-midnight in the restaurant's timezone. */
 export function nowIn(timezone: string, date = new Date()) {
@@ -35,23 +25,18 @@ export function nowIn(timezone: string, date = new Date()) {
   return { day, minutes: Number(get("hour")) * 60 + Number(get("minute")) };
 }
 
-export type OpenStatus = {
-  open: boolean;
-  /** Closing within 45 minutes. */
-  soon: boolean;
-  headline: string;
-  detail: string;
-};
+export type OpenStatus =
+  | { open: true; /** Closing within 45 minutes. */ soon: boolean; until: string }
+  | { open: false; soon: false; /** Days from today (0 = later today), or null if nothing this week. */ next: { offset: number; day: Day; time: string } | null };
 
 export function openStatus(hours: Hours, timezone: string, date = new Date()): OpenStatus {
   const { day, minutes } = nowIn(timezone, date);
   const yesterday = ((day + 6) % 7) as Day;
+  const closing = (remaining: number, until: string): OpenStatus => ({ open: true, soon: remaining <= 45, until });
 
   // Spans that started yesterday and run past midnight.
   for (const [o, c] of hours[yesterday]) {
-    if (toMin(c) < toMin(o) && minutes < toMin(c)) {
-      return closing(toMin(c) - minutes, c);
-    }
+    if (toMin(c) < toMin(o) && minutes < toMin(c)) return closing(toMin(c) - minutes, c);
   }
   for (const [o, c] of hours[day]) {
     const open = toMin(o);
@@ -62,18 +47,25 @@ export function openStatus(hours: Hours, timezone: string, date = new Date()): O
   // Closed: find the next opening in the coming week.
   for (let offset = 0; offset < 7; offset++) {
     const d = ((day + offset) % 7) as Day;
-    const next = hours[d].map(([o]) => o).find((o) => offset > 0 || toMin(o) > minutes);
-    if (next) {
-      const when = offset === 0 ? "" : offset === 1 ? "tomorrow " : `${dayNames[d].slice(0, 3)} `;
-      return { open: false, soon: false, headline: "Closed", detail: `opens ${when}${formatTime(next)}` };
-    }
+    const time = hours[d].map(([o]) => o).find((o) => offset > 0 || toMin(o) > minutes);
+    if (time) return { open: false, soon: false, next: { offset, day: d, time } };
   }
-  return { open: false, soon: false, headline: "Closed", detail: "temporarily" };
+  return { open: false, soon: false, next: null };
 }
 
-function closing(remaining: number, close: string): OpenStatus {
-  const soon = remaining <= 45;
-  return { open: true, soon, headline: soon ? "Closing soon" : "Open", detail: `until ${formatTime(close)}` };
+/** "Open" + "until 2 AM", "Closed" + "opens tomorrow 7 AM", in the viewer's language. */
+export function describeStatus(s: OpenStatus, i18n: I18n) {
+  const t = i18n.t.hours;
+  if (s.open) return { headline: s.soon ? t.closingSoon : t.open, detail: t.until(i18n.time(s.until)) };
+  if (!s.next) return { headline: t.closed, detail: t.temporarily };
+  const time = i18n.time(s.next.time);
+  const detail =
+    s.next.offset === 0
+      ? t.opensAt(time)
+      : s.next.offset === 1
+        ? t.opensTomorrow(time)
+        : t.opensOn(t.daysShort[s.next.day], time);
+  return { headline: t.closed, detail };
 }
 
 /**

@@ -1,12 +1,13 @@
 "use client";
 
-import { UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
+import { CuisineGlyph } from "@/components/icons";
 import { cn, photoSrcSet, photoUrl } from "@/lib/format";
+import type { Restaurant } from "@/lib/types";
 
 /**
- * Remote food photo that fades in once decoded. Missing or broken images fall
- * back to a quiet accent-tinted tile so text-only menus still look deliberate.
+ * Remote food photo that fades in once decoded. Missing or broken images leave
+ * a flat tint of the restaurant's color, so a text-only menu still looks even.
  */
 export function Photo({
   id,
@@ -14,30 +15,23 @@ export function Photo({
   width,
   className,
   priority,
-  iconSize = 20,
+  fallback,
 }: {
   id?: string;
   alt: string;
   width: number;
   className?: string;
   priority?: boolean;
-  iconSize?: number;
+  /** Shown centered on the tint when there's no photo (e.g. a cuisine glyph). */
+  fallback?: React.ReactNode;
 }) {
   const [state, setState] = useState<"loading" | "loaded" | "error">("loading");
   const failed = !id || state === "error";
 
   return (
     <div className={cn("relative overflow-hidden bg-accent-soft", className)}>
-      {failed ? (
-        <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(120%_90%_at_30%_20%,color-mix(in_oklab,var(--accent)_16%,transparent),transparent_70%)]">
-          <UtensilsCrossed
-            aria-hidden
-            className="text-accent opacity-35"
-            style={{ width: iconSize, height: iconSize }}
-            strokeWidth={1.6}
-          />
-        </div>
-      ) : (
+      {failed && fallback && <div className="absolute inset-0 grid place-items-center text-accent">{fallback}</div>}
+      {!failed && (
         <>
           {state === "loading" && <div className="skeleton absolute inset-0" />}
           {/* eslint-disable-next-line @next/next/no-img-element -- remote CDN already sizes images */}
@@ -55,12 +49,25 @@ export function Photo({
             onLoad={() => setState("loaded")}
             onError={() => setState("error")}
             className={cn(
-              "absolute inset-0 size-full object-cover transition-[opacity,transform] duration-700 ease-out-expo",
-              state === "loaded" ? "scale-100 opacity-100" : "scale-[1.03] opacity-0",
+              "absolute inset-0 size-full object-cover transition-opacity duration-500",
+              state === "loaded" ? "opacity-100" : "opacity-0",
             )}
           />
         </>
       )}
     </div>
+  );
+}
+
+/** Small cover thumbnail, or the cuisine glyph when there's no photo. */
+export function RestaurantThumb({ restaurant: r, className }: { restaurant: Restaurant; className?: string }) {
+  return (
+    <Photo
+      id={r.cover}
+      alt=""
+      width={96}
+      className={className}
+      fallback={<CuisineGlyph cuisine={r.cuisine} className="size-5 opacity-70" strokeWidth={1.7} />}
+    />
   );
 }

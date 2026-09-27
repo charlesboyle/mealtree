@@ -1,20 +1,21 @@
 "use client";
 
-import { AlertTriangle, ArrowUpRight, BadgeCheck, CheckCircle2, Copy, Eye, MousePointerClick, ScanLine } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Copy } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+import { LanguageToggle } from "@/components/language-toggle";
 import { LogoMark } from "@/components/logo";
 import { useToast } from "@/components/providers";
 import { Card, CardTitle } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
+import { formatDayMonth } from "@/i18n/format";
 import { accentStyle } from "@/lib/accent";
-import { cn, formatVerified } from "@/lib/format";
-import { menuActions, useHydrated, useOverrides } from "@/lib/store";
+import { cn } from "@/lib/format";
+import { actionErrorMessage, menuActions, useHydrated, useOverrides } from "@/lib/store";
 import type { Restaurant } from "@/lib/types";
 import { AreaChart, Sparkline } from "./area-chart";
 import { MenuEditor } from "./menu-editor";
 import { QrCard } from "./qr-card";
-
-const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 
 /** Deterministic mock views per dish, weighted toward "popular" items. */
 function topDishes(r: Restaurant, n = 5) {
@@ -32,105 +33,109 @@ function topDishes(r: Restaurant, n = 5) {
     .slice(0, n);
 }
 
-function dayLabels(n: number) {
-  const today = new Date();
-  return Array.from({ length: n }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - (n - 1 - i));
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  });
-}
-
 export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
+  const i18n = useI18n();
+  const { t, pick, href } = i18n;
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
   const overrides = useOverrides(r.slug);
   const toast = useToast();
   const claimed = r.claimed || overrides.claimed;
   const canEdit = overrides.isOwner;
+  const name = pick(r.name, r.nameAr);
   // Dates depend on the viewer's clock, so they're filled in after hydration.
   const hydrated = useHydrated();
   const n = r.stats.daily.length;
-  const labels = useMemo(() => (hydrated ? dayLabels(n) : Array<string>(n).fill("")), [hydrated, n]);
+  const labels = useMemo(() => {
+    if (!hydrated) return Array<string>(n).fill("");
+    const today = new Date();
+    return Array.from({ length: n }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (n - 1 - i));
+      return formatDayMonth(d, i18n.locale);
+    });
+  }, [hydrated, n, i18n.locale]);
   const dishes = useMemo(() => topDishes(r), [r]);
   const googleLinked = r.googleMenuLink || !!overrides.googleOptIn;
   const greetingName = overrides.ownerName?.split(" ")[0];
 
   const tiles = [
-    { label: "Menu views", value: r.stats.views30d, icon: Eye, trend: true },
-    { label: "QR scans", value: r.stats.qrScans30d, icon: ScanLine },
-    { label: "Link clicks", value: r.stats.linkClicks30d, icon: MousePointerClick },
+    { label: t.dashboard.views, value: r.stats.views30d, trend: true },
+    { label: t.dashboard.scans, value: r.stats.qrScans30d },
+    { label: t.dashboard.clicks, value: r.stats.linkClicks30d },
   ];
 
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg">
-      <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-5">
-          <Link href="/" aria-label="mealtree home" className="pressable">
+      <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
+          <Link href={href("/")} aria-label="mealtree" className="pressable">
             <LogoMark />
           </Link>
           <span className="text-ink-3">/</span>
-          <p className="flex min-w-0 items-center gap-1.5 truncate text-[14.5px] font-semibold">
-            {r.name}
+          <p className="flex min-w-0 items-center gap-1.5 truncate text-base font-semibold">
+            <span className="truncate">{name}</span>
             {claimed && <BadgeCheck className="size-4 shrink-0 fill-accent text-bg" strokeWidth={2} />}
           </p>
-          <Link
-            href={`/r/${r.slug}`}
-            className="pressable ml-auto flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-surface px-3.5 text-[13px] font-medium ring-1 ring-line hover:ring-line-strong"
-          >
-            Live page <ArrowUpRight className="size-3.5" strokeWidth={2.2} />
-          </Link>
+          <div className="ms-auto flex shrink-0 items-center gap-1">
+            <LanguageToggle />
+            <Link
+              href={href(`/r/${r.slug}`)}
+              className="pressable flex h-9 items-center gap-1 rounded-lg border border-line-strong px-3 text-sm font-medium hover:bg-surface-2"
+            >
+              {t.dashboard.livePage} <ArrowUpRight className="size-3.5 rtl:-scale-x-100" strokeWidth={2.2} />
+            </Link>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-5 pb-16 pt-6">
+      <main className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
         {overrides.ready && !canEdit && (
-          <div className="mb-5 flex animate-rise flex-wrap items-center gap-3 rounded-2xl bg-accent-soft px-4 py-3 text-[13.5px] text-ink-2 ring-1 ring-accent-line">
-            {overrides.pendingReview ? (
-              <span className="min-w-0 flex-1">
-                <span className="font-medium text-ink">Verification pending.</span> We&apos;ll call {r.name}&apos;s listed
-                number to confirm your claim. Editing unlocks right after.
-              </span>
-            ) : claimed ? (
-              <span className="min-w-0 flex-1">
-                <span className="font-medium text-ink">View only.</span> {r.name} is managed by its verified owner.
-              </span>
-            ) : (
-              <>
-                <span className="min-w-0 flex-1">
-                  <span className="font-medium text-ink">Preview.</span> Claim {r.name} to edit the menu.
-                </span>
-                <Link href={`/claim/${r.slug}`} className="pressable rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-on-accent">
-                  Claim now
-                </Link>
-              </>
+          <div className="mb-5 flex animate-fade flex-wrap items-center gap-3 rounded-xl bg-accent-soft px-4 py-3 text-sm text-ink-2">
+            <span className="min-w-0 flex-1">
+              {overrides.pendingReview
+                ? t.dashboard.pendingBanner(name)
+                : claimed
+                  ? t.dashboard.viewOnly(name)
+                  : t.dashboard.preview(name)}
+            </span>
+            {!overrides.pendingReview && !claimed && (
+              <Link
+                href={href(`/claim/${r.slug}`)}
+                className="pressable rounded-lg bg-accent px-3.5 py-1.5 text-sm font-semibold text-on-accent"
+              >
+                {t.dashboard.claimNow}
+              </Link>
             )}
           </div>
         )}
 
-        <h1 className="animate-rise font-display text-[32px] leading-tight tracking-[-0.02em] [font-variation-settings:'opsz'_48]">
-          {greetingName ? `Good to see you, ${greetingName}` : "Your menu at a glance"}
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          {greetingName ? t.dashboard.greeting(greetingName) : t.dashboard.title}
         </h1>
-        <p className="mt-1 animate-rise text-[14px] text-ink-3 [animation-delay:40ms]">
-          Last 30 days · menu updated {formatVerified(r.verifiedAt)}
-        </p>
+        <p className="mt-1 text-sm text-ink-3">{t.dashboard.subtitle(i18n.date(r.verifiedAt))}</p>
 
-        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {tiles.map((t, i) => (
+        <div className="mt-5 grid grid-cols-2 overflow-hidden rounded-xl border border-line lg:grid-cols-4">
+          {tiles.map((tile, i) => (
             <div
-              key={t.label}
-              className={cn("animate-rise rounded-[22px] bg-surface p-4 ring-1 ring-line", i === 0 && "col-span-2 lg:col-span-1")}
-              style={{ animationDelay: `${80 + i * 50}ms` }}
+              key={tile.label}
+              className={cn(
+                "border-line p-4",
+                i === 0 ? "col-span-2 border-b lg:col-span-1 lg:border-b-0 lg:border-e" : "border-e",
+                i === 2 && "max-lg:border-e-0",
+              )}
             >
-              <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-3">
-                <t.icon className="size-3.5" strokeWidth={2.2} /> {t.label}
-              </p>
-              <div className="mt-2 flex items-end justify-between gap-3">
-                <p className="tabular text-[28px] font-semibold leading-none tracking-[-0.02em]">{compact.format(t.value)}</p>
-                {t.trend && (
+              <p className="text-sm text-ink-3">{tile.label}</p>
+              <div className="mt-1.5 flex items-end justify-between gap-3">
+                <p className="tabular text-3xl font-semibold leading-none">{i18n.compact(tile.value)}</p>
+                {tile.trend && (
                   <div className="flex items-end gap-3">
                     <Sparkline data={r.stats.daily.slice(-12)} className="h-7 w-20" />
-                    <span className={cn("text-[12.5px] font-semibold", r.stats.trendPct >= 0 ? "text-positive" : "text-danger")}>
-                      {r.stats.trendPct >= 0 ? "↑" : "↓"} {Math.abs(r.stats.trendPct)}%
+                    <span
+                      dir="ltr"
+                      className={cn("text-sm font-semibold", r.stats.trendPct >= 0 ? "text-positive" : "text-danger")}
+                    >
+                      {r.stats.trendPct >= 0 ? "+" : "−"}
+                      {Math.abs(r.stats.trendPct)}%
                     </span>
                   </div>
                 )}
@@ -139,41 +144,39 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
           ))}
           <GoogleTile
             linked={googleLinked}
-            index={3}
             onAdd={
               canEdit
                 ? () =>
                     menuActions
                       .requestGoogleLink(r.slug)
-                      .then(() => toast("Requested — usually live on Google within a day"))
-                      .catch((e: Error) => toast(e.message))
+                      .then(() => toast(t.dashboard.googleRequested))
+                      .catch((e) => toast(actionErrorMessage(e, t)))
                 : undefined
             }
           />
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="grid min-w-0 content-start gap-3">
-            <Card className="animate-rise [animation-delay:200ms]">
-              <CardTitle>Menu views per day</CardTitle>
-              <AreaChart data={r.stats.daily} labels={labels} valueLabel="views" />
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid min-w-0 content-start gap-4">
+            <Card>
+              <CardTitle>{t.dashboard.viewsPerDay}</CardTitle>
+              <AreaChart data={r.stats.daily} labels={labels} valueLabel={t.dashboard.viewsUnit} />
             </Card>
             <MenuEditor restaurant={r} canEdit={canEdit} />
           </div>
-          <div className="grid min-w-0 content-start gap-3">
+          <div className="grid min-w-0 content-start gap-4">
             <Card>
-              <CardTitle>Most viewed dishes</CardTitle>
+              <CardTitle>{t.dashboard.topDishes}</CardTitle>
               <ol className="space-y-3.5">
                 {dishes.map(({ item, views }) => (
                   <li key={item.id}>
-                    <div className="flex items-baseline justify-between gap-3 text-[14px]">
-                      <span className="truncate font-medium">{item.name}</span>
-                      <span className="tabular shrink-0 text-ink-2">{views.toLocaleString()}</span>
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="truncate font-medium">{pick(item.name, item.nameAr)}</span>
+                      <span className="tabular shrink-0 text-ink-2">{i18n.number(views)}</span>
                     </div>
-                    {/* Meter: accent fill on a lighter step of the same hue. */}
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-accent-soft">
                       <div
-                        className="h-full origin-left animate-[grow_900ms_var(--ease-out-expo)_both] rounded-full bg-accent"
+                        className="h-full animate-[grow_900ms_var(--ease-out-expo)_both] rounded-full bg-accent ltr:origin-left rtl:origin-right"
                         style={{ width: `${(views / (dishes[0].views || 1)) * 100}%` }}
                       />
                     </div>
@@ -190,59 +193,50 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
   );
 }
 
-function GoogleTile({ linked, index, onAdd }: { linked: boolean; index: number; onAdd?: () => void }) {
+function GoogleTile({ linked, onAdd }: { linked: boolean; onAdd?: () => void }) {
+  const { t } = useI18n();
   return (
-    <div
-      className="col-span-2 animate-rise rounded-[22px] bg-surface p-4 ring-1 ring-line lg:col-span-1"
-      style={{ animationDelay: `${80 + index * 50}ms` }}
-    >
-      <p className="text-[12.5px] font-medium text-ink-3">Google Maps menu link</p>
-      {linked ? (
-        <p className="mt-2 flex items-center gap-1.5 text-[15px] font-semibold text-positive">
-          <CheckCircle2 className="size-[18px]" strokeWidth={2.2} /> Linked
+    <div className="col-span-2 border-t border-line p-4 lg:col-span-1 lg:border-t-0">
+      <p className="text-sm text-ink-3">{t.dashboard.google}</p>
+      <div className="mt-1.5 flex items-center justify-between gap-3">
+        <p className={cn("text-lg font-semibold", linked ? "text-positive" : "text-warning")}>
+          {linked ? t.dashboard.linked : t.dashboard.missing}
         </p>
-      ) : (
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <p className="flex items-center gap-1.5 text-[15px] font-semibold text-warning">
-            <AlertTriangle className="size-[18px]" strokeWidth={2.2} /> Missing
-          </p>
-          {onAdd && (
-            <button onClick={onAdd} className="pressable rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-semibold text-bg">
-              Add to Google
-            </button>
-          )}
-        </div>
-      )}
+        {!linked && onAdd && (
+          <button onClick={onAdd} className="pressable rounded-lg bg-ink px-3 py-1.5 text-sm font-semibold text-bg">
+            {t.dashboard.addToGoogle}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 function ShareCard({ restaurant: r }: { restaurant: Restaurant }) {
+  const { t } = useI18n();
   const toast = useToast();
   const copy = async (text: string, msg: string) => {
     await navigator.clipboard?.writeText(text).catch(() => {});
     toast(msg);
   };
+  const targets = t.dashboard.shareTargets;
   return (
     <Card>
-      <CardTitle>Share your menu</CardTitle>
-      <div className="space-y-2">
-        {[
-          { label: "Instagram bio link", src: "instagram" },
-          { label: "Google Business Profile", src: "google" },
-          { label: "Delivery app listings", src: "delivery" },
-        ].map((x) => (
+      <CardTitle>{t.dashboard.share}</CardTitle>
+      <div className="divide-y divide-line border-y border-line">
+        {(Object.keys(targets) as (keyof typeof targets)[]).map((src) => (
           <button
-            key={x.src}
-            onClick={() => copy(`${location.origin}/r/${r.slug}?utm_source=${x.src}`, `${x.label} link copied`)}
-            className="pressable flex w-full items-center justify-between rounded-xl bg-surface-2 px-3.5 py-2.5 text-left text-[13.5px] font-medium hover:bg-surface-3"
+            key={src}
+            // Bare /r/… links pick the viewer's language.
+            onClick={() => copy(`${location.origin}/r/${r.slug}?utm_source=${src}`, t.dashboard.shareCopied(targets[src]))}
+            className="flex w-full items-center justify-between py-3 text-start text-sm font-medium hover:text-ink-2"
           >
-            {x.label}
+            {targets[src]}
             <Copy className="size-4 text-ink-3" strokeWidth={2} />
           </button>
         ))}
       </div>
-      <p className="mt-3 text-[12px] leading-relaxed text-ink-3">Each link is tagged so you can see which channel brings guests.</p>
+      <p className="mt-3 text-xs text-ink-3">{t.dashboard.shareNote}</p>
     </Card>
   );
 }

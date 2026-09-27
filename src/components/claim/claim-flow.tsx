@@ -1,29 +1,20 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import {
-  ArrowLeft,
-  BarChart3,
-  Check,
-  Loader2,
-  Mail,
-  MessageSquareText,
-  Pencil,
-  QrCode,
-  ShieldCheck,
-  Store,
-  TimerOff,
-} from "lucide-react";
+import { ArrowLeft, Check, Loader2, Mail, MessageSquareText, ShieldCheck, Store } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkline } from "@/components/dashboard/area-chart";
+import { LanguageToggle } from "@/components/language-toggle";
 import { Logo } from "@/components/logo";
-import { Photo } from "@/components/photo";
+import { RestaurantThumb } from "@/components/photo";
 import { Button, Switch } from "@/components/ui";
+import { useI18n } from "@/i18n/client";
+import { maskPhone } from "@/i18n/format";
 import { accentStyle } from "@/lib/accent";
 import { cn } from "@/lib/format";
-import { menuActions, useOverrides } from "@/lib/store";
+import { actionErrorMessage, menuActions, useOverrides } from "@/lib/store";
 import type { Restaurant } from "@/lib/types";
 import { OtpInput } from "./otp-input";
 
@@ -31,13 +22,19 @@ type Step = "pitch" | "method" | "code" | "details" | "done";
 const STEPS: Step[] = ["pitch", "method", "code", "details", "done"];
 type Method = "phone" | "email" | "google";
 
+/** Keeps a phone number in LTR order inside Arabic sentences. */
+const isolate = (s: string) => `⁨${s}⁩`;
+
 export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
+  const { t, dir: textDir } = useI18n();
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
   const [step, setStep] = useState<Step>("pitch");
   const [dir, setDir] = useState(1);
   const [method, setMethod] = useState<Method>("phone");
   const live = useOverrides(r.slug);
   const [name, setName] = useState("");
+  // Steps slide in from the reading direction's "forward" side.
+  const sign = textDir === "rtl" ? -1 : 1;
 
   const go = (next: Step) => {
     setDir(STEPS.indexOf(next) > STEPS.indexOf(step) ? 1 : -1);
@@ -56,10 +53,14 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
 
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg">
-      <header className="mx-auto flex h-16 max-w-lg items-center gap-3 px-5">
+      <header className="mx-auto flex h-14 max-w-lg items-center gap-3 px-4">
         {step !== "pitch" && step !== "done" ? (
-          <button onClick={back} aria-label="Back" className="pressable -ml-2 grid size-10 place-items-center rounded-full hover:bg-surface-2">
-            <ArrowLeft className="size-5" strokeWidth={2.2} />
+          <button
+            onClick={back}
+            aria-label={t.common.back}
+            className="pressable -ms-2 grid size-10 place-items-center rounded-full hover:bg-surface-2"
+          >
+            <ArrowLeft className="size-5 rtl:-scale-x-100" strokeWidth={2} />
           </button>
         ) : (
           <Logo />
@@ -69,25 +70,26 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
             className="h-full rounded-full bg-accent"
             initial={false}
             animate={{ width: `${Math.max(progress, 0.06) * 100}%` }}
-            transition={{ type: "spring", bounce: 0.1, duration: 0.6 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.5 }}
           />
         </div>
+        <LanguageToggle className="-me-2" />
       </header>
 
-      <main className="mx-auto max-w-lg overflow-hidden px-5 pb-16">
+      <main className="mx-auto max-w-lg overflow-hidden px-4 pb-16">
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div
             key={step}
             custom={dir}
             variants={{
-              enter: (d: number) => ({ opacity: 0, x: 28 * d }),
+              enter: (d: number) => ({ opacity: 0, x: 20 * d * sign }),
               center: { opacity: 1, x: 0 },
-              exit: (d: number) => ({ opacity: 0, x: -28 * d, transition: { duration: 0.14 } }),
+              exit: (d: number) => ({ opacity: 0, x: -20 * d * sign, transition: { duration: 0.12 } }),
             }}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ type: "spring", bounce: 0.1, duration: 0.45 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.35 }}
           >
             {step === "pitch" && <Pitch restaurant={r} onNext={() => go("method")} />}
             {step === "method" && (
@@ -116,97 +118,68 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
 function StepTitle({ eyebrow, title, sub }: { eyebrow?: string; title: React.ReactNode; sub?: React.ReactNode }) {
   return (
     <div className="pt-6">
-      {eyebrow && <p className="text-[12.5px] font-semibold uppercase tracking-[0.1em] text-accent">{eyebrow}</p>}
-      <h1 className="mt-2 font-display text-[34px] leading-[1.05] tracking-[-0.02em] text-ink [font-variation-settings:'opsz'_60]">
-        {title}
-      </h1>
-      {sub && <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{sub}</p>}
+      {eyebrow && <p className="text-sm text-ink-3">{eyebrow}</p>}
+      <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">{title}</h1>
+      {sub && <p className="mt-3 text-base text-ink-2">{sub}</p>}
     </div>
   );
 }
 
-const SOURCE_PHRASE: Record<Restaurant["source"], string> = {
-  visit: "an in-person visit",
-  photos: "photos of your menu",
-  website: "your website",
-  owner: "details you shared",
-};
-
-const BENEFITS = [
-  { icon: Pencil, title: "Fix prices in seconds", body: "Edit any dish from your phone. Changes go live instantly." },
-  { icon: TimerOff, title: "Mark dishes sold out", body: "Stop the “sorry, we're out” conversation at the table." },
-  { icon: QrCode, title: "Free table QR codes", body: "Print-ready codes that always point to your latest menu." },
-  { icon: BarChart3, title: "See what diners look at", body: "Views, top dishes, and where your guests come from." },
-];
-
 function Pitch({ restaurant: r, onNext }: { restaurant: Restaurant; onNext: () => void }) {
+  const { t, pick, href, number } = useI18n();
+  const name = pick(r.name, r.nameAr);
   return (
     <div>
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-surface p-2.5 pr-4 ring-1 ring-line">
-        <Photo id={r.cover} alt="" width={96} className="size-14 shrink-0 rounded-xl" iconSize={18} />
+      <div className="mt-4 flex items-center gap-3">
+        <RestaurantThumb restaurant={r} className="size-12 shrink-0 rounded-lg" />
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold">{r.name}</p>
-          <p className="truncate text-[13px] text-ink-3">{r.address}</p>
+          <p className="truncate text-base font-semibold">{name}</p>
+          <p className="truncate text-sm text-ink-3">{pick(r.address, r.addressAr)}</p>
         </div>
       </div>
 
       <StepTitle
-        title={
-          r.stats.views30d > 0 ? (
-            <>
-              <span className="tabular text-accent">{r.stats.views30d.toLocaleString()}</span> people looked at your
-              menu this month.
-            </>
-          ) : (
-            <>Your menu is live on mealtree.</>
-          )
-        }
-        sub={`We built this page from ${SOURCE_PHRASE[r.source]} so guests can check your dishes and prices. Claim it to keep it accurate — it's free.`}
+        title={r.stats.views30d > 0 ? t.claim.viewsTitle(number(r.stats.views30d)) : t.claim.liveTitle}
+        sub={t.claim.pitchSub(t.source[r.source])}
       />
 
       {r.stats.views30d > 0 && (
-        <div className="mt-5 rounded-2xl bg-surface p-4 ring-1 ring-line">
-          <div className="flex items-baseline justify-between text-[12.5px] text-ink-3">
-            <span>Views, last 30 days</span>
+        <div className="mt-6 rounded-xl border border-line p-4">
+          <div className="flex items-baseline justify-between gap-3 text-sm text-ink-3">
+            <span>{t.claim.views30}</span>
             <span className={cn("font-medium", r.stats.trendPct >= 0 ? "text-positive" : "text-ink-2")}>
-              {r.stats.trendPct >= 0 ? "↑" : "↓"} {Math.abs(r.stats.trendPct)}% in 2 weeks
+              {t.claim.trend(r.stats.trendPct)}
             </span>
           </div>
-          <Sparkline data={r.stats.daily} className="mt-2 h-14 w-full" />
+          <Sparkline data={r.stats.daily} className="mt-3 h-12 w-full" />
         </div>
       )}
 
-      <ul className="mt-6 space-y-4">
-        {BENEFITS.map((b, i) => (
-          <li key={b.title} className="flex animate-rise gap-3.5" style={{ animationDelay: `${120 + i * 60}ms` }}>
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-              <b.icon className="size-[18px]" strokeWidth={2} />
-            </span>
+      <ul className="mt-6 divide-y divide-line">
+        {t.claim.benefits.map((b) => (
+          <li key={b.title} className="flex gap-3 py-3.5">
+            <Check className="mt-0.5 size-4.5 shrink-0 text-accent" strokeWidth={2.4} />
             <div>
-              <p className="text-[15px] font-medium text-ink">{b.title}</p>
-              <p className="mt-0.5 text-[13.5px] leading-snug text-ink-2">{b.body}</p>
+              <p className="text-base font-medium text-ink">{b.title}</p>
+              <p className="mt-0.5 text-sm text-ink-2">{b.body}</p>
             </div>
           </li>
         ))}
       </ul>
 
-      <div className="sticky bottom-0 -mx-5 mt-8 bg-gradient-to-t from-bg via-bg to-transparent px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6">
+      <div className="sticky bottom-0 -mx-4 mt-6 bg-bg px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
         <Button variant="accent" className="w-full" onClick={onNext}>
-          Claim {r.name} — free
+          {t.claim.cta(name)}
         </Button>
-        <p className="mt-3 text-center text-[12.5px] text-ink-3">
-          Not the owner?{" "}
-          <Link href={`/r/${r.slug}`} className="font-medium text-ink-2 underline-offset-2 hover:underline">
-            Back to the menu
+        <p className="mt-3 text-center text-sm text-ink-3">
+          {t.claim.free} {t.claim.notOwner}{" "}
+          <Link href={href(`/r/${r.slug}`)} className="font-medium text-ink-2 underline-offset-2 hover:underline">
+            {t.claim.backToMenu}
           </Link>
         </p>
       </div>
     </div>
   );
-}
-
-function maskPhone(e164: string) {
-  return `(${e164.slice(2, 5)}) •••-${e164.slice(-4)}`;
 }
 
 function MethodStep({
@@ -220,21 +193,22 @@ function MethodStep({
   setMethod: (m: Method) => void;
   onNext: () => void;
 }) {
+  const { t } = useI18n();
   const options: { id: Method; icon: typeof Mail; title: string; body: string; badge?: string }[] = [
     {
       id: "phone",
       icon: MessageSquareText,
-      title: `Text ${maskPhone(r.phone)}`,
-      body: "The number listed on your Google Business Profile.",
-      badge: "Fastest",
+      title: t.claim.methodPhone(isolate(maskPhone(r.phone))),
+      body: t.claim.methodPhoneBody,
+      badge: t.claim.fastest,
     },
-    { id: "email", icon: Mail, title: "Email a business address", body: "Must match your website's domain." },
-    { id: "google", icon: Store, title: "Sign in with Google Business", body: "If you already manage the Google listing." },
+    { id: "email", icon: Mail, title: t.claim.methodEmail, body: t.claim.methodEmailBody },
+    { id: "google", icon: Store, title: t.claim.methodGoogle, body: t.claim.methodGoogleBody },
   ];
   return (
     <div>
-      <StepTitle eyebrow="Step 1 of 3" title="Let's make sure it's you" sub="We verify every owner so no one else can edit your menu." />
-      <div role="radiogroup" className="mt-6 space-y-2.5">
+      <StepTitle eyebrow={t.claim.step(1, 3)} title={t.claim.verifyTitle} sub={t.claim.verifySub} />
+      <div role="radiogroup" className="mt-6 space-y-2">
         {options.map((o) => {
           const on = method === o.id;
           return (
@@ -244,56 +218,50 @@ function MethodStep({
               aria-checked={on}
               onClick={() => setMethod(o.id)}
               className={cn(
-                "pressable relative flex w-full items-center gap-3.5 rounded-2xl bg-surface p-4 text-left ring-1",
-                on ? "ring-2 ring-accent" : "ring-line hover:ring-line-strong",
+                "pressable flex w-full items-center gap-3.5 rounded-xl border p-4 text-start",
+                on ? "border-accent bg-accent-soft" : "border-line-strong hover:border-ink-3",
               )}
             >
-              <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl transition-colors", on ? "bg-accent text-on-accent" : "bg-surface-2 text-ink-2")}>
-                <o.icon className="size-[18px]" strokeWidth={2} />
-              </span>
+              <o.icon className={cn("size-5 shrink-0", on ? "text-accent" : "text-ink-3")} strokeWidth={1.9} />
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 text-[15px] font-medium text-ink">
+                <span className="flex flex-wrap items-center gap-x-2 text-base font-medium text-ink">
                   {o.title}
-                  {o.badge && (
-                    <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-accent">
-                      {o.badge}
-                    </span>
-                  )}
+                  {o.badge && <span className="text-xs font-medium text-accent">{o.badge}</span>}
                 </span>
-                <span className="mt-0.5 block text-[13px] text-ink-3">{o.body}</span>
+                <span className="mt-0.5 block text-sm text-ink-3">{o.body}</span>
               </span>
-              <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border-[1.5px]", on ? "border-accent bg-accent" : "border-line-strong")}>
-                <AnimatePresence>
-                  {on && (
-                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                      <Check className="size-3 text-on-accent" strokeWidth={3.5} />
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+              <span
+                className={cn(
+                  "grid size-5 shrink-0 place-items-center rounded-full border-[1.5px]",
+                  on ? "border-accent bg-accent" : "border-line-strong",
+                )}
+              >
+                {on && <Check className="size-3 text-on-accent" strokeWidth={3.5} />}
               </span>
             </button>
           );
         })}
       </div>
       <Button variant="accent" className="mt-8 w-full" onClick={onNext}>
-        {method === "google" ? "Continue with Google" : "Send code"}
+        {method === "google" ? t.claim.continueGoogle : t.claim.sendCode}
       </Button>
-      <p className="mt-4 flex items-center justify-center gap-1.5 text-[12.5px] text-ink-3">
-        <ShieldCheck className="size-3.5" strokeWidth={2} /> We never share your contact details.
+      <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-ink-3">
+        <ShieldCheck className="size-4" strokeWidth={2} /> {t.claim.privacyNote}
       </p>
     </div>
   );
 }
 
 function CodeStep({ restaurant: r, method, onNext }: { restaurant: Restaurant; method: Method; onNext: () => void }) {
+  const { t } = useI18n();
   const [code, setCode] = useState("");
   const [status, setStatus] = useState<"idle" | "checking" | "error">("idle");
   const [resendIn, setResendIn] = useState(30);
 
   useEffect(() => {
     if (resendIn <= 0) return;
-    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
   }, [resendIn]);
 
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -313,42 +281,40 @@ function CodeStep({ restaurant: r, method, onNext }: { restaurant: Restaurant; m
     }, 900);
   };
 
-  const target = method === "phone" ? maskPhone(r.phone) : method === "email" ? "your business email" : "your Google account";
+  const target =
+    method === "phone"
+      ? isolate(maskPhone(r.phone))
+      : method === "email"
+        ? t.claim.codeTargetEmail
+        : t.claim.codeTargetGoogle;
   return (
     <div>
-      <StepTitle eyebrow="Step 2 of 3" title="Enter the 6-digit code" sub={<>We sent it to {target}. It expires in 10 minutes.</>} />
+      <StepTitle eyebrow={t.claim.step(2, 3)} title={t.claim.codeTitle} sub={t.claim.codeSub(target)} />
       <div className="mt-8">
         <OtpInput
           value={code}
           onChange={onCode}
           error={status === "error"}
           disabled={status === "checking"}
+          label={t.claim.codeLabel}
         />
       </div>
-      <div className="mt-5 flex h-6 items-center justify-center text-[13.5px]">
-        <AnimatePresence mode="wait">
-          {status === "checking" ? (
-            <motion.span key="c" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-ink-2">
-              <Loader2 className="size-4 animate-spin" /> Verifying…
-            </motion.span>
-          ) : status === "error" ? (
-            <motion.span key="e" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-danger">
-              That code didn&apos;t work. Try again.
-            </motion.span>
-          ) : resendIn > 0 ? (
-            <motion.span key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="tabular text-ink-3">
-              Resend code in 0:{String(resendIn).padStart(2, "0")}
-            </motion.span>
-          ) : (
-            <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => setResendIn(30)} className="font-medium text-accent">
-              Resend code
-            </motion.button>
-          )}
-        </AnimatePresence>
+      <div className="mt-5 flex h-6 items-center justify-center text-sm">
+        {status === "checking" ? (
+          <span className="flex animate-fade items-center gap-2 text-ink-2">
+            <Loader2 className="size-4 animate-spin" /> {t.claim.verifying}
+          </span>
+        ) : status === "error" ? (
+          <span className="animate-fade text-danger">{t.claim.codeError}</span>
+        ) : resendIn > 0 ? (
+          <span className="tabular text-ink-3">{t.claim.resendIn(`0:${String(resendIn).padStart(2, "0")}`)}</span>
+        ) : (
+          <button onClick={() => setResendIn(30)} className="font-medium text-accent">
+            {t.claim.resend}
+          </button>
+        )}
       </div>
-      <p className="mt-10 rounded-2xl bg-surface-2 px-4 py-3 text-center text-[12.5px] text-ink-3">
-        Demo: any 6 digits verify. <span className="tabular">000000</span> shows the error state.
-      </p>
+      <p className="mt-10 rounded-lg bg-surface-2 px-4 py-3 text-center text-xs text-ink-3">{t.claim.demoNote}</p>
     </div>
   );
 }
@@ -366,6 +332,7 @@ function DetailsStep({
   setName: (v: string) => void;
   onNext: (googleLink: boolean, role: string) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [role, setRole] = useState("Owner");
   const [google, setGoogle] = useState(!r.googleMenuLink);
   const [pending, setPending] = useState(false);
@@ -376,119 +343,114 @@ function DetailsStep({
     try {
       await onNext(google, role);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setError(actionErrorMessage(e, t));
       setPending(false);
     }
   };
   return (
     <div>
-      <StepTitle eyebrow="Step 3 of 3" title="Almost done" sub="Tell us who's managing the page." />
+      <StepTitle eyebrow={t.claim.step(3, 3)} title={t.claim.detailsTitle} sub={t.claim.detailsSub} />
       <label className="mt-6 block">
-        <span className="text-[13px] font-medium text-ink-2">Your name</span>
+        <span className="text-sm font-medium text-ink-2">{t.claim.yourName}</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
           autoComplete="name"
-          placeholder="e.g. Lucia Romano"
-          className="mt-1.5 h-12 w-full rounded-2xl bg-surface px-4 text-[16px] text-ink ring-1 ring-line-strong outline-none transition-shadow placeholder:text-ink-3 focus:ring-2 focus:ring-accent"
+          placeholder={t.claim.namePlaceholder}
+          className="mt-1.5 h-12 w-full rounded-xl border border-line-strong bg-surface px-4 text-md text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-3 focus:border-accent focus:ring-2 focus:ring-accent-line"
         />
       </label>
       <div className="mt-5">
-        <span className="text-[13px] font-medium text-ink-2">Your role</span>
-        <div className="mt-1.5 inline-flex w-full rounded-2xl bg-surface-2 p-1">
+        <span className="text-sm font-medium text-ink-2">{t.claim.yourRole}</span>
+        <div className="mt-1.5 flex w-full rounded-xl bg-surface-2 p-1">
           {ROLES.map((x) => (
             <button
               key={x}
               onClick={() => setRole(x)}
               aria-pressed={role === x}
-              className={cn("relative h-10 flex-1 rounded-xl text-[14px] font-medium transition-colors", role === x ? "text-ink" : "text-ink-3")}
+              className={cn(
+                "relative h-10 flex-1 rounded-lg text-sm font-medium transition-colors",
+                role === x ? "text-ink" : "text-ink-3",
+              )}
             >
-              {role === x && <motion.span layoutId="role" className="absolute inset-0 rounded-xl bg-surface shadow-sm" />}
-              <span className="relative">{x}</span>
+              {role === x && (
+                <motion.span
+                  layoutId="role"
+                  className="absolute inset-0 rounded-lg bg-surface shadow-sm ring-1 ring-line"
+                  transition={{ type: "spring", bounce: 0.15, duration: 0.35 }}
+                />
+              )}
+              <span className="relative">{t.claim.roles[x]}</span>
             </button>
           ))}
         </div>
       </div>
 
       {!r.googleMenuLink && (
-        <div className="mt-6 flex gap-3.5 rounded-2xl bg-surface p-4 ring-1 ring-line">
+        <div className="mt-6 flex gap-4 rounded-xl border border-line p-4">
           <div className="min-w-0 flex-1">
-            <p className="text-[14.5px] font-medium text-ink">Add this menu to your Google listing</p>
-            <p className="mt-1 text-[13px] leading-snug text-ink-3">
-              Your Google Business Profile has no menu link yet. We&apos;ll add it for you — you can remove it
-              anytime.
-            </p>
+            <p className="text-base font-medium text-ink">{t.claim.googleTitle}</p>
+            <p className="mt-1 text-sm text-ink-3">{t.claim.googleBody}</p>
           </div>
-          <Switch checked={google} onChange={setGoogle} label="Add menu link to Google" />
+          <Switch checked={google} onChange={setGoogle} label={t.claim.googleLabel} />
         </div>
       )}
 
-      <AnimatePresence>
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            role="alert"
-            className="mt-6 rounded-2xl bg-danger/10 px-4 py-3 text-[13.5px] text-danger"
-          >
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      {error && (
+        <p role="alert" className="mt-6 animate-fade rounded-lg bg-danger/10 px-4 py-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
       <Button variant="accent" className="mt-8 w-full" disabled={!name.trim() || pending} onClick={finish}>
-        {pending ? <Loader2 className="size-5 animate-spin" /> : "Finish setup"}
+        {pending ? <Loader2 className="size-5 animate-spin" /> : t.claim.finish}
       </Button>
     </div>
   );
 }
 
-function maskedPhone(e164: string) {
-  const m = e164.match(/^\+1(\d{3})\d{3}(\d{4})$/);
-  return m ? `(${m[1]}) •••-${m[2]}` : "the restaurant's listed number";
-}
-
 function Done({ restaurant: r, name, pending }: { restaurant: Restaurant; name: string; pending: boolean }) {
+  const { t, pick, href } = useI18n();
   const router = useRouter();
+  const first = name.trim().split(" ")[0] ?? "";
+  const rName = pick(r.name, r.nameAr);
   return (
     <div className="flex flex-col items-center pt-16 text-center">
       <motion.div
-        initial={{ scale: 0.6, opacity: 0 }}
+        initial={{ scale: 0.7, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", bounce: 0.5, duration: 0.6 }}
-        className="relative grid size-20 place-items-center rounded-full bg-accent text-on-accent shadow-lg"
+        transition={{ type: "spring", bounce: 0.35, duration: 0.5 }}
+        className="grid size-16 place-items-center rounded-full bg-accent text-on-accent"
       >
-        <motion.span
-          className="absolute inset-0 rounded-full bg-accent"
-          initial={{ scale: 1, opacity: 0.5 }}
-          animate={{ scale: 1.9, opacity: 0 }}
-          transition={{ duration: 1.1, ease: "easeOut", delay: 0.15 }}
-        />
-        <svg viewBox="0 0 24 24" className="relative size-9" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
-          <motion.path d="M5 12.5l4.5 4.5L19 7.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.45, delay: 0.25, ease: "easeOut" }} />
+        <svg
+          viewBox="0 0 24 24"
+          className="size-8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <motion.path
+            d="M5 12.5l4.5 4.5L19 7.5"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+          />
         </svg>
       </motion.div>
-      <h1 className="mt-8 font-display text-[36px] leading-tight tracking-[-0.02em] [font-variation-settings:'opsz'_60]">
-        {pending ? "Thanks" : "You're in"}
-        {name.trim() ? `, ${name.trim().split(" ")[0]}` : ""}.
+      <h1 className="mt-7 text-3xl font-bold tracking-tight">
+        {pending ? t.claim.thanks(first) : t.claim.youreIn(first)}
       </h1>
-      <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-ink-2">
-        {pending ? (
-          <>
-            We&apos;ll call {maskedPhone(r.phone)} to confirm you manage {r.name}, usually within a day. Once
-            that&apos;s done you can edit the menu from this browser.
-          </>
-        ) : (
-          <>{r.name} is now verified. Guests will see a checkmark, and you can update the menu anytime.</>
-        )}
+      <p className="mt-3 max-w-sm text-base text-ink-2">
+        {pending ? t.claim.pendingBody(isolate(maskPhone(r.phone)), rName) : t.claim.approvedBody(rName)}
       </p>
-      <div className="mt-8 flex w-full flex-col gap-2.5">
-        <Button variant="accent" onClick={() => router.push(`/dashboard/${r.slug}`)}>
-          {pending ? "Preview your dashboard" : "Open your dashboard"}
+      <div className="mt-8 flex w-full flex-col gap-2">
+        <Button variant="accent" onClick={() => router.push(href(`/dashboard/${r.slug}`))}>
+          {pending ? t.claim.previewDashboard : t.claim.openDashboard}
         </Button>
-        <Button variant="secondary" onClick={() => router.push(`/r/${r.slug}`)}>
-          View your menu page
+        <Button variant="secondary" onClick={() => router.push(href(`/r/${r.slug}`))}>
+          {t.claim.viewMenu}
         </Button>
       </div>
     </div>
@@ -504,26 +466,28 @@ function AlreadyClaimed({
   style: React.CSSProperties;
   pending?: boolean;
 }) {
+  const { t, pick, href } = useI18n();
+  const name = pick(r.name, r.nameAr);
   return (
     <div data-accent style={style} className="grid min-h-dvh place-items-center bg-bg px-6 text-center">
       <div className="max-w-sm animate-rise">
-        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent">
-          <ShieldCheck className="size-6" strokeWidth={2} />
-        </div>
-        <h1 className="mt-6 font-display text-[32px] leading-tight tracking-[-0.02em]">
-          {pending ? "We're verifying your claim" : `${r.name} is already claimed`}
+        <ShieldCheck className="mx-auto size-8 text-accent" strokeWidth={1.8} />
+        <h1 className="mt-5 text-2xl font-bold tracking-tight">
+          {pending ? t.claim.pendingTitle : t.claim.claimedTitle(name)}
         </h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          {pending
-            ? `We'll call ${r.name}'s listed number to confirm, usually within a day. After that you can edit the menu from this browser.`
-            : "If you work there and need access, ask the current manager to invite you, or reply to our message and we'll help."}
-        </p>
-        <div className="mt-8 flex flex-col gap-2.5">
-          <Link href={`/dashboard/${r.slug}`} className="pressable inline-flex h-12 items-center justify-center rounded-full bg-accent px-6 text-[15px] font-semibold text-on-accent">
-            {pending ? "Preview your dashboard" : "View dashboard"}
+        <p className="mt-3 text-base text-ink-2">{pending ? t.claim.pendingAlready(name) : t.claim.claimedBody}</p>
+        <div className="mt-8 flex flex-col gap-2">
+          <Link
+            href={href(`/dashboard/${r.slug}`)}
+            className="pressable inline-flex h-12 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-on-accent"
+          >
+            {pending ? t.claim.previewDashboard : t.claim.viewDashboard}
           </Link>
-          <Link href={`/r/${r.slug}`} className="pressable inline-flex h-12 items-center justify-center rounded-full bg-surface-2 px-6 text-[15px] font-semibold">
-            Back to menu
+          <Link
+            href={href(`/r/${r.slug}`)}
+            className="pressable inline-flex h-12 items-center justify-center rounded-xl bg-surface-2 px-6 text-base font-semibold"
+          >
+            {t.claim.backToMenu}
           </Link>
         </div>
       </div>

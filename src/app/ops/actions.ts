@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { locales } from "@/i18n/config";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminDb, requireAdmin } from "@/lib/admin/server";
@@ -37,11 +38,11 @@ export async function signOut() {
 /** Refresh every page that shows restaurant data after an admin write. */
 function refresh(slug?: string) {
   updateTag("mealtree");
-  revalidatePath("/");
-  revalidatePath("/claim");
   revalidatePath("/ops");
-  if (slug) {
-    for (const base of ["/r", "/claim", "/dashboard"]) revalidatePath(`${base}/${slug}`);
+  for (const lang of locales) {
+    revalidatePath(`/${lang}`);
+    revalidatePath(`/${lang}/claim`);
+    if (slug) for (const base of ["/r", "/claim", "/dashboard"]) revalidatePath(`/${lang}${base}/${slug}`);
   }
 }
 

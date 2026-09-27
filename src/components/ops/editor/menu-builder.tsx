@@ -4,7 +4,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { dietIcon } from "@/components/icons";
-import { cn, dietLabel, formatPrice, slugify } from "@/lib/format";
+import { en } from "@/i18n/dictionaries/en";
+import { formatPrice } from "@/i18n/format";
+import { cn, slugify } from "@/lib/format";
 import type { DietTag, Menu, MenuItem, MenuSection, Variant } from "@/lib/types";
 import { Field, TextArea, TextInput } from "./fields";
 
@@ -68,9 +70,9 @@ export function MenuBuilder({ menus, onChange }: { menus: Menu[]; onChange: (m: 
 
   if (!menu) {
     return (
-      <div className="rounded-[20px] bg-surface-2/60 p-8 text-center">
-        <p className="text-[14px] text-ink-2">No menu yet. Read one from photos above, or start from scratch.</p>
-        <button type="button" onClick={addMenu} className="pressable mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13.5px] font-semibold text-bg">
+      <div className="rounded-xl bg-surface-2/60 p-8 text-center">
+        <p className="text-base text-ink-2">No menu yet. Read one from photos above, or start from scratch.</p>
+        <button type="button" onClick={addMenu} className="pressable mt-4 inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-sm font-semibold text-bg">
           <Plus className="size-4" strokeWidth={2.4} /> Start a menu
         </button>
       </div>
@@ -86,7 +88,7 @@ export function MenuBuilder({ menus, onChange }: { menus: Menu[]; onChange: (m: 
             type="button"
             onClick={() => setActive(i)}
             className={cn(
-              "relative shrink-0 rounded-full px-3.5 py-1.5 text-[13.5px] font-semibold transition-colors",
+              "relative shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
               i === active ? "text-bg" : "text-ink-2 hover:text-ink",
             )}
           >
@@ -94,14 +96,17 @@ export function MenuBuilder({ menus, onChange }: { menus: Menu[]; onChange: (m: 
             <span className="relative">{m.name || "Untitled"}</span>
           </button>
         ))}
-        <button type="button" onClick={addMenu} className="pressable flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium text-ink-3 hover:text-ink">
+        <button type="button" onClick={addMenu} className="pressable flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-ink-3 hover:text-ink">
           <Plus className="size-3.5" strokeWidth={2.4} /> Menu
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+      <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
         <Field label="Menu name">
           <TextInput value={menu.name} onChange={(e) => setMenu({ name: e.target.value })} placeholder="Menu, Lunch, Drinks…" />
+        </Field>
+        <Field label="Arabic name" hint="optional">
+          <TextInput dir="rtl" lang="ar" value={menu.nameAr ?? ""} onChange={(e) => setMenu({ nameAr: e.target.value || undefined })} placeholder="الطعام، المشروبات…" />
         </Field>
         <Field label="Note" hint="optional">
           <TextInput value={menu.note ?? ""} onChange={(e) => setMenu({ note: e.target.value || undefined })} placeholder="Cash only" />
@@ -114,7 +119,7 @@ export function MenuBuilder({ menus, onChange }: { menus: Menu[]; onChange: (m: 
               onChange(menus.filter((_, i) => i !== active));
               setActive(0);
             }}
-            className="pressable h-11 rounded-xl px-3 text-[13px] font-medium text-danger hover:bg-danger/10"
+            className="pressable h-11 rounded-xl px-3 text-sm font-medium text-danger hover:bg-danger/10"
           >
             Delete menu
           </button>
@@ -144,7 +149,7 @@ export function MenuBuilder({ menus, onChange }: { menus: Menu[]; onChange: (m: 
       <button
         type="button"
         onClick={addSection}
-        className="pressable mt-4 flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl border-[1.5px] border-dashed border-line-strong text-[13.5px] font-medium text-ink-2 hover:text-ink"
+        className="pressable mt-4 flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl border-[1.5px] border-dashed border-line-strong text-sm font-medium text-ink-2 hover:text-ink"
       >
         <Plus className="size-4" strokeWidth={2.4} /> Add section
       </button>
@@ -175,7 +180,7 @@ function SectionEditor({
     setItems([...section.items, { id, name: "", price: null }]);
   };
   return (
-    <div className="rounded-[20px] bg-surface-2/40 p-3 ring-1 ring-line sm:p-4">
+    <div className="rounded-xl bg-surface-2/40 p-3 ring-1 ring-line sm:p-4">
       <div className="flex items-start gap-2">
         <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
           <TextInput
@@ -187,10 +192,19 @@ function SectionEditor({
             className="font-semibold"
           />
           <TextInput
+            dir="rtl"
+            lang="ar"
+            value={section.nameAr ?? ""}
+            onChange={(e) => onChange({ ...section, nameAr: e.target.value || undefined })}
+            placeholder="اسم القسم (اختياري)"
+            aria-label="Section name in Arabic"
+          />
+          <TextInput
             value={section.description ?? ""}
             onChange={(e) => onChange({ ...section, description: e.target.value || undefined })}
             placeholder="Section note (optional)"
             aria-label="Section note"
+            className="sm:col-span-2"
           />
         </div>
         <Reorder first={first} last={last} onMove={onMove} onDelete={onDelete} label="section" />
@@ -208,7 +222,7 @@ function SectionEditor({
           />
         ))}
       </ul>
-      <button type="button" onClick={addItem} className="pressable mt-2 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[13px] font-medium text-brand">
+      <button type="button" onClick={addItem} className="pressable mt-2 flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-brand">
         <Plus className="size-3.5" strokeWidth={2.4} /> Add dish
       </button>
     </div>
@@ -255,10 +269,19 @@ function ItemEditor({
           placeholder="Dish name"
           aria-label="Dish name"
           aria-invalid={!item.name.trim() || undefined}
-          className="h-9 min-w-0 flex-1 bg-transparent text-[14.5px] font-medium outline-none placeholder:text-ink-3 aria-[invalid=true]:placeholder:text-danger"
+          className="h-9 min-w-0 flex-1 bg-transparent text-base font-medium outline-none placeholder:text-ink-3 aria-[invalid=true]:placeholder:text-danger"
         />
-        <label className={cn("flex h-9 w-[92px] shrink-0 items-center rounded-lg bg-surface-2/70 px-2.5 text-[14px]", priceBad && "ring-2 ring-danger")}>
-          <span className="text-ink-3">$</span>
+        <input
+          dir="rtl"
+          lang="ar"
+          value={item.nameAr ?? ""}
+          onChange={(e) => onChange({ ...item, nameAr: e.target.value || undefined })}
+          placeholder="الاسم بالعربية"
+          aria-label="Dish name in Arabic"
+          className="hidden h-9 w-40 min-w-0 bg-transparent text-base outline-none placeholder:text-ink-3 sm:block"
+        />
+        <label className={cn("flex h-9 w-[92px] shrink-0 items-center rounded-lg bg-surface-2/70 px-2.5 text-base", priceBad && "ring-2 ring-danger")}>
+          <span className="text-xs text-ink-3">AED</span>
           <input
             value={priceText}
             inputMode="decimal"
@@ -287,11 +310,11 @@ function ItemEditor({
         </button>
       </div>
       {!open && (item.description || item.tags?.length || item.variants?.length || item.popular) && (
-        <p className="-mt-1 truncate px-3 pb-2.5 text-[12.5px] text-ink-3">
+        <p className="-mt-1 truncate px-3 pb-2.5 text-xs text-ink-3">
           {[
             item.popular && "Popular",
-            item.variants?.map((v) => `${v.label} ${formatPrice(v.price)}`).join(" / "),
-            item.tags?.map((t) => dietLabel[t]).join(", "),
+            item.variants?.map((v) => `${v.label} ${formatPrice(v.price, "en")}`).join(" / "),
+            item.tags?.map((t) => en.diet[t]).join(", "),
             item.description,
           ]
             .filter(Boolean)
@@ -302,13 +325,33 @@ function ItemEditor({
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="space-y-3 border-t border-line p-3">
-              <TextArea
-                value={item.description ?? ""}
-                onChange={(e) => onChange({ ...item, description: e.target.value || undefined })}
-                placeholder="Description, as printed on the menu"
-                aria-label="Description"
-                rows={2}
+              <TextInput
+                dir="rtl"
+                lang="ar"
+                value={item.nameAr ?? ""}
+                onChange={(e) => onChange({ ...item, nameAr: e.target.value || undefined })}
+                placeholder="الاسم بالعربية (اختياري)"
+                aria-label="Dish name in Arabic"
+                className="sm:hidden"
               />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <TextArea
+                  value={item.description ?? ""}
+                  onChange={(e) => onChange({ ...item, description: e.target.value || undefined })}
+                  placeholder="Description, as printed on the menu"
+                  aria-label="Description"
+                  rows={2}
+                />
+                <TextArea
+                  dir="rtl"
+                  lang="ar"
+                  value={item.descriptionAr ?? ""}
+                  onChange={(e) => onChange({ ...item, descriptionAr: e.target.value || undefined })}
+                  placeholder="الوصف بالعربية (اختياري)"
+                  aria-label="Description in Arabic"
+                  rows={2}
+                />
+              </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Sizes / options" hint="Small 14, Large 16" error={variantsBad ? "Use: Label 12, Label 15" : undefined}>
                   <TextInput
@@ -316,7 +359,7 @@ function ItemEditor({
                     invalid={variantsBad}
                     onChange={(e) => {
                       setVariantText(e.target.value);
-                      const v = textToVariants(e.target.value);
+                      const v = keepArabic(textToVariants(e.target.value), item.variants);
                       if (v) {
                         const variants = v.length > 1 ? v : undefined;
                         const price = variants ? Math.min(...variants.map((x) => x.price)) : item.price;
@@ -332,7 +375,7 @@ function ItemEditor({
                     invalid={addOnsBad}
                     onChange={(e) => {
                       setAddOnText(e.target.value);
-                      const v = textToVariants(e.target.value);
+                      const v = keepArabic(textToVariants(e.target.value), item.addOns);
                       if (v) onChange({ ...item, addOns: v.length ? v : undefined });
                     }}
                   />
@@ -354,13 +397,13 @@ function ItemEditor({
                   const Icon = dietIcon[t];
                   return (
                     <Chip key={t} on={!!item.tags?.includes(t)} onClick={() => toggleTag(t)}>
-                      <Icon className="size-3.5" strokeWidth={2.2} /> {dietLabel[t]}
+                      <Icon className="size-3.5" strokeWidth={2.2} /> {en.diet[t]}
                     </Chip>
                   );
                 })}
               </div>
               <div className="flex items-center justify-between gap-2 pt-1">
-                <span className="truncate font-mono text-[11px] text-ink-3">id: {item.id}</span>
+                <span className="truncate font-mono text-2xs text-ink-3">id: {item.id}</span>
                 <Reorder first={first} last={last} onMove={onMove} onDelete={onDelete} label="dish" />
               </div>
             </div>
@@ -378,7 +421,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       aria-pressed={on}
       onClick={onClick}
       className={cn(
-        "pressable flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-medium",
+        "pressable flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium",
         on ? "bg-ink text-bg" : "bg-surface-2 text-ink-2 hover:text-ink",
       )}
     >
@@ -416,3 +459,11 @@ function Reorder({
   );
 }
 
+/** Options are edited as English text; carry over Arabic labels for options that kept their name. */
+function keepArabic(next: Variant[] | null, prev?: Variant[]) {
+  if (!next || !prev) return next;
+  return next.map((v) => {
+    const labelAr = prev.find((p) => p.label === v.label)?.labelAr;
+    return labelAr ? { ...v, labelAr } : v;
+  });
+}

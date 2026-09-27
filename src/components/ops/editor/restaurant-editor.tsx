@@ -12,6 +12,7 @@ import { Photo } from "@/components/photo";
 import { useToast } from "@/components/providers";
 import { Switch } from "@/components/ui";
 import { accentStyle } from "@/lib/accent";
+import { en } from "@/i18n/dictionaries/en";
 import { cn, normalizePhone, slugify, sourceLabel } from "@/lib/format";
 import { dayNames, parseRanges, rangesToText } from "@/lib/hours";
 import type { RestaurantInput } from "@/lib/supabase/database";
@@ -76,6 +77,7 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
         ...cur,
         menus: r.menus,
         name,
+        name_ar: cur.name_ar || r.restaurant.nameAr || null,
         slug: slugTouched ? cur.slug : slugify(name),
         phone: cur.phone || (r.restaurant.phone ? normalizePhone(r.restaurant.phone) : ""),
         address: cur.address || r.restaurant.address,
@@ -131,9 +133,9 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
           <Link href="/ops" aria-label="Back to ops" className="pressable -ml-2 grid size-10 place-items-center rounded-full hover:bg-surface-2">
             <ArrowLeft className="size-5" strokeWidth={2.2} />
           </Link>
-          <p className="min-w-0 flex-1 truncate text-[15px] font-semibold">{isNew ? "New restaurant" : d.name || "Edit restaurant"}</p>
+          <p className="min-w-0 flex-1 truncate text-base font-semibold">{isNew ? "New restaurant" : d.name || "Edit restaurant"}</p>
           {!isNew && d.published && (
-            <Link href={`/r/${initial.slug}`} target="_blank" className="pressable flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-ink-2 hover:bg-surface-2">
+            <Link href={`/r/${initial.slug}`} target="_blank" className="pressable flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-ink-2 hover:bg-surface-2">
               View <ExternalLink className="size-3.5" />
             </Link>
           )}
@@ -155,8 +157,11 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
                   const name = e.target.value;
                   setD((cur) => ({ ...cur, name, slug: slugTouched ? cur.slug : slugify(name) }));
                 }}
-                placeholder="Taquería El Faro Azul"
+                placeholder="Qasr Al Shawarma"
               />
+            </Field>
+            <Field label="Arabic name" hint="as on the sign, optional">
+              <TextInput dir="rtl" lang="ar" value={d.name_ar ?? ""} onChange={(e) => set("name_ar", e.target.value || null)} placeholder="قصر الشاورما" />
             </Field>
             <Field label="Link" hint={isNew ? "can't change after publishing" : "fixed"} error={shown.slug}>
               <div className={cn(inputClass, "flex items-center gap-0.5 p-0 pl-3.5", !isNew && "opacity-60")}>
@@ -173,32 +178,41 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
                 />
               </div>
             </Field>
-            <Field label="Tagline" className="sm:col-span-2">
-              <TextInput value={d.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Mission-style burritos and tacos al pastor." />
+            <Field label="Tagline">
+              <TextInput value={d.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Charcoal shawarma and fresh juices, open until 3." />
+            </Field>
+            <Field label="Arabic tagline" hint="optional">
+              <TextInput dir="rtl" lang="ar" value={d.tagline_ar ?? ""} onChange={(e) => set("tagline_ar", e.target.value || null)} placeholder="شاورما على الفحم وعصائر طازجة" />
             </Field>
             <Field label="Cuisine" hint="comma separated">
-              <TextInput value={cuisineText} onChange={(e) => setCuisineText(e.target.value)} placeholder="Mexican, Taquería" />
+              <TextInput value={cuisineText} onChange={(e) => setCuisineText(e.target.value)} placeholder="Shawarma, Arabic" />
             </Field>
             <Field label="Price level">
               <Segmented
                 label="Price level"
                 value={d.price_level}
                 onChange={(v) => set("price_level", v)}
-                options={[1, 2, 3, 4].map((n) => ({ value: n, label: "$".repeat(n) }))}
+                options={[1, 2, 3, 4].map((n) => ({ value: n, label: en.price.levels[n - 1] }))}
               />
             </Field>
-            <Field label="Address" error={shown.address} className="sm:col-span-2">
-              <TextInput value={d.address} invalid={!!shown.address} onChange={(e) => set("address", e.target.value)} placeholder="3011 24th St, San Francisco, CA 94110" />
+            <Field label="Address" error={shown.address}>
+              <TextInput value={d.address} invalid={!!shown.address} onChange={(e) => set("address", e.target.value)} placeholder="2nd December St, Al Satwa, Dubai" />
             </Field>
-            <Field label="Phone" error={shown.phone} hint="the number on Google">
-              <TextInput value={d.phone} invalid={!!shown.phone} inputMode="tel" onChange={(e) => set("phone", e.target.value)} placeholder="(415) 555-0187" />
+            <Field label="Arabic address" hint="optional">
+              <TextInput dir="rtl" lang="ar" value={d.address_ar ?? ""} onChange={(e) => set("address_ar", e.target.value || null)} placeholder="شارع 2 ديسمبر، السطوة، دبي" />
             </Field>
             <Field label="Neighborhood" error={shown.neighborhood}>
-              <TextInput value={d.neighborhood} invalid={!!shown.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} />
+              <TextInput value={d.neighborhood} invalid={!!shown.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} placeholder="Al Satwa" />
+            </Field>
+            <Field label="Arabic neighborhood" hint="optional">
+              <TextInput dir="rtl" lang="ar" value={d.neighborhood_ar ?? ""} onChange={(e) => set("neighborhood_ar", e.target.value || null)} placeholder="السطوة" />
+            </Field>
+            <Field label="Phone" error={shown.phone} hint="the number on Google">
+              <TextInput value={d.phone} invalid={!!shown.phone} inputMode="tel" onChange={(e) => set("phone", e.target.value)} placeholder="04 344 9872" />
             </Field>
             <Field label="Cover photo" hint="image URL" className="sm:col-span-2">
               <div className="flex gap-3">
-                <Photo id={d.cover ?? undefined} alt="" width={96} className="size-11 shrink-0 rounded-xl" iconSize={16} />
+                <Photo id={d.cover ?? undefined} alt="" width={96} className="size-11 shrink-0 rounded-xl" />
                 <TextInput value={d.cover ?? ""} onChange={(e) => set("cover", e.target.value.trim() || null)} placeholder="https://…" />
               </div>
             </Field>
@@ -221,7 +235,7 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
                 <label className="pressable relative size-8 overflow-hidden rounded-full ring-1 ring-line-strong" aria-label="Custom color">
                   <input type="color" value={d.accent} onChange={(e) => set("accent", e.target.value)} className="absolute -inset-2 size-12 cursor-pointer" />
                 </label>
-                <span className="ml-1 rounded-full bg-accent px-3 py-1.5 text-[12.5px] font-semibold text-on-accent">Preview</span>
+                <span className="ml-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-on-accent">Preview</span>
               </div>
             </Field>
           </div>
@@ -233,12 +247,12 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
               const bad = showErrors && parseRanges(hoursText[day]) === null;
               return (
                 <label key={day} className="grid grid-cols-[88px_1fr] items-center gap-3">
-                  <span className="text-[13.5px] font-medium text-ink-2">{dayNames[day]}</span>
+                  <span className="text-sm font-medium text-ink-2">{dayNames[day]}</span>
                   <TextInput value={hoursText[day]} invalid={bad} onChange={(e) => setHoursText((h) => ({ ...h, [day]: e.target.value }))} />
                 </label>
               );
             })}
-            {shown.hours && <p className="text-[12.5px] text-danger">{shown.hours}</p>}
+            {shown.hours && <p className="text-xs text-danger">{shown.hours}</p>}
           </div>
         </Section>
 
@@ -249,13 +263,13 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
             <button
               type="button"
               onClick={() => set("links", [...d.links, { kind: "order", label: "Order pickup", url: "" }])}
-              className="pressable flex h-9 shrink-0 items-center gap-1 rounded-full bg-surface-2 px-3 text-[13px] font-medium"
+              className="pressable flex h-9 shrink-0 items-center gap-1 rounded-full bg-surface-2 px-3 text-sm font-medium"
             >
               <Plus className="size-3.5" strokeWidth={2.4} /> Link
             </button>
           }
         >
-          {d.links.length === 0 && <p className="text-[13.5px] text-ink-3">No links yet. Call and Directions are always shown.</p>}
+          {d.links.length === 0 && <p className="text-sm text-ink-3">No links yet. Call and Directions are always shown.</p>}
           <ul className="space-y-2">
             {d.links.map((l, i) => {
               const Icon = linkIcon[l.kind];
@@ -287,7 +301,7 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
               );
             })}
           </ul>
-          {shown.links && <p className="mt-2 text-[12.5px] text-danger">{shown.links}</p>}
+          {shown.links && <p className="mt-2 text-xs text-danger">{shown.links}</p>}
         </Section>
 
         <Section
@@ -295,7 +309,7 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
           description={`${itemCount} dish${itemCount === 1 ? "" : "es"}. Changing a dish's name keeps its id, so owner edits and share links still work.`}
         >
           <MenuBuilder menus={d.menus} onChange={(menus: Menu[]) => set("menus", menus)} />
-          {shown.menu && <p className="mt-3 text-[12.5px] text-danger">{shown.menu}</p>}
+          {shown.menu && <p className="mt-3 text-xs text-danger">{shown.menu}</p>}
         </Section>
 
         <Section title="Source & status">
@@ -336,7 +350,7 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className={cn("min-w-0 flex-1 truncate text-[13px]", saveError || Object.keys(shown).length ? "text-danger" : "text-ink-3")}
+              className={cn("min-w-0 flex-1 truncate text-sm", saveError || Object.keys(shown).length ? "text-danger" : "text-ink-3")}
             >
               {saveError ?? (Object.keys(shown).length ? `${Object.keys(shown).length} field(s) need attention` : d.published ? "Live after saving" : "Hidden until you publish")}
             </motion.p>
@@ -346,7 +360,7 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
               type="button"
               disabled={saving}
               onClick={() => save(false)}
-              className="pressable h-11 rounded-full bg-surface-2 px-4 text-[14px] font-semibold disabled:opacity-50"
+              className="pressable h-11 rounded-full bg-surface-2 px-4 text-base font-semibold disabled:opacity-50"
             >
               Save draft
             </button>
@@ -355,7 +369,7 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
             type="button"
             disabled={saving}
             onClick={() => save(true)}
-            className="pressable flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-[14px] font-semibold text-bg disabled:opacity-60"
+            className="pressable flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-base font-semibold text-bg disabled:opacity-60"
           >
             {saving && <Loader2 className="size-4 animate-spin" />}
             {d.published ? "Save" : "Publish"}
@@ -388,8 +402,8 @@ function Toggle({ label, hint, checked, onChange }: { label: string; hint: strin
   return (
     <div className="flex items-start gap-3 rounded-2xl bg-surface-2/50 p-3.5">
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium">{label}</p>
-        <p className="mt-0.5 text-[12.5px] leading-snug text-ink-3">{hint}</p>
+        <p className="text-base font-medium">{label}</p>
+        <p className="mt-0.5 text-xs leading-snug text-ink-3">{hint}</p>
       </div>
       <Switch checked={checked} onChange={onChange} label={label} />
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import type { Dictionary } from "@/i18n/dictionaries";
 import { getBrowserClient } from "./supabase/client";
 
 /**
@@ -32,16 +33,30 @@ export type ClaimInput = {
   googleOptIn: boolean;
 };
 
-/** Turn Supabase/network errors into messages an owner can act on. */
-function friendlyError(error: unknown): Error {
+export type ActionErrorCode = "network" | "alreadyClaimed" | "claimPending" | "notAuthorized" | "itemNotFound";
+
+/** Owner actions reject with one of these codes; the UI shows it in the viewer's language. */
+export class ActionError extends Error {
+  constructor(public code: ActionErrorCode | "generic") {
+    super(code);
+  }
+}
+
+/** Turn Supabase/network errors into codes an owner can act on. */
+function friendlyError(error: unknown): ActionError {
   const message = String((error as { message?: string })?.message ?? error);
-  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message))
-    return new Error("Couldn't reach mealtree. Check your connection and try again.");
-  if (message === "already_claimed") return new Error("This restaurant was already claimed.");
-  if (message === "claim_pending") return new Error("Someone already asked to claim this restaurant. We're verifying it now.");
-  if (message === "not_authorized") return new Error("Only the verified owner can edit this menu.");
-  if (message === "item_not_found") return new Error("That dish isn't on this menu anymore.");
-  return new Error("Something went wrong. Please try again.");
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message)) return new ActionError("network");
+  if (message === "already_claimed") return new ActionError("alreadyClaimed");
+  if (message === "claim_pending") return new ActionError("claimPending");
+  if (message === "not_authorized") return new ActionError("notAuthorized");
+  if (message === "item_not_found") return new ActionError("itemNotFound");
+  return new ActionError("generic");
+}
+
+/** Message for a rejected owner action, from the current dictionary. */
+export function actionErrorMessage(e: unknown, t: Dictionary) {
+  const code = e instanceof ActionError ? e.code : "generic";
+  return code === "generic" ? t.common.genericError : t.errors[code];
 }
 
 const EMPTY: Overrides = { ready: false, claimed: false, isOwner: false, pendingReview: false, soldOut: {}, price: {} };
@@ -163,7 +178,7 @@ async function mutate(slug: string, patch: (o: Overrides) => Overrides, remote?:
   const token = storageGet(tokenKey(slug));
   if (!token) {
     emit(slug, before);
-    throw new Error("Only the verified owner can edit this menu.");
+    throw new ActionError("notAuthorized");
   }
   const { error } = await remote(token);
   if (error) {

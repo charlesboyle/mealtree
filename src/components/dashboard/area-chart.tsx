@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useId, useMemo, useRef, useState } from "react";
+import { useI18n } from "@/i18n/client";
 
-const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 
 function niceMax(v: number) {
   if (!(v > 0)) return 10;
@@ -27,6 +27,7 @@ export function AreaChart({
   height?: number;
   valueLabel: string;
 }) {
+  const i18n = useI18n();
   const id = useId();
   const clipId = `reveal-${id.replace(/[^\w-]/g, "")}`;
   const box = useRef<HTMLDivElement>(null);
@@ -69,7 +70,8 @@ export function AreaChart({
   const hx = hover === null ? 0 : (x(hover) / W) * 100;
 
   return (
-    <div className="relative">
+    // Time runs left to right in both languages, as in most Arabic dashboards.
+    <div className="relative" dir="ltr">
       <div
         ref={box}
         className="relative touch-pan-y select-none"
@@ -125,7 +127,7 @@ export function AreaChart({
             style={{ left: `${hx}%`, top: y(data[hover]) }}
           />
         )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between text-[11px] text-ink-3">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between text-2xs text-ink-3">
           <span>{labels[0]}</span>
           <span>{labels[Math.floor(labels.length / 2)]}</span>
           <span>{labels.at(-1)}</span>
@@ -133,10 +135,10 @@ export function AreaChart({
         {ticks.slice(1).map((t) => (
           <span
             key={t}
-            className="tabular pointer-events-none absolute left-0 text-[11px] leading-none text-ink-3"
+            className="tabular pointer-events-none absolute left-0 text-2xs leading-none text-ink-3"
             style={{ top: y(t) + 4 }}
           >
-            {compact.format(t)}
+            {i18n.compact(t)}
           </span>
         ))}
         <AnimatePresence>
@@ -146,10 +148,10 @@ export function AreaChart({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.12 }}
-              className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xl bg-ink px-2.5 py-1.5 text-[12px] text-bg shadow-md"
+              className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-xs text-bg shadow-md"
               style={{ left: `clamp(48px, ${hx}%, calc(100% - 48px))` }}
             >
-              <span className="tabular font-semibold">{data[hover].toLocaleString()}</span>{" "}
+              <span className="tabular font-semibold">{i18n.number(data[hover])}</span>{" "}
               <span className="opacity-70">
                 {valueLabel} · {labels[hover]}
               </span>

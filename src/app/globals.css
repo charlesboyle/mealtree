@@ -1,33 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f7f5f1;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f0ede7;
-  --surface-3: #e7e3db;
-  --ink: #17140f;
-  --ink-2: #5e574d;
-  --ink-3: #8f877b;
-  --line: rgb(23 20 15 / 0.08);
-  --line-strong: rgb(23 20 15 / 0.15);
-  --brand: #1e6b47;
-  --brand-soft: #e3efe8;
+  --surface-2: #f5f5f3;
+  --surface-3: #e9e8e5;
+  --ink: #1a1917;
+  --ink-2: #57534e;
+  --ink-3: #8c8781;
+  --line: rgb(26 25 23 / 0.09);
+  --line-strong: rgb(26 25 23 / 0.16);
+  --brand: #13734b;
+  --brand-soft: #e6f2ec;
   --on-brand: #ffffff;
-  --positive: #1f8a55;
-  --warning: #b86e00;
-  --danger: #c2412d;
-  --scrim: rgb(15 13 10 / 0.42);
-  --shadow-sm: 0 1px 2px rgb(23 20 15 / 0.06), 0 1px 1px rgb(23 20 15 / 0.03);
-  --shadow-md: 0 8px 24px -8px rgb(23 20 15 / 0.16), 0 2px 6px -2px rgb(23 20 15 / 0.06);
-  --shadow-lg: 0 24px 64px -16px rgb(23 20 15 / 0.28), 0 8px 20px -8px rgb(23 20 15 / 0.1);
+  --positive: #16794c;
+  --warning: #a35c00;
+  --danger: #c0392b;
+  --scrim: rgb(12 12 11 / 0.44);
+  --shadow-sm: 0 1px 2px rgb(26 25 23 / 0.06);
+  --shadow-md: 0 6px 20px -8px rgb(26 25 23 / 0.18), 0 1px 3px rgb(26 25 23 / 0.06);
+  --shadow-lg: 0 24px 56px -16px rgb(26 25 23 / 0.3), 0 6px 16px -8px rgb(26 25 23 / 0.1);
 
   /* Per-restaurant accent, overridden inline on menu pages. */
-  --accent-light: #1e6b47;
-  --accent-dark: #4cc38a;
+  --accent-light: #13734b;
+  --accent-dark: #5bd197;
   --on-accent-light: #ffffff;
-  --on-accent-dark: #0f0e0c;
+  --on-accent-dark: #0c0c0b;
+
+  /* Latin first; Arabic glyphs fall through to Plex Sans Arabic. */
+  --font-stack: var(--font-plex), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
 
   color-scheme: light;
+}
+
+/* In Arabic, digits and punctuation come from the Arabic cut so mixed runs share one rhythm. */
+:root:lang(ar) {
+  --font-stack: var(--font-plex-arabic), var(--font-plex), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Re-declared on [data-accent] so an inline brand color re-resolves there. */
@@ -35,28 +43,28 @@
 [data-accent] {
   --accent: var(--accent-light);
   --on-accent: var(--on-accent-light);
-  --accent-soft: color-mix(in oklab, var(--accent) 9%, var(--surface));
-  --accent-line: color-mix(in oklab, var(--accent) 22%, transparent);
+  --accent-soft: color-mix(in oklab, var(--accent) 8%, var(--surface));
+  --accent-line: color-mix(in oklab, var(--accent) 24%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0e0d0b;
-    --surface: #171614;
-    --surface-2: #201e1b;
-    --surface-3: #2a2824;
-    --ink: #f4f1eb;
-    --ink-2: #b4ada2;
-    --ink-3: #7f786d;
+    --bg: #0e0e0d;
+    --surface: #171716;
+    --surface-2: #1f1f1d;
+    --surface-3: #2a2927;
+    --ink: #f4f3f1;
+    --ink-2: #aba69f;
+    --ink-3: #7d7871;
     --line: rgb(255 255 255 / 0.08);
-    --line-strong: rgb(255 255 255 / 0.14);
-    --brand: #4cc38a;
-    --brand-soft: #16271e;
-    --on-brand: #0b120e;
-    --positive: #4cc38a;
+    --line-strong: rgb(255 255 255 / 0.15);
+    --brand: #5bd197;
+    --brand-soft: #14261d;
+    --on-brand: #0c0c0b;
+    --positive: #5bd197;
     --warning: #f0a53a;
     --danger: #f07560;
-    --scrim: rgb(0 0 0 / 0.6);
+    --scrim: rgb(0 0 0 / 0.62);
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
     --shadow-lg: 0 24px 64px -16px rgb(0 0 0 / 0.75);
@@ -66,8 +74,46 @@
   [data-accent] {
     --accent: var(--accent-dark);
     --on-accent: var(--on-accent-dark);
-    --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));
+    --accent-soft: color-mix(in oklab, var(--accent) 13%, var(--surface));
   }
+}
+
+/* Type scale. Every text size in the app comes from here. */
+@theme {
+  --text-2xs: 11px;
+  --text-2xs--line-height: 14px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 15px;
+  --text-base--line-height: 22px;
+  --text-md: 16px;
+  --text-md--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 26px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 30px;
+  --text-3xl: 30px;
+  --text-3xl--line-height: 36px;
+  --text-4xl: 38px;
+  --text-4xl--line-height: 44px;
+}
+
+/* Arabic needs taller lines for its ascenders, descenders and dots. */
+:root:lang(ar) {
+  --text-2xs--line-height: 17px;
+  --text-xs--line-height: 19px;
+  --text-sm--line-height: 21px;
+  --text-base--line-height: 25px;
+  --text-md--line-height: 27px;
+  --text-lg--line-height: 28px;
+  --text-xl--line-height: 31px;
+  --text-2xl--line-height: 36px;
+  --text-3xl--line-height: 44px;
+  --text-4xl--line-height: 54px;
 }
 
 @theme inline {
@@ -94,21 +140,18 @@
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-display-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-stack);
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --animate-rise: rise 520ms var(--ease-out-expo) both;
-  --animate-fade: fade 360ms ease-out both;
+  --animate-rise: rise 420ms var(--ease-out-expo) both;
+  --animate-fade: fade 280ms ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
-  --animate-pulse-dot: pulse-dot 2s ease-out infinite;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -137,29 +180,26 @@
   }
 }
 
-@keyframes pulse-dot {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 45%, transparent);
-  }
-  70%,
-  100% {
-    box-shadow: 0 0 0 6px transparent;
-  }
-}
-
 /* Base styles live in a layer so utilities (e.g. outline-none) can override them. */
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-    text-rendering: optimizeLegibility;
+    /* Uses unhinted glyph advances; with hinting, Chromium on Linux spaces Plex unevenly ("Direct ions"). */
+    text-rendering: geometricPrecision;
   }
 
   body {
     background: var(--bg);
     color: var(--ink);
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
+  /* Letter-spacing breaks Arabic joins; tracking utilities are for Latin only. */
+  :lang(ar) {
+    letter-spacing: normal !important;
   }
 
   ::selection {
@@ -169,6 +209,10 @@
   :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+
+  button {
+    cursor: pointer;
   }
 }
 
@@ -183,6 +227,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Keeps phone numbers, codes and URLs in reading order inside Arabic text. */
+@utility ltr-isolate {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 @utility pressable {
   transition:
     transform 160ms var(--ease-out-expo),
@@ -192,17 +242,12 @@
     box-shadow 200ms ease,
     opacity 160ms ease;
   &:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
 }
 
 @utility skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--surface-2) 0%,
-    var(--surface-3) 50%,
-    var(--surface-2) 100%
-  );
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
   background-size: 200% 100%;
   animation: var(--animate-shimmer);
 }

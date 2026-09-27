@@ -32,6 +32,7 @@ export function Sheet({
   className,
   style,
   closeTone = "image",
+  closeLabel = "Close",
 }: {
   open: boolean;
   onClose: () => void;
@@ -43,6 +44,7 @@ export function Sheet({
   /** Portaled to <body>, so page-level CSS variables (accent) are passed here. */
   style?: React.CSSProperties;
   closeTone?: "image" | "surface";
+  closeLabel?: string;
 }) {
   const hydrated = useHydrated();
   const desktop = useMediaQuery("(min-width: 640px)");
@@ -71,7 +73,7 @@ export function Sheet({
       {open && (
         <div className="fixed inset-0 z-50" style={style} data-accent={style ? "" : undefined}>
           <motion.div
-            className="absolute inset-0 bg-scrim backdrop-blur-[3px]"
+            className="absolute inset-0 bg-scrim"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -86,7 +88,7 @@ export function Sheet({
               aria-label={label}
               tabIndex={-1}
               className={cn(
-                "pointer-events-auto relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] bg-surface shadow-lg outline-none sm:max-h-[min(86dvh,820px)] sm:max-w-[520px] sm:rounded-[28px]",
+                "pointer-events-auto relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-lg outline-none sm:max-h-[min(86dvh,820px)] sm:max-w-[520px] sm:rounded-2xl",
                 className,
               )}
               initial={desktop ? { opacity: 0, scale: 0.96, y: 12 } : { y: "100%" }}
@@ -111,17 +113,17 @@ export function Sheet({
                 onPointerDown={(e) => !desktop && controls.start(e)}
               >
                 <div className="absolute inset-x-0 top-0 z-10 flex justify-center pt-2 sm:hidden">
-                  <span className="h-1 w-9 rounded-full bg-white/70 mix-blend-difference" />
+                  <span className="h-1 w-9 rounded-full bg-ink-3/50" />
                 </div>
                 {header}
               </div>
               <button
                 onClick={onClose}
-                aria-label="Close"
+                aria-label={closeLabel}
                 className={cn(
-                  "pressable absolute right-3 top-3 z-20 grid size-9 place-items-center rounded-full backdrop-blur-md",
+                  "pressable absolute end-3 top-3 z-20 grid size-9 place-items-center rounded-full",
                   closeTone === "image"
-                    ? "bg-black/35 text-white hover:bg-black/50"
+                    ? "bg-black/45 text-white hover:bg-black/60"
                     : "bg-surface-2 text-ink-2 hover:bg-surface-3 hover:text-ink",
                 )}
               >

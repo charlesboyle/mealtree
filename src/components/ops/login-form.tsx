@@ -12,10 +12,10 @@ export function LoginForm({ next }: { next: string }) {
     <main className="grid min-h-dvh place-items-center px-5">
       <form action={action} className="w-full max-w-sm animate-rise">
         <LogoMark className="size-10" />
-        <h1 className="mt-6 font-display text-[32px] leading-tight tracking-[-0.02em] [font-variation-settings:'opsz'_48]">
+        <h1 className="mt-6 text-3xl leading-tight">
           mealtree ops
         </h1>
-        <p className="mt-2 text-[14.5px] text-ink-2">Enter the admin key to manage restaurants, claims, and takedowns.</p>
+        <p className="mt-2 text-base text-ink-2">Enter the admin key to manage restaurants, claims, and takedowns.</p>
         <input type="hidden" name="next" value={next} />
         <motion.label
           animate={state.error ? { x: [0, -8, 8, -5, 5, 0] } : { x: 0 }}
@@ -30,7 +30,7 @@ export function LoginForm({ next }: { next: string }) {
             autoComplete="current-password"
             placeholder="Admin key"
             aria-label="Admin key"
-            className="h-full min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-3"
+            className="h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-ink-3"
           />
         </motion.label>
         <AnimatePresence>
@@ -40,7 +40,7 @@ export function LoginForm({ next }: { next: string }) {
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="mt-3 text-[13.5px] text-danger"
+              className="mt-3 text-sm text-danger"
             >
               {state.error}
             </motion.p>
@@ -48,7 +48,7 @@ export function LoginForm({ next }: { next: string }) {
         </AnimatePresence>
         <button
           disabled={pending}
-          className="pressable mt-5 flex h-12 w-full items-center justify-center rounded-full bg-ink text-[15px] font-semibold text-bg disabled:opacity-60"
+          className="pressable mt-5 flex h-12 w-full items-center justify-center rounded-full bg-ink text-base font-semibold text-bg disabled:opacity-60"
         >
           {pending ? <Loader2 className="size-5 animate-spin" /> : "Sign in"}
         </button>

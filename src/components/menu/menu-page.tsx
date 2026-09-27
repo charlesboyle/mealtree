@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, Search, SearchX, Share, X } from "lucide-react";
+import { ArrowLeft, Search, Share, X } from "lucide-react";
 import Link from "next/link";
 import {
   useCallback,
@@ -12,15 +12,17 @@ import {
   useRef,
   useState,
 } from "react";
+import { LanguageToggle } from "@/components/language-toggle";
 import { LogoMark } from "@/components/logo";
 import { useToast } from "@/components/providers";
+import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
 import { cn, itemMinPrice } from "@/lib/format";
-import { parseQuery, scoreItem } from "@/lib/search";
+import { parseQuery, scoreItem, sectionText } from "@/lib/search";
 import { useOverrides } from "@/lib/store";
 import type { MenuItem, MenuSection, Restaurant } from "@/lib/types";
 import { type Filter, FilterChips } from "./filter-chips";
-import { InfoCard } from "./info-card";
+import { InfoSection } from "./info-card";
 import { ItemRow } from "./item-row";
 import { ItemSheet } from "./item-sheet";
 import { RestaurantHeader } from "./restaurant-header";
@@ -31,9 +33,12 @@ const TABBAR = 52;
 type ViewSection = MenuSection & { key: string; label: string };
 
 export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
+  const i18n = useI18n();
+  const { t, pick } = i18n;
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
   const overrides = useOverrides(r.slug);
   const claimed = r.claimed || overrides.claimed;
+  const name = pick(r.name, r.nameAr);
 
   const [menuId, setMenuId] = useState(r.menus[0].id);
   const [query, setQuery] = useState("");
@@ -61,9 +66,10 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     return menus.flatMap((m) =>
       m.sections
         .map((s) => {
+          const text = sectionText(s);
           const items = s.items
             .map(applyOverrides)
-            .map((item) => ({ item, score: scoreItem(item, s.name, parsed.tokens) }))
+            .map((item) => ({ item, score: scoreItem(item, text, parsed.tokens) }))
             .filter(({ item, score }) => {
               if (score <= 0) return false;
               const min = itemMinPrice(item);
@@ -72,11 +78,12 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
             })
             .sort((a, b) => (hasQuery ? b.score - a.score : 0))
             .map(({ item }) => item);
-          return { ...s, items, key: `${m.id}:${s.id}`, label: multi ? `${m.name} · ${s.name}` : s.name };
+          const label = pick(s.name, s.nameAr);
+          return { ...s, items, key: `${m.id}:${s.id}`, label: multi ? `${pick(m.name, m.nameAr)} · ${label}` : label };
         })
         .filter((s) => s.items.length > 0),
     );
-  }, [r.menus, menuId, hasQuery, parsed, filters, applyOverrides]);
+  }, [r.menus, menuId, hasQuery, parsed, filters, applyOverrides, pick]);
 
   const available = useMemo(() => {
     const set = new Set<Filter>();
@@ -84,15 +91,17 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
       for (const s of m.sections)
         for (const i of s.items) {
           if (i.popular) set.add("popular");
-          i.tags?.forEach((t) => set.add(t));
+          i.tags?.forEach((tag) => set.add(tag));
         }
     return set;
   }, [r.menus]);
 
   const resultCount = sections.reduce((n, s) => n + s.items.length, 0);
   const narrowed = hasQuery || filters.length > 0;
+  const currentMenu = r.menus.find((m) => m.id === menuId);
+  const note = currentMenu?.note ? pick(currentMenu.note, currentMenu.noteAr) : undefined;
 
-  // ——— Top bar reveal once the restaurant name scrolls under it ———
+  // ——— Top bar fills in once the restaurant name scrolls under it ———
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [compact, setCompact] = useState(false);
   useEffect(() => {
@@ -166,10 +175,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
   }, [deferredQuery, filters, menuId]);
 
   // ——— Deep links: /r/slug#dish-<id> ———
-  const allItems = useMemo(
-    () => r.menus.flatMap((m) => m.sections.flatMap((s) => s.items)),
-    [r.menus],
-  );
+  const allItems = useMemo(() => r.menus.flatMap((m) => m.sections.flatMap((s) => s.items)), [r.menus]);
   useEffect(() => {
     const fromHash = () => {
       const id = location.hash.match(/^#dish-(.+)$/)?.[1];
@@ -202,142 +208,117 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
 
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg pb-10">
-      <TopBar restaurant={r} compact={compact} />
+      <TopBar restaurant={r} name={name} compact={compact} />
 
       <RestaurantHeader restaurant={r} claimed={claimed} titleRef={titleRef} />
 
       {/* ——— Sticky menu navigation ——— */}
-      <div ref={menuStart} className="h-6" />
+      <div ref={menuStart} className="h-4" />
       <div
         className={cn(
-          "sticky top-14 z-30 border-b transition-[background-color,border-color,box-shadow] duration-300",
-          compact
-            ? "border-line bg-bg/95 shadow-[0_8px_20px_-16px_rgb(0_0_0/0.25)] backdrop-blur-xl backdrop-saturate-150"
-            : "border-transparent bg-bg",
+          "sticky top-14 z-30 border-b bg-bg transition-[border-color,box-shadow] duration-300",
+          compact ? "border-line" : "border-transparent",
         )}
       >
-        <div className="mx-auto max-w-2xl px-5">
+        <div className="mx-auto max-w-2xl px-4 sm:px-5">
           <AnimatePresence mode="popLayout" initial={false}>
             {searching ? (
               <motion.div
                 key="search"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6, transition: { duration: 0.12 } }}
-                className="flex h-[52px] items-center gap-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                className="flex h-13 items-center gap-2"
               >
-                <label className="flex h-10 flex-1 items-center gap-2 rounded-full bg-surface px-3.5 ring-1 ring-line-strong focus-within:ring-2 focus-within:ring-accent">
+                <label className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-surface-2 px-3 focus-within:ring-2 focus-within:ring-accent">
                   <Search className="size-4 shrink-0 text-ink-3" strokeWidth={2.2} />
                   <input
                     autoFocus
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Escape" && closeSearch()}
-                    placeholder={`Search ${r.name}`}
+                    placeholder={t.menu.searchPlaceholder(name)}
                     enterKeyHint="search"
-                    className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-3 [&::-webkit-search-cancel-button]:hidden"
+                    className="h-full min-w-0 flex-1 bg-transparent text-md text-ink outline-none placeholder:text-ink-3 [&::-webkit-search-cancel-button]:hidden"
                     type="search"
-                    aria-label="Search this menu"
+                    aria-label={t.menu.searchLabel}
                   />
-                  <AnimatePresence>
-                    {query && (
-                      <motion.button
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.5, opacity: 0 }}
-                        onClick={() => setQuery("")}
-                        aria-label="Clear search"
-                        className="grid size-5 place-items-center rounded-full bg-ink-3 text-surface"
-                      >
-                        <X className="size-3" strokeWidth={3} />
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
+                  {query && (
+                    <button
+                      onClick={() => setQuery("")}
+                      aria-label={t.common.clearSearch}
+                      className="grid size-5 place-items-center rounded-full bg-ink-3 text-surface"
+                    >
+                      <X className="size-3" strokeWidth={3} />
+                    </button>
+                  )}
                 </label>
-                <button
-                  onClick={closeSearch}
-                  className="pressable h-10 px-2 text-[14.5px] font-medium text-accent"
-                >
-                  Cancel
+                <button onClick={closeSearch} className="pressable h-10 px-2 text-base font-medium text-ink">
+                  {t.common.cancel}
                 </button>
               </motion.div>
             ) : (
               <motion.div
                 key="tabs"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 6, transition: { duration: 0.12 } }}
-                className="flex h-[52px] items-center gap-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                className="flex h-13 items-stretch"
               >
                 <button
                   onClick={() => setSearching(true)}
-                  aria-label="Search this menu"
-                  className="pressable relative -ml-1 grid size-10 shrink-0 place-items-center rounded-full text-ink hover:bg-surface-2"
+                  aria-label={t.menu.searchLabel}
+                  className="pressable relative -ms-2 grid w-10 shrink-0 place-items-center text-ink"
                 >
-                  <Search className="size-[19px]" strokeWidth={2.2} />
+                  <Search className="size-5" strokeWidth={2} />
                   {filters.length > 0 && (
-                    <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent ring-2 ring-bg" />
+                    <span className="absolute end-2 top-3 size-2 rounded-full bg-accent ring-2 ring-bg" />
                   )}
                 </button>
-                <SectionTabs sections={sections} active={active} onSelect={jumpTo} />
+                <SectionTabs sections={sections} active={active} onSelect={jumpTo} label={t.menu.sections} />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      <main className="mx-auto max-w-2xl px-5">
-        <div className="space-y-3 pb-1 pt-4">
+      <main className="mx-auto max-w-2xl px-4 sm:px-5">
+        <div className="space-y-3 pt-4">
           {r.menus.length > 1 && !hasQuery && (
-            <MenuSwitcher menus={r.menus} value={menuId} onChange={setMenuId} />
+            <MenuSwitcher menus={r.menus} value={menuId} onChange={setMenuId} label={t.menu.menuSwitch} />
           )}
           <FilterChips available={available} active={filters} onToggle={toggleFilter} />
-          {r.menus.find((m) => m.id === menuId)?.note && !hasQuery && (
-            <p className="text-[13px] leading-relaxed text-ink-3">{r.menus.find((m) => m.id === menuId)?.note}</p>
-          )}
+          {note && !hasQuery && <p className="text-sm text-ink-3">{note}</p>}
         </div>
 
-        <AnimatePresence initial={false}>
-          {narrowed && (
-            <motion.p
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden text-[13px] text-ink-3"
-            >
-              <span className="block pt-2">
-                <span className="tabular font-medium text-ink-2">{resultCount}</span>{" "}
-                {resultCount === 1 ? "dish" : "dishes"}
-                {parsed.maxPrice !== undefined && ` under $${parsed.maxPrice}`}
-                {filters.length > 0 && (
-                  <button onClick={() => setFilters([])} className="ml-2 font-medium text-accent">
-                    Clear filters
-                  </button>
-                )}
-              </span>
-            </motion.p>
-          )}
-        </AnimatePresence>
+        {narrowed && (
+          <p className="animate-fade pt-3 text-sm text-ink-3">
+            <span className="tabular font-medium text-ink-2">{t.menu.results(resultCount)}</span>
+            {parsed.maxPrice !== undefined && ` · ${t.price.under(i18n.price(parsed.maxPrice, r.currency))}`}
+            {filters.length > 0 && (
+              <button onClick={() => setFilters([])} className="ms-3 font-medium text-accent">
+                {t.menu.clearFilters}
+              </button>
+            )}
+          </p>
+        )}
 
         {sections.length === 0 ? (
-          <EmptyState query={deferredQuery} onReset={() => { setQuery(""); setFilters([]); }} />
+          <EmptyState
+            query={deferredQuery}
+            onReset={() => {
+              setQuery("");
+              setFilters([]);
+            }}
+          />
         ) : (
-          sections.map((s, si) => (
-            <section
-              key={s.key}
-              id={`sec-${s.key}`}
-              aria-labelledby={`h-${s.key}`}
-              className="animate-rise pt-7"
-              style={{ animationDelay: `${Math.min(si, 4) * 50 + 200}ms` }}
-            >
-              <h2
-                id={`h-${s.key}`}
-                className="font-display text-[26px] leading-tight tracking-[-0.01em] text-ink [font-variation-settings:'opsz'_36]"
-              >
+          sections.map((s) => (
+            <section key={s.key} id={`sec-${s.key}`} aria-labelledby={`h-${s.key}`} className="pt-8">
+              <h2 id={`h-${s.key}`} className="text-xl font-semibold tracking-tight text-ink">
                 {s.label}
               </h2>
               {s.description && !narrowed && (
-                <p className="mt-1 text-[13px] leading-relaxed text-ink-3">{s.description}</p>
+                <p className="mt-0.5 text-sm text-ink-3">{pick(s.description, s.descriptionAr)}</p>
               )}
               <ul className="mt-1 divide-y divide-line">
                 <AnimatePresence initial={false}>
@@ -349,7 +330,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0, transition: { duration: 0.1 } }}
                     >
-                      <ItemRow item={item} tokens={parsed.tokens} onOpen={openDish} />
+                      <ItemRow item={item} tokens={parsed.tokens} onOpen={openDish} currency={r.currency} />
                     </motion.li>
                   ))}
                 </AnimatePresence>
@@ -358,57 +339,67 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
           ))
         )}
 
-        <InfoCard restaurant={r} />
+        <InfoSection restaurant={r} />
         <Footer restaurant={r} claimed={claimed} />
       </main>
 
-      <ItemSheet item={openItem} onClose={closeDish} claimed={claimed} accentStyle={style} />
+      <ItemSheet item={openItem} onClose={closeDish} claimed={claimed} accentStyle={style} currency={r.currency} />
     </div>
   );
 }
 
-function TopBar({ restaurant: r, compact }: { restaurant: Restaurant; compact: boolean }) {
+function TopBar({ restaurant: r, name, compact }: { restaurant: Restaurant; name: string; compact: boolean }) {
+  const { t, href } = useI18n();
   const toast = useToast();
   const share = async () => {
     const url = location.origin + location.pathname;
     try {
-      if (navigator.share) await navigator.share({ title: `${r.name} menu`, url });
+      if (navigator.share) await navigator.share({ title: t.menu.shareTitle(name), url });
       else {
         await navigator.clipboard.writeText(url);
-        toast("Menu link copied");
+        toast(t.menu.copied);
       }
     } catch {}
   };
-  const glass = compact
-    ? "text-ink hover:bg-surface-2"
-    : "bg-black/30 text-white backdrop-blur-md hover:bg-black/45";
+  // Over the cover photo (phones only; from sm up the cover sits below the bar)
+  // the controls sit on dark discs; on the page they're plain.
+  const solid = compact || !r.cover;
+  const glass = "max-sm:bg-black/40 max-sm:text-white max-sm:hover:bg-black/55";
+  const control = cn("text-ink hover:bg-surface-2", !solid && glass);
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow] duration-300",
-        compact ? "bg-bg/95 backdrop-blur-xl backdrop-saturate-150" : "bg-transparent",
+        "fixed inset-x-0 top-0 z-40 transition-colors duration-200",
+        solid ? "bg-bg" : "bg-bg max-sm:bg-transparent",
+        compact && "border-b border-line",
       )}
     >
-      <div className="mx-auto flex h-14 max-w-2xl items-center gap-2 px-3 sm:px-5">
-        <Link href="/" aria-label="All restaurants" className={cn("pressable grid size-10 place-items-center rounded-full", glass)}>
-          <ArrowLeft className="size-5" strokeWidth={2.2} />
+      <div className="mx-auto flex h-14 max-w-2xl items-center gap-1 px-2 sm:px-3">
+        <Link
+          href={href("/")}
+          aria-label={t.menu.allRestaurants}
+          className={cn("pressable grid size-10 place-items-center rounded-full", control)}
+        >
+          <ArrowLeft className="size-5 rtl:-scale-x-100" strokeWidth={2} />
         </Link>
-        <div className="relative min-w-0 flex-1 overflow-hidden">
-          <AnimatePresence>
-            {compact && (
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="truncate text-center text-[15px] font-semibold tracking-tight"
-              >
-                {r.name}
-              </motion.p>
+        <div className="min-w-0 flex-1 overflow-hidden px-1">
+          <p
+            aria-hidden={!compact}
+            className={cn(
+              "truncate text-center text-base font-semibold transition-[opacity,transform] duration-200",
+              compact ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
             )}
-          </AnimatePresence>
+          >
+            {name}
+          </p>
         </div>
-        <button onClick={share} aria-label="Share menu" className={cn("pressable grid size-10 place-items-center rounded-full", glass)}>
-          <Share className="size-[18px]" strokeWidth={2.2} />
+        <LanguageToggle className={cn("rounded-full", !solid && `${glass} max-sm:hover:text-white`)} />
+        <button
+          onClick={share}
+          aria-label={t.menu.share}
+          className={cn("pressable grid size-10 place-items-center rounded-full", control)}
+        >
+          <Share className="size-[18px]" strokeWidth={2} />
         </button>
       </div>
     </div>
@@ -419,53 +410,62 @@ function SectionTabs({
   sections,
   active,
   onSelect,
+  label,
 }: {
   sections: ViewSection[];
   active?: string;
   onSelect: (key: string) => void;
+  label: string;
 }) {
   const strip = useRef<HTMLDivElement>(null);
   const tabs = useRef(new Map<string, HTMLButtonElement>());
 
+  // Center the active tab. Measured from rects, so it works the same in RTL
+  // (where scrollLeft runs negative).
   useEffect(() => {
     const el = active && tabs.current.get(active);
     const container = strip.current;
     if (!el || !container) return;
-    const left = el.offsetLeft - container.clientWidth / 2 + el.clientWidth / 2;
-    container.scrollTo({ left, behavior: "smooth" });
+    const a = el.getBoundingClientRect();
+    const c = container.getBoundingClientRect();
+    container.scrollBy({ left: a.left + a.width / 2 - (c.left + c.width / 2), behavior: "smooth" });
   }, [active]);
 
   return (
     <div
       ref={strip}
-      className="no-scrollbar relative -mr-5 flex flex-1 gap-0.5 overflow-x-auto pr-5 [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
       role="tablist"
+      aria-label={label}
+      className="no-scrollbar relative -me-4 flex flex-1 overflow-x-auto pe-4 [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:-me-5 sm:pe-5 rtl:[mask-image:linear-gradient(to_left,black_calc(100%-24px),transparent)]"
     >
-      {sections.map((s) => (
-        <button
-          key={s.key}
-          ref={(el) => {
-            if (el) tabs.current.set(s.key, el);
-            else tabs.current.delete(s.key);
-          }}
-          role="tab"
-          aria-selected={active === s.key}
-          onClick={() => onSelect(s.key)}
-          className={cn(
-            "relative shrink-0 rounded-full px-3.5 py-2 text-[14px] font-medium transition-colors duration-200",
-            active === s.key ? "text-on-accent" : "text-ink-2 hover:text-ink",
-          )}
-        >
-          {active === s.key && (
-            <motion.span
-              layoutId="section-tab"
-              className="absolute inset-0 rounded-full bg-accent"
-              transition={{ type: "spring", bounce: 0.2, duration: 0.45 }}
-            />
-          )}
-          <span className="relative whitespace-nowrap">{s.label}</span>
-        </button>
-      ))}
+      {sections.map((s) => {
+        const on = active === s.key;
+        return (
+          <button
+            key={s.key}
+            ref={(el) => {
+              if (el) tabs.current.set(s.key, el);
+              else tabs.current.delete(s.key);
+            }}
+            role="tab"
+            aria-selected={on}
+            onClick={() => onSelect(s.key)}
+            className={cn(
+              "relative shrink-0 px-3 text-sm font-medium transition-colors duration-200",
+              on ? "text-ink" : "text-ink-3 hover:text-ink-2",
+            )}
+          >
+            <span className="whitespace-nowrap">{s.label}</span>
+            {on && (
+              <motion.span
+                layoutId="section-tab"
+                className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-accent"
+                transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+              />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -474,13 +474,16 @@ function MenuSwitcher({
   menus,
   value,
   onChange,
+  label,
 }: {
   menus: Restaurant["menus"];
   value: string;
   onChange: (id: string) => void;
+  label: string;
 }) {
+  const { pick } = useI18n();
   return (
-    <div role="radiogroup" aria-label="Menu" className="inline-flex rounded-full bg-surface-2 p-1">
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg bg-surface-2 p-0.5">
       {menus.map((m) => (
         <button
           key={m.id}
@@ -488,14 +491,18 @@ function MenuSwitcher({
           aria-checked={value === m.id}
           onClick={() => onChange(m.id)}
           className={cn(
-            "relative rounded-full px-4 py-1.5 text-[13.5px] font-semibold transition-colors",
+            "relative h-8 rounded-md px-4 text-sm font-medium transition-colors",
             value === m.id ? "text-ink" : "text-ink-3 hover:text-ink-2",
           )}
         >
           {value === m.id && (
-            <motion.span layoutId="menu-switch" className="absolute inset-0 rounded-full bg-surface shadow-sm" />
+            <motion.span
+              layoutId="menu-switch"
+              className="absolute inset-0 rounded-md bg-surface shadow-sm ring-1 ring-line"
+              transition={{ type: "spring", bounce: 0.15, duration: 0.35 }}
+            />
           )}
-          <span className="relative">{m.name}</span>
+          <span className="relative">{pick(m.name, m.nameAr)}</span>
         </button>
       ))}
     </div>
@@ -503,49 +510,55 @@ function MenuSwitcher({
 }
 
 function EmptyState({ query, onReset }: { query: string; onReset: () => void }) {
+  const { t } = useI18n();
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center py-16 text-center"
-    >
-      <div className="grid size-14 place-items-center rounded-2xl bg-surface-2 text-ink-3">
-        <SearchX className="size-6" strokeWidth={1.8} />
-      </div>
-      <p className="mt-4 text-[15px] font-medium text-ink">
-        {query ? <>Nothing matches &ldquo;{query}&rdquo;</> : "No dishes match these filters"}
-      </p>
-      <p className="mt-1 text-[13.5px] text-ink-3">Try a different word, or clear filters.</p>
-      <button onClick={onReset} className="pressable mt-5 rounded-full bg-surface-2 px-4 py-2 text-[13.5px] font-medium">
-        Show full menu
+    <div className="animate-fade py-16 text-center">
+      <p className="text-md font-medium text-ink">{query ? t.menu.emptyQuery(query) : t.menu.emptyFilters}</p>
+      <p className="mt-1 text-sm text-ink-3">{t.menu.emptyHint}</p>
+      <button
+        onClick={onReset}
+        className="pressable mt-5 h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-ink hover:bg-surface-2"
+      >
+        {t.menu.showAll}
       </button>
-    </motion.div>
+    </div>
   );
 }
 
 function Footer({ restaurant: r, claimed }: { restaurant: Restaurant; claimed: boolean }) {
+  const { t, href } = useI18n();
   return (
-    <footer className="mt-10 border-t border-line pt-6 text-center text-[12.5px] leading-relaxed text-ink-3">
-      <p>Prices and availability may change. Please confirm with the restaurant.</p>
+    <footer className="mt-10 border-t border-line pt-6 text-center text-xs text-ink-3">
+      <p>{t.menu.footerNote}</p>
       {!claimed && (
         <p className="mt-1">
-          Is this your restaurant?{" "}
-          <Link href={`/claim/${r.slug}`} className="font-medium text-accent underline-offset-2 hover:underline">
-            Claim this page for free
+          {t.menu.footerClaim}{" "}
+          <Link href={href(`/claim/${r.slug}`)} className="font-medium text-accent hover:underline">
+            {t.menu.footerClaimLink}
           </Link>{" "}
-          or{" "}
-          <Link href={`/remove?r=${r.slug}`} className="underline-offset-2 hover:underline">
-            ask us to remove it
+          {t.menu.footerOr}{" "}
+          <Link href={href(`/remove?r=${r.slug}`)} className="underline-offset-2 hover:underline">
+            {t.menu.footerRemove}
           </Link>
           .
         </p>
       )}
-      <Link href="/" className="pressable mt-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-ink-2 hover:bg-surface-2">
-        <LogoMark className="size-4" /> Menus by <span className="font-semibold text-ink">mealtree</span>
+      <Link
+        href={href("/")}
+        className="pressable mt-6 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-ink-2 hover:bg-surface-2"
+      >
+        <LogoMark className="size-4" /> {t.menu.madeWith}{" "}
+        <span lang="en" className="font-semibold text-ink">
+          mealtree
+        </span>
       </Link>
-      <nav className="mt-2 flex justify-center gap-4 text-[12px]">
-        <Link href="/terms" className="hover:text-ink">Terms</Link>
-        <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+      <nav className="mt-2 flex justify-center gap-4">
+        <Link href={href("/terms")} className="hover:text-ink">
+          {t.common.terms}
+        </Link>
+        <Link href={href("/privacy")} className="hover:text-ink">
+          {t.common.privacy}
+        </Link>
       </nav>
     </footer>
   );

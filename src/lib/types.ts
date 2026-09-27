@@ -1,11 +1,14 @@
 export type DietTag = "vegetarian" | "vegan" | "gluten-free" | "spicy" | "nuts";
 
-export type Variant = { label: string; price: number };
+export type Variant = { label: string; labelAr?: string; price: number };
 
 export type MenuItem = {
   id: string;
   name: string;
+  /** Arabic name, when the menu prints one (most UAE menus do). */
+  nameAr?: string;
   description?: string;
+  descriptionAr?: string;
   /** Null when the menu lists "market price" or no price at all. */
   price: number | null;
   priceNote?: string;
@@ -20,14 +23,18 @@ export type MenuItem = {
 export type MenuSection = {
   id: string;
   name: string;
+  nameAr?: string;
   description?: string;
+  descriptionAr?: string;
   items: MenuItem[];
 };
 
 export type Menu = {
   id: string;
   name: string;
+  nameAr?: string;
   note?: string;
+  noteAr?: string;
   sections: MenuSection[];
 };
 
@@ -41,18 +48,25 @@ export type LinkKind =
   | "website"
   | "whatsapp";
 
-export type ExternalLink = { kind: LinkKind; label: string; url: string };
+export type ExternalLink = { kind: LinkKind; label: string; labelAr?: string; url: string };
 
 export type MenuSource = "visit" | "photos" | "website" | "owner";
 
 export type Restaurant = {
   slug: string;
   name: string;
+  nameAr?: string;
   tagline: string;
+  taglineAr?: string;
+  /** English names; translated for display through the dictionary. */
   cuisine: string[];
   priceLevel: 1 | 2 | 3 | 4;
   neighborhood: string;
+  neighborhoodAr?: string;
   address: string;
+  addressAr?: string;
+  /** ISO 4217 code for every price on the menu. */
+  currency: string;
   phone: string;
   timezone: string;
   /** Hex brand color, used to tint the menu page. */

@@ -5,12 +5,14 @@ import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useToast } from "@/components/providers";
 import { Card, CardTitle, Switch } from "@/components/ui";
-import { cn, formatPrice } from "@/lib/format";
-import { parseQuery, scoreItem } from "@/lib/search";
-import { menuActions, type Overrides, useOverrides } from "@/lib/store";
+import { useI18n } from "@/i18n/client";
+import { cn, toLatinDigits } from "@/lib/format";
+import { parseQuery, scoreItem, sectionText } from "@/lib/search";
+import { actionErrorMessage, menuActions, type Overrides, useOverrides } from "@/lib/store";
 import type { MenuItem, Restaurant } from "@/lib/types";
 
 export function MenuEditor({ restaurant: r, canEdit }: { restaurant: Restaurant; canEdit: boolean }) {
+  const { t, pick } = useI18n();
   const overrides = useOverrides(r.slug);
   const [query, setQuery] = useState("");
   const toast = useToast();
@@ -21,12 +23,12 @@ export function MenuEditor({ restaurant: r, canEdit }: { restaurant: Restaurant;
       m.sections
         .map((s) => ({
           key: `${m.id}:${s.id}`,
-          name: r.menus.length > 1 ? `${m.name} · ${s.name}` : s.name,
-          items: s.items.filter((i) => scoreItem(i, s.name, tokens) > 0),
+          name: r.menus.length > 1 ? `${pick(m.name, m.nameAr)} · ${pick(s.name, s.nameAr)}` : pick(s.name, s.nameAr),
+          items: s.items.filter((i) => scoreItem(i, sectionText(s), tokens) > 0),
         }))
         .filter((s) => s.items.length),
     );
-  }, [r.menus, query]);
+  }, [r.menus, query, pick]);
 
   const edits = Object.keys(overrides.soldOut).length + Object.keys(overrides.price).length;
 
@@ -41,41 +43,41 @@ export function MenuEditor({ restaurant: r, canEdit }: { restaurant: Restaurant;
                 onClick={() =>
                   menuActions
                     .reset(r.slug)
-                    .then(() => toast("Menu reset to original"))
-                    .catch((e: Error) => toast(e.message))
+                    .then(() => toast(t.dashboard.resetDone))
+                    .catch((e) => toast(actionErrorMessage(e, t)))
                 }
-                className="text-[12.5px] font-medium text-ink-3 hover:text-ink"
+                className="text-sm font-medium text-ink-3 hover:text-ink"
               >
-                Reset {edits} {edits === 1 ? "edit" : "edits"}
+                {t.dashboard.reset(edits)}
               </button>
             )
           }
         >
-          Menu
+          {t.dashboard.menu}
         </CardTitle>
-        <label className="flex h-10 items-center gap-2 rounded-xl bg-surface-2 px-3 focus-within:ring-2 focus-within:ring-accent">
+        <label className="flex h-10 items-center gap-2 rounded-lg bg-surface-2 px-3 focus-within:ring-2 focus-within:ring-accent">
           <Search className="size-4 text-ink-3" strokeWidth={2.2} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Find a dish"
-            aria-label="Find a dish"
-            className="h-full min-w-0 flex-1 bg-transparent text-[14.5px] outline-none placeholder:text-ink-3"
+            placeholder={t.dashboard.findDish}
+            aria-label={t.dashboard.findDish}
+            className="h-full min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-ink-3"
           />
         </label>
       </div>
       <div className="px-5 pb-3">
         {sections.map((s) => (
           <div key={s.key} className="pt-3">
-            <h3 className="py-1 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">{s.name}</h3>
+            <h3 className="py-1 text-sm font-semibold text-ink-2">{s.name}</h3>
             <ul className="divide-y divide-line">
               {s.items.map((item) => (
-                <EditorRow key={item.id} slug={r.slug} item={item} overrides={overrides} canEdit={canEdit} />
+                <EditorRow key={item.id} slug={r.slug} item={item} overrides={overrides} canEdit={canEdit} currency={r.currency} />
               ))}
             </ul>
           </div>
         ))}
-        {sections.length === 0 && <p className="py-8 text-center text-[14px] text-ink-3">No dishes match.</p>}
+        {sections.length === 0 && <p className="py-8 text-center text-sm text-ink-3">{t.dashboard.noDishes}</p>}
       </div>
     </Card>
   );
@@ -86,12 +88,17 @@ function EditorRow({
   item,
   overrides,
   canEdit,
+  currency,
 }: {
   slug: string;
   item: MenuItem;
   overrides: Overrides;
   canEdit: boolean;
+  currency: string;
 }) {
+  const i18n = useI18n();
+  const { t } = i18n;
+  const name = i18n.pick(item.name, item.nameAr);
   const toast = useToast();
   const soldOut = overrides.soldOut[item.id] ?? !!item.soldOut;
   const price = overrides.price[item.id] ?? item.price;
@@ -100,21 +107,21 @@ function EditorRow({
 
   const commit = () => {
     if (draft === null) return;
-    const n = Number(draft.replace(/[^0-9.]/g, ""));
+    const n = Number(toLatinDigits(draft).replace("٫", ".").replace(/[^0-9.]/g, ""));
     setDraft(null);
     if (!draft.trim() || !Number.isFinite(n) || n <= 0 || n === price) return;
     const rounded = Math.round(n * 100) / 100;
     menuActions
       .setPrice(slug, item.id, rounded)
-      .then(() => toast(`${item.name} is now ${formatPrice(rounded)}`))
-      .catch((e: Error) => toast(e.message));
+      .then(() => toast(t.dashboard.priceSet(name, i18n.price(rounded, currency))))
+      .catch((e) => toast(actionErrorMessage(e, t)));
   };
 
   return (
     <li className="flex items-center gap-3 py-3">
       <div className="min-w-0 flex-1">
-        <p className={cn("truncate text-[14.5px] font-medium transition-colors", soldOut ? "text-ink-3" : "text-ink")}>
-          {item.name}
+        <p className={cn("truncate text-base font-medium transition-colors", soldOut ? "text-ink-3" : "text-ink")}>
+          {name}
         </p>
         <AnimatePresence initial={false}>
           {(soldOut || edited) && (
@@ -122,12 +129,12 @@ function EditorRow({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden text-[12px]"
+              className="overflow-hidden text-xs"
             >
               {soldOut ? (
-                <span className="font-medium text-warning">Shown as sold out on your menu</span>
+                <span className="font-medium text-warning">{t.dashboard.soldOutShown}</span>
               ) : (
-                <span className="text-ink-3">Edited · live on your menu</span>
+                <span className="text-ink-3">{t.dashboard.editedLive}</span>
               )}
             </motion.p>
           )}
@@ -136,11 +143,11 @@ function EditorRow({
       {price !== null && (
         <label
           className={cn(
-            "flex h-9 w-[84px] items-center rounded-xl bg-surface-2 px-2.5 text-[14px] ring-1 ring-transparent transition-shadow focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent has-[:disabled]:opacity-50",
+            "flex h-9 w-24 items-center gap-1 rounded-lg bg-surface-2 px-2.5 text-sm ring-1 ring-transparent transition-shadow focus-within:bg-surface focus-within:ring-2 focus-within:ring-accent has-[:disabled]:opacity-50",
             edited && item.id in overrides.price && "ring-accent-line",
           )}
         >
-          <span className="text-ink-3">$</span>
+          <span className="text-xs text-ink-3">{i18n.currency(currency)}</span>
           <input
             value={draft ?? (Number.isInteger(price) ? String(price) : price.toFixed(2))}
             onFocus={(e) => {
@@ -158,20 +165,21 @@ function EditorRow({
             }}
             inputMode="decimal"
             disabled={!canEdit}
-            aria-label={`Price for ${item.name}`}
-            className="tabular h-full w-full min-w-0 bg-transparent pl-1 text-right font-medium outline-none"
+            aria-label={t.dashboard.priceFor(name)}
+            dir="ltr"
+            className="tabular h-full w-full min-w-0 bg-transparent text-end font-medium outline-none"
           />
         </label>
       )}
       <Switch
         checked={!soldOut}
         disabled={!canEdit}
-        label={`${item.name} available`}
+        label={t.dashboard.available(name)}
         onChange={(available) =>
           menuActions
             .setSoldOut(slug, item.id, !available)
-            .then(() => toast(available ? `${item.name} is back on` : `${item.name} marked sold out`))
-            .catch((e: Error) => toast(e.message))
+            .then(() => toast(available ? t.dashboard.backOn(name) : t.dashboard.markedSoldOut(name)))
+            .catch((e) => toast(actionErrorMessage(e, t)))
         }
       />
     </li>

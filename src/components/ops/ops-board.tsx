@@ -25,7 +25,8 @@ import { Logo } from "@/components/logo";
 import { Photo } from "@/components/photo";
 import { useToast } from "@/components/providers";
 import { accentStyle } from "@/lib/accent";
-import { cn, formatPhone, sourceLabel } from "@/lib/format";
+import { formatNumber, formatPhone } from "@/i18n/format";
+import { cn, sourceLabel } from "@/lib/format";
 import { useHydrated } from "@/lib/store";
 import type { AdminOverview, ClaimRow, RemovalRow } from "@/lib/supabase/database";
 
@@ -45,16 +46,25 @@ function timeAgo(iso: string) {
   return `${Math.round(mins / 1440)}d ago`;
 }
 
+/** WhatsApp-ready outreach message: Arabic first, then English, each linking to its own language. */
 function pitch(r: Row, origin: string) {
-  return [
+  const views = r.stats.views30d > 0 ? formatNumber(r.stats.views30d) : null;
+  const arName = r.name_ar || r.name;
+  const ar = [
+    `مرحبًا فريق ${arName}!`,
+    `نشرنا قائمة طعامكم على الإنترنت ليطّلع الضيوف على الأسعار قبل زيارتهم: ${origin}/ar/r/${r.slug}`,
+    views ? `حصلت القائمة على ${views} مشاهدة خلال آخر 30 يومًا.` : "",
+    `المطالبة بالصفحة مجانية، ويمكنكم تعديل الأسعار وتحديد الأطباق التي نفدت والحصول على رموز QR للطاولات: ${origin}/ar/claim/${r.slug}`,
+    `إن كنتم تفضّلون عدم الإدراج، ردّوا على هذه الرسالة وسنزيل الصفحة: ${origin}/ar/remove?r=${r.slug}`,
+  ];
+  const en = [
     `Hi ${r.name} team!`,
-    `We put your menu online so guests can check prices before they visit: ${origin}/r/${r.slug}`,
-    r.stats.views30d > 0 ? `${r.stats.views30d.toLocaleString()} people looked at it in the last 30 days.` : "",
-    `It's free to claim — you can fix prices, mark sold-out dishes, and get QR codes for your tables: ${origin}/claim/${r.slug}`,
-    `If you'd rather not be listed, reply and we'll take it down: ${origin}/remove?r=${r.slug}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+    `We put your menu online so guests can check prices before they visit: ${origin}/en/r/${r.slug}`,
+    views ? `It got ${views} views in the last 30 days.` : "",
+    `It's free to claim. You can fix prices, mark sold-out dishes, and get QR codes for your tables: ${origin}/en/claim/${r.slug}`,
+    `If you'd rather not be listed, reply and we'll take it down: ${origin}/en/remove?r=${r.slug}`,
+  ];
+  return [...ar, "———", ...en].filter(Boolean).join("\n\n");
 }
 
 /** Runs a server action, toasts the outcome, and refreshes server data. */
@@ -92,11 +102,11 @@ export function OpsBoard({ overview }: { overview: AdminOverview }) {
       <header className="border-b border-line">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-5">
           <Logo />
-          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11.5px] font-semibold uppercase tracking-wide text-ink-3">Ops</span>
+          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Ops</span>
           <div className="ml-auto flex items-center gap-2">
             <Link
               href="/ops/new"
-              className="pressable flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 text-[13px] font-semibold text-bg"
+              className="pressable flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 text-sm font-semibold text-bg"
             >
               <Plus className="size-4" strokeWidth={2.4} /> Add<span className="hidden sm:inline"> restaurant</span>
             </Link>
@@ -109,8 +119,8 @@ export function OpsBoard({ overview }: { overview: AdminOverview }) {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-5 pb-16 pt-6">
-        <h1 className="font-display text-[32px] leading-tight tracking-[-0.02em] [font-variation-settings:'opsz'_48]">Outreach pipeline</h1>
-        <p className="mt-1 text-[14px] text-ink-3">Add menus, send pitches, verify owners, handle takedowns.</p>
+        <h1 className="text-3xl leading-tight">Outreach pipeline</h1>
+        <p className="mt-1 text-base text-ink-3">Add menus, send pitches, verify owners, handle takedowns.</p>
 
         <Tiles overview={overview} hydrated={hydrated} />
 
@@ -121,13 +131,13 @@ export function OpsBoard({ overview }: { overview: AdminOverview }) {
               role="tab"
               aria-selected={view === v.id}
               onClick={() => setView(v.id)}
-              className={cn("relative rounded-full px-4 py-1.5 text-[13.5px] font-semibold transition-colors", view === v.id ? "text-ink" : "text-ink-3 hover:text-ink-2")}
+              className={cn("relative rounded-full px-4 py-1.5 text-sm font-semibold transition-colors", view === v.id ? "text-ink" : "text-ink-3 hover:text-ink-2")}
             >
               {view === v.id && <motion.span layoutId="ops-view" className="absolute inset-0 rounded-full bg-surface shadow-sm" />}
               <span className="relative flex items-center gap-1.5">
                 {v.label}
                 {!!v.count && (
-                  <span className="tabular grid min-w-5 place-items-center rounded-full bg-danger px-1.5 text-[11px] leading-5 text-white">{v.count}</span>
+                  <span className="tabular grid min-w-5 place-items-center rounded-full bg-danger px-1.5 text-2xs leading-5 text-white">{v.count}</span>
                 )}
               </span>
             </button>
@@ -165,10 +175,10 @@ function Tiles({ overview, hydrated }: { overview: AdminOverview; hydrated: bool
   return (
     <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
       {tiles.map((t, i) => (
-        <div key={t.label} className="animate-rise rounded-[22px] bg-surface p-4 ring-1 ring-line" style={{ animationDelay: `${i * 50}ms` }}>
-          <p className="text-[12.5px] font-medium text-ink-3">{t.label}</p>
-          <p className="tabular mt-2 text-[26px] font-semibold leading-none tracking-[-0.02em]">{t.value}</p>
-          <p className="mt-1.5 text-[12px] text-ink-3">{t.sub}</p>
+        <div key={t.label} className="animate-rise rounded-xl bg-surface p-4 ring-1 ring-line" style={{ animationDelay: `${i * 50}ms` }}>
+          <p className="text-xs font-medium text-ink-3">{t.label}</p>
+          <p className="tabular mt-2 text-2xl font-semibold leading-none">{t.value}</p>
+          <p className="mt-1.5 text-xs text-ink-3">{t.sub}</p>
         </div>
       ))}
     </div>
@@ -216,7 +226,7 @@ function Pipeline({ rows, hydrated }: { rows: Row[]; hydrated: boolean }) {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={cn("relative shrink-0 rounded-full px-3.5 py-2 text-[13.5px] font-medium transition-colors", tab === t.id ? "text-bg" : "text-ink-2 hover:text-ink")}
+            className={cn("relative shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors", tab === t.id ? "text-bg" : "text-ink-2 hover:text-ink")}
           >
             {tab === t.id && <motion.span layoutId="ops-tab" className="absolute inset-0 rounded-full bg-ink" />}
             <span className="relative">
@@ -226,7 +236,7 @@ function Pipeline({ rows, hydrated }: { rows: Row[]; hydrated: boolean }) {
         ))}
       </div>
 
-      <ul className="mt-4 overflow-hidden rounded-[24px] bg-surface ring-1 ring-line">
+      <ul className="mt-4 overflow-hidden rounded-xl bg-surface ring-1 ring-line">
         {visible.map(({ r, age }) => (
           <li
             key={r.slug}
@@ -238,16 +248,16 @@ function Pipeline({ rows, hydrated }: { rows: Row[]; hydrated: boolean }) {
             )}
           >
             <div className="flex min-w-0 items-center gap-3">
-              <Photo id={r.cover ?? undefined} alt="" width={80} className={cn("size-11 shrink-0 rounded-xl", !r.published && "opacity-50")} iconSize={16} />
+              <Photo id={r.cover ?? undefined} alt="" width={80} className={cn("size-11 shrink-0 rounded-xl", !r.published && "opacity-50")} />
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5 truncate text-[14.5px] font-semibold">
+                <p className="flex items-center gap-1.5 truncate text-base font-semibold">
                   {r.name}
                   {r.claimed_at && <BadgeCheck className="size-4 shrink-0 fill-accent text-bg" strokeWidth={2} />}
                   {!r.published && (
-                    <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-ink-3">Hidden</span>
+                    <span className="rounded-full bg-surface-3 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Hidden</span>
                   )}
                 </p>
-                <p className="truncate text-[12.5px] text-ink-3">
+                <p className="truncate text-xs text-ink-3">
                   {sourceLabel[r.source]} · {r.item_count} dishes
                   {age !== null && <span className={cn(age > STALE_DAYS && "font-medium text-warning")}> · verified {age}d ago</span>}
                 </p>
@@ -255,7 +265,7 @@ function Pipeline({ rows, hydrated }: { rows: Row[]; hydrated: boolean }) {
             </div>
             <Status ok={!!r.claimed_at} okLabel="Claimed" badLabel="Unclaimed" neutral />
             <Status ok={r.google_menu_link} okLabel="On Google" badLabel="No Google link" />
-            <p className="tabular text-[14px] font-medium md:text-right">
+            <p className="tabular text-base font-medium md:text-right">
               {r.stats.views30d.toLocaleString()} <span className="font-normal text-ink-3">views</span>
             </p>
             <div className="flex gap-2">
@@ -265,19 +275,19 @@ function Pipeline({ rows, hydrated }: { rows: Row[]; hydrated: boolean }) {
                     await navigator.clipboard?.writeText(pitch(r, location.origin)).catch(() => {});
                     toast("Pitch copied — paste into DM or email");
                   }}
-                  className="pressable flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-[12.5px] font-semibold text-bg"
+                  className="pressable flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-xs font-semibold text-bg"
                 >
                   <Copy className="size-3.5" strokeWidth={2.2} /> Pitch
                 </button>
               )}
               <IconLink href={`/ops/edit/${r.slug}`} label={`Edit ${r.name}`} icon={Pencil} />
               {r.published ? (
-                <IconLink href={`/r/${r.slug}`} label={`Open ${r.name}`} icon={ExternalLink} />
+                <IconLink href={`/en/r/${r.slug}`} label={`Open ${r.name}`} icon={ExternalLink} />
               ) : (
                 <button
                   onClick={() => run(`pub:${r.slug}`, () => setPublished(r.slug, true), `${r.name} is live again`)}
                   disabled={busy === `pub:${r.slug}`}
-                  className="pressable flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-[12.5px] font-semibold text-ink"
+                  className="pressable flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-xs font-semibold text-ink"
                 >
                   {busy === `pub:${r.slug}` ? <Loader2 className="size-3.5 animate-spin" /> : "Publish"}
                 </button>
@@ -285,9 +295,9 @@ function Pipeline({ rows, hydrated }: { rows: Row[]; hydrated: boolean }) {
             </div>
           </li>
         ))}
-        {visible.length === 0 && <li className="p-10 text-center text-[14px] text-ink-3">Nothing here. Nice.</li>}
+        {visible.length === 0 && <li className="p-10 text-center text-base text-ink-3">Nothing here. Nice.</li>}
       </ul>
-      <p className="mt-4 flex items-center gap-1.5 text-[12.5px] text-ink-3">
+      <p className="mt-4 flex items-center gap-1.5 text-xs text-ink-3">
         <Clock className="size-3.5" /> Re-verify menus older than {STALE_DAYS} days before outreach.
       </p>
     </section>
@@ -301,17 +311,17 @@ function Claims({ claims, hydrated }: { claims: ClaimRow[]; hydrated: boolean })
   return (
     <section className="mt-5 space-y-6">
       <div>
-        <h2 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3">Waiting for verification</h2>
+        <h2 className="mb-3 text-xs font-semibold text-ink-3">Waiting for verification</h2>
         {pending.length === 0 ? (
           <Empty text="No claims waiting. When an owner claims a page, it shows up here." />
         ) : (
           <ul className="space-y-3">
             {pending.map((c) => (
-              <li key={c.id} className="rounded-[22px] bg-surface p-4 ring-1 ring-line">
+              <li key={c.id} className="rounded-xl bg-surface p-4 ring-1 ring-line">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[15px] font-semibold">{c.restaurant}</p>
-                    <p className="mt-0.5 text-[13.5px] text-ink-2">
+                    <p className="text-base font-semibold">{c.restaurant}</p>
+                    <p className="mt-0.5 text-sm text-ink-2">
                       {c.name} · {c.role} · via {c.method}
                       {c.google_opt_in && " · wants Google menu link"}
                       {hydrated && <span className="text-ink-3"> · {timeAgo(c.created_at)}</span>}
@@ -319,12 +329,12 @@ function Claims({ claims, hydrated }: { claims: ClaimRow[]; hydrated: boolean })
                   </div>
                   <a
                     href={`tel:${c.phone}`}
-                    className="pressable flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-[12.5px] font-semibold"
+                    className="pressable flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-xs font-semibold"
                   >
                     <Phone className="size-3.5" strokeWidth={2.2} /> {formatPhone(c.phone)}
                   </a>
                 </div>
-                <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2 text-[12.5px] leading-relaxed text-ink-2">
+                <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2 text-xs leading-relaxed text-ink-2">
                   Call the number on the restaurant&apos;s Google listing (not a number the claimant gave you) and confirm{" "}
                   {c.name} manages {c.restaurant}.
                 </p>
@@ -332,14 +342,14 @@ function Claims({ claims, hydrated }: { claims: ClaimRow[]; hydrated: boolean })
                   <button
                     onClick={() => run(`a:${c.id}`, () => reviewClaim(c.id, c.slug, true), `${c.restaurant} verified`)}
                     disabled={!!busy}
-                    className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-positive text-[13.5px] font-semibold text-white disabled:opacity-50 sm:flex-none sm:px-5"
+                    className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-positive text-sm font-semibold text-white disabled:opacity-50 sm:flex-none sm:px-5"
                   >
                     {busy === `a:${c.id}` ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" strokeWidth={2.6} />} Approve
                   </button>
                   <button
                     onClick={() => run(`r:${c.id}`, () => reviewClaim(c.id, c.slug, false), "Claim rejected")}
                     disabled={!!busy}
-                    className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-2 text-[13.5px] font-semibold text-ink disabled:opacity-50 sm:flex-none sm:px-5"
+                    className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-2 text-sm font-semibold text-ink disabled:opacity-50 sm:flex-none sm:px-5"
                   >
                     {busy === `r:${c.id}` ? <Loader2 className="size-4 animate-spin" /> : <X className="size-4" strokeWidth={2.6} />} Reject
                   </button>
@@ -351,10 +361,10 @@ function Claims({ claims, hydrated }: { claims: ClaimRow[]; hydrated: boolean })
       </div>
       {done.length > 0 && (
         <div>
-          <h2 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3">Reviewed</h2>
-          <ul className="overflow-hidden rounded-[22px] bg-surface ring-1 ring-line">
+          <h2 className="mb-3 text-xs font-semibold text-ink-3">Reviewed</h2>
+          <ul className="overflow-hidden rounded-xl bg-surface ring-1 ring-line">
             {done.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 text-[13.5px] last:border-0">
+              <li key={c.id} className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 text-sm last:border-0">
                 <span className="min-w-0 truncate">
                   <span className="font-medium">{c.restaurant}</span> <span className="text-ink-3">· {c.name}</span>
                 </span>
@@ -375,25 +385,25 @@ function Removals({ removals, hydrated }: { removals: RemovalRow[]; hydrated: bo
     <section className="mt-5 space-y-3">
       {open.length === 0 && <Empty text="No open takedown requests." />}
       {open.map((q) => (
-        <div key={q.id} className="rounded-[22px] bg-surface p-4 ring-1 ring-line">
-          <p className="text-[15px] font-semibold">{q.restaurant ?? "Unknown restaurant"}</p>
-          <p className="mt-0.5 text-[13.5px] text-ink-2">
+        <div key={q.id} className="rounded-xl bg-surface p-4 ring-1 ring-line">
+          <p className="text-base font-semibold">{q.restaurant ?? "Unknown restaurant"}</p>
+          <p className="mt-0.5 text-sm text-ink-2">
             {q.name} · {q.contact}
             {hydrated && <span className="text-ink-3"> · {timeAgo(q.created_at)}</span>}
           </p>
-          {q.reason && <p className="mt-3 whitespace-pre-wrap rounded-xl bg-surface-2 px-3 py-2 text-[13px] text-ink-2">{q.reason}</p>}
+          {q.reason && <p className="mt-3 whitespace-pre-wrap rounded-xl bg-surface-2 px-3 py-2 text-sm text-ink-2">{q.reason}</p>}
           <div className="mt-3 flex gap-2">
             <button
               onClick={() => run(`rm:${q.id}`, () => resolveRemoval(q.id, q.slug, true), "Page hidden")}
               disabled={!!busy}
-              className="pressable flex h-10 items-center gap-1.5 rounded-full bg-danger px-5 text-[13.5px] font-semibold text-white disabled:opacity-50"
+              className="pressable flex h-10 items-center gap-1.5 rounded-full bg-danger px-5 text-sm font-semibold text-white disabled:opacity-50"
             >
               {busy === `rm:${q.id}` ? <Loader2 className="size-4 animate-spin" /> : <EyeOff className="size-4" strokeWidth={2.2} />} Hide page
             </button>
             <button
               onClick={() => run(`d:${q.id}`, () => resolveRemoval(q.id, q.slug, false), "Request dismissed")}
               disabled={!!busy}
-              className="pressable h-10 rounded-full bg-surface-2 px-5 text-[13.5px] font-semibold disabled:opacity-50"
+              className="pressable h-10 rounded-full bg-surface-2 px-5 text-sm font-semibold disabled:opacity-50"
             >
               Dismiss
             </button>
@@ -401,7 +411,7 @@ function Removals({ removals, hydrated }: { removals: RemovalRow[]; hydrated: bo
         </div>
       ))}
       {removals.length > open.length && (
-        <p className="text-[12.5px] text-ink-3">{removals.length - open.length} resolved request(s).</p>
+        <p className="text-xs text-ink-3">{removals.length - open.length} resolved request(s).</p>
       )}
     </section>
   );
@@ -416,13 +426,13 @@ function IconLink({ href, label, icon: Icon }: { href: string; label: string; ic
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="rounded-[22px] bg-surface p-8 text-center text-[14px] text-ink-3 ring-1 ring-line">{text}</p>;
+  return <p className="rounded-xl bg-surface p-8 text-center text-base text-ink-3 ring-1 ring-line">{text}</p>;
 }
 
 function Status({ ok, okLabel, badLabel, neutral }: { ok: boolean; okLabel: string; badLabel: string; neutral?: boolean }) {
   const Icon = ok ? CheckCircle2 : AlertTriangle;
   return (
-    <span className={cn("flex items-center gap-1.5 text-[13px] font-medium", ok ? "text-positive" : neutral ? "text-ink-3" : "text-warning")}>
+    <span className={cn("flex items-center gap-1.5 text-sm font-medium", ok ? "text-positive" : neutral ? "text-ink-3" : "text-warning")}>
       <Icon className="size-4" strokeWidth={2.2} /> {ok ? okLabel : badLabel}
     </span>
   );

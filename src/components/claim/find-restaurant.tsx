@@ -4,13 +4,16 @@ import { BadgeCheck, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SearchBox } from "@/components/discover/search-box";
+import { LanguageToggle } from "@/components/language-toggle";
 import { Logo } from "@/components/logo";
-import { Photo } from "@/components/photo";
+import { RestaurantThumb } from "@/components/photo";
+import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
 import { parseQuery, scoreRestaurant } from "@/lib/search";
 import type { Restaurant } from "@/lib/types";
 
 export function FindRestaurant({ restaurants }: { restaurants: Restaurant[] }) {
+  const { t, pick, href } = useI18n();
   const [query, setQuery] = useState("");
   const list = useMemo(() => {
     const { tokens } = parseQuery(query);
@@ -19,50 +22,44 @@ export function FindRestaurant({ restaurants }: { restaurants: Restaurant[] }) {
 
   return (
     <div className="min-h-dvh">
-      <header className="mx-auto flex h-16 max-w-lg items-center px-5">
+      <header className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
         <Logo />
+        <LanguageToggle className="-me-2" />
       </header>
-      <main className="mx-auto max-w-lg px-5 pb-16">
-        <p className="mt-6 animate-rise text-[12.5px] font-semibold uppercase tracking-[0.1em] text-brand">For restaurants</p>
-        <h1 className="mt-2 animate-rise font-display text-[38px] leading-[1.02] tracking-[-0.02em] [animation-delay:40ms] [font-variation-settings:'opsz'_60]">
-          Your menu might already be here.
-        </h1>
-        <p className="mt-3 animate-rise text-[15px] leading-relaxed text-ink-2 [animation-delay:80ms]">
-          Find your restaurant to claim it for free. Keep prices current, mark sold-out dishes, and get QR codes for your
-          tables.
-        </p>
-        <div className="mt-6 animate-rise [animation-delay:120ms]">
-          <SearchBox value={query} onChange={setQuery} examples={["Nonna Lucia", "El Faro Azul", "Dosa Republic"]} label="Find your restaurant" />
-        </div>
-        <ul className="mt-6 space-y-2">
-          {list.map((r, i) => (
-            <li key={r.slug} data-accent style={{ ...accentStyle(r.accent), animationDelay: `${160 + i * 35}ms` }} className="animate-rise">
+      <main className="mx-auto max-w-lg px-4 pb-16">
+        <p className="mt-6 text-sm font-medium text-brand">{t.find.eyebrow}</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight">{t.find.title}</h1>
+        <p className="mt-3 text-base text-ink-2">{t.find.lead}</p>
+        <SearchBox value={query} onChange={setQuery} label={t.find.searchLabel} className="mt-6" />
+        <ul className="mt-4 divide-y divide-line">
+          {list.map((r) => (
+            <li key={r.slug} data-accent style={accentStyle(r.accent)}>
               <Link
-                href={`/claim/${r.slug}`}
-                className="pressable flex items-center gap-3 rounded-2xl bg-surface p-2.5 pr-4 ring-1 ring-line hover:ring-line-strong"
+                href={href(`/claim/${r.slug}`)}
+                className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-surface-2/60"
               >
-                <Photo id={r.cover} alt="" width={96} className="size-12 shrink-0 rounded-xl" iconSize={16} />
+                <RestaurantThumb restaurant={r} className="size-11 shrink-0 rounded-lg" />
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1.5 truncate text-[15px] font-medium">
-                    {r.name}
+                  <p className="flex items-center gap-1.5 truncate text-base font-medium">
+                    {pick(r.name, r.nameAr)}
                     {r.claimed && <BadgeCheck className="size-4 fill-accent text-bg" strokeWidth={2} />}
                   </p>
-                  <p className="truncate text-[12.5px] text-ink-3">{r.address}</p>
+                  <p className="truncate text-sm text-ink-3">{pick(r.address, r.addressAr)}</p>
                 </div>
-                <span className="text-[12.5px] font-medium text-ink-3">{r.claimed ? "Claimed" : "Claim"}</span>
-                <ChevronRight className="size-4 text-ink-3" />
+                <span className="text-sm font-medium text-ink-3">{r.claimed ? t.find.claimed : t.find.claim}</span>
+                <ChevronRight className="size-4 text-ink-3 rtl:-scale-x-100" />
               </Link>
             </li>
           ))}
         </ul>
         {list.length === 0 && (
-          <div className="mt-6 rounded-2xl bg-surface-2 p-5 text-center text-[14px] text-ink-2">
-            Not listed yet?{" "}
+          <p className="mt-6 rounded-xl bg-surface-2 p-5 text-center text-sm text-ink-2">
+            {t.find.notListed}{" "}
             <a href="mailto:hello@example.com?subject=Add%20my%20restaurant" className="font-medium text-brand">
-              Send us your menu
+              {t.find.sendMenu}
             </a>{" "}
-            and we&apos;ll set up your page within a day.
-          </div>
+            {t.find.notListedTail}
+          </p>
         )}
       </main>
     </div>

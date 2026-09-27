@@ -2,7 +2,7 @@ import type { RestaurantInput } from "@/lib/supabase/database";
 import type { Hours } from "@/lib/types";
 
 // Shared by the server page (initial draft) and the client editor.
-export const ACCENTS = ["#C2412D", "#1E5BB8", "#2F6B3A", "#B7791F", "#3F7D58", "#5F7A61", "#1F1F24", "#C47F0E", "#7C3AED", "#BE185D"];
+export const ACCENTS = ["#C2410C", "#9A6A1F", "#3F6B2A", "#B45309", "#0F766E", "#1E3A8A", "#5B4636", "#9F1239", "#1F1F24", "#7C3AED"];
 
 const EMPTY_HOURS: Hours = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
 
@@ -10,13 +10,18 @@ export function blankRestaurant(): RestaurantInput {
   return {
     slug: "",
     name: "",
+    name_ar: null,
     tagline: "",
+    tagline_ar: null,
     cuisine: [],
     price_level: 2,
-    neighborhood: "Mission District",
+    neighborhood: "",
+    neighborhood_ar: null,
     address: "",
+    address_ar: null,
     phone: "",
-    timezone: "America/Los_Angeles",
+    timezone: "Asia/Dubai",
+    currency: "AED",
     accent: ACCENTS[0],
     cover: null,
     hours: EMPTY_HOURS,

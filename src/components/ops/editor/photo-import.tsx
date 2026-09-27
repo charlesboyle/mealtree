@@ -104,7 +104,7 @@ export function PhotoImport({
           add(e.dataTransfer.files);
         }}
         className={cn(
-          "rounded-[20px] border-[1.5px] border-dashed p-4 transition-colors",
+          "rounded-xl border-[1.5px] border-dashed p-4 transition-colors",
           dragging ? "border-brand bg-brand-soft" : "border-line-strong",
         )}
       >
@@ -113,8 +113,8 @@ export function PhotoImport({
             <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand">
               <Camera className="size-5" strokeWidth={2} />
             </span>
-            <span className="mt-3 text-[14.5px] font-medium">Add menu photos</span>
-            <span className="mt-1 text-[12.5px] text-ink-3">Take or drop up to {MAX_PHOTOS} photos. Straight-on and well lit works best.</span>
+            <span className="mt-3 text-base font-medium">Add menu photos</span>
+            <span className="mt-1 text-xs text-ink-3">Take or drop up to {MAX_PHOTOS} photos. Straight-on and well lit works best.</span>
           </button>
         ) : (
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -174,7 +174,7 @@ export function PhotoImport({
           type="button"
           onClick={read}
           disabled={status === "reading"}
-          className="pressable mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand text-[14.5px] font-semibold text-on-brand disabled:opacity-80"
+          className="pressable mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-on-brand disabled:opacity-80"
         >
           {status === "reading" ? (
             <>
@@ -201,7 +201,7 @@ export function PhotoImport({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             role="alert"
-            className="mt-3 overflow-hidden rounded-xl bg-danger/10 px-3.5 py-2.5 text-[13px] text-danger"
+            className="mt-3 overflow-hidden rounded-xl bg-danger/10 px-3.5 py-2.5 text-sm text-danger"
           >
             {error}
           </motion.p>
@@ -210,7 +210,7 @@ export function PhotoImport({
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="mt-3 overflow-hidden rounded-xl bg-brand-soft px-3.5 py-2.5 text-[13px] text-brand"
+            className="mt-3 overflow-hidden rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm text-brand"
           >
             Draft filled in below. Check every price against the photos before publishing.
             {warnings.length > 0 && (

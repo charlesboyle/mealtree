@@ -10,12 +10,18 @@ const MAX_PHOTOS = 8;
 const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 type MediaType = (typeof MEDIA_TYPES)[number];
 
-const Priced = z.object({ label: z.string(), price: z.number() });
+const Priced = z.object({
+  label: z.string(),
+  label_ar: z.string().describe("Arabic label if printed, else empty string"),
+  price: z.number(),
+});
+const AR = "Arabic text exactly as printed on the menu, or empty string if the menu has none. Never translate.";
 
 const Extraction = z.object({
   restaurant: z.object({
-    name: z.string().describe("Restaurant name as printed, or empty string"),
-    cuisine: z.array(z.string()).describe("1-3 short cuisine labels, e.g. Mexican, Taquería"),
+    name: z.string().describe("Restaurant name in Latin script as printed, or empty string"),
+    name_ar: z.string().describe(AR),
+    cuisine: z.array(z.string()).describe("1-3 short English cuisine labels, e.g. Lebanese, Shawarma, Emirati"),
     phone: z.string().describe("Phone number as printed, or empty string"),
     address: z.string().describe("Street address as printed, or empty string"),
     hours: z
@@ -30,16 +36,20 @@ const Extraction = z.object({
   }),
   menus: z.array(
     z.object({
-      name: z.string().describe('e.g. "Menu", "Lunch", "Dinner", "Drinks"'),
+      name: z.string().describe('e.g. "Menu", "Breakfast", "Drinks"'),
+      name_ar: z.string().describe(AR),
       note: z.string().describe("Menu-wide note such as 'Cash only', or empty string"),
       sections: z.array(
         z.object({
           name: z.string(),
+          name_ar: z.string().describe(AR),
           description: z.string().describe("Section note as printed, or empty string"),
           items: z.array(
             z.object({
-              name: z.string(),
-              description: z.string().describe("As printed; empty string if none. Never invent one."),
+              name: z.string().describe("English / Latin-script name as printed"),
+              name_ar: z.string().describe(AR),
+              description: z.string().describe("English description as printed; empty string if none. Never invent one."),
+              description_ar: z.string().describe(AR),
               price: z.number().nullable().describe("Base price as a number; null if not shown or market price"),
               price_note: z.string().describe('e.g. "Market price"; empty string otherwise'),
               variants: z.array(Priced).describe("Sizes or options with their own prices"),
@@ -59,10 +69,11 @@ const Extraction = z.object({
 const SYSTEM = `You transcribe restaurant menus from photos into structured data for a public menu page.
 
 Accuracy matters more than completeness: diners will see these prices.
-- Copy dish names, descriptions, and prices exactly as printed. Do not invent, embellish, or translate descriptions.
-- Prices are plain numbers without currency symbols. "Market price" or a missing price means price null with a price_note.
+- Menus are from the UAE and are often bilingual. Put English (or Latin-script) text in name/description and the Arabic text printed alongside it in name_ar/description_ar. Copy both exactly as printed; never translate between them. If a dish is printed only in Arabic, give a short Latin transliteration as its name and add a warning.
+- Copy dish names, descriptions, and prices exactly as printed. Do not invent or embellish.
+- Prices are in AED (dirhams, "Dhs", "د.إ"). Give plain numbers without currency symbols; read Arabic-Indic digits (١٢) as normal numbers. "Market price" or a missing price means price null with a price_note.
 - Sizes or options with their own prices (Small/Large, Glass/Bottle, Half/Whole) go in variants; the base price is the cheapest.
-- Priced extras ("add chicken +$3") go in add_ons.
+- Priced extras ("add chicken +3") go in add_ons.
 - Only add dietary tags the menu itself marks. Don't infer vegan from ingredients.
 - Keep the menu's section order. Use separate menus only when the photos clearly show separate menus (e.g. lunch vs. drinks).
 - Several photos may overlap or show the same page twice; list each dish once.
@@ -72,7 +83,7 @@ export type ExtractResult =
   | {
       ok: true;
       menus: Menu[];
-      restaurant: { name: string; cuisine: string[]; phone: string; address: string; hours: Hours | null };
+      restaurant: { name: string; nameAr?: string; cuisine: string[]; phone: string; address: string; hours: Hours | null };
       warnings: string[];
     }
   | { ok: false; error: string };
@@ -117,24 +128,30 @@ function toMenus(data: z.infer<typeof Extraction>): Menu[] {
       return {
         id: uniqueId(m.name || "menu", menuIds),
         name: m.name || "Menu",
+        nameAr: m.name_ar.trim() || undefined,
         note: m.note || undefined,
         sections: m.sections
           .filter((s) => s.items.length)
           .map((s) => ({
             id: uniqueId(s.name || "section", sectionIds),
             name: s.name || "Menu",
+            nameAr: s.name_ar.trim() || undefined,
             description: s.description || undefined,
             items: s.items.map((i): MenuItem => {
-              const variants = i.variants.filter((v) => v.price > 0);
+              const priced = (list: z.infer<typeof Priced>[]) =>
+                list.map((v) => ({ label: v.label, labelAr: v.label_ar.trim() || undefined, price: v.price }));
+              const variants = priced(i.variants.filter((v) => v.price > 0));
               const base = i.price ?? (variants.length ? Math.min(...variants.map((v) => v.price)) : null);
               return {
                 id: uniqueId(i.name, ids),
                 name: i.name.trim(),
+                nameAr: i.name_ar.trim() || undefined,
                 description: i.description.trim() || undefined,
+                descriptionAr: i.description_ar.trim() || undefined,
                 price: base,
                 priceNote: base === null ? i.price_note || "Ask" : i.price_note || undefined,
                 variants: variants.length > 1 ? variants : undefined,
-                addOns: i.add_ons.length ? i.add_ons : undefined,
+                addOns: i.add_ons.length ? priced(i.add_ons) : undefined,
                 tags: i.tags.length ? ([...new Set(i.tags)] as DietTag[]) : undefined,
               };
             }),
@@ -208,6 +225,7 @@ export async function extractMenu(form: FormData): Promise<ExtractResult> {
       menus,
       restaurant: {
         name: data.restaurant.name.trim(),
+        nameAr: data.restaurant.name_ar.trim() || undefined,
         cuisine: data.restaurant.cuisine.filter(Boolean).slice(0, 3),
         phone: data.restaurant.phone.trim(),
         address: data.restaurant.address.trim(),

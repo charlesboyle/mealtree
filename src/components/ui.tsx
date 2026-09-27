@@ -25,7 +25,7 @@ export function Switch({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative flex h-[26px] w-[44px] shrink-0 items-center rounded-full p-[3px] transition-[background-color,opacity] duration-200 disabled:opacity-40",
+        "relative flex h-6.5 w-11 shrink-0 items-center rounded-full p-[3px] transition-[background-color,opacity] duration-200 disabled:opacity-40",
         checked ? "justify-end bg-accent" : "justify-start bg-surface-3",
         className,
       )}
@@ -49,13 +49,13 @@ export function Card({
   flush?: boolean;
   children: React.ReactNode;
 }) {
-  return <section className={cn("rounded-[24px] bg-surface ring-1 ring-line", !flush && "p-5", className)}>{children}</section>;
+  return <section className={cn("rounded-xl border border-line bg-surface", !flush && "p-5", className)}>{children}</section>;
 }
 
 export function CardTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="mb-4 flex items-center justify-between gap-3">
-      <h2 className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">{children}</h2>
+      <h2 className="text-base font-semibold text-ink">{children}</h2>
       {action}
     </div>
   );
@@ -70,7 +70,7 @@ export function Button({
     <button
       {...props}
       className={cn(
-        "pressable inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold disabled:pointer-events-none disabled:opacity-40",
+        "pressable inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-base font-semibold disabled:pointer-events-none disabled:opacity-40",
         variant === "primary" && "bg-ink text-bg hover:opacity-90",
         variant === "accent" && "bg-accent text-on-accent hover:opacity-90",
         variant === "secondary" && "bg-surface-2 text-ink hover:bg-surface-3",
