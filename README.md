@@ -34,7 +34,7 @@ Public pages live under `/en/…` and `/ar/…`. A bare URL (`/r/slug` on a QR c
 ## How it's put together
 
 - **Next.js 16 (App Router) + React 19 + Tailwind CSS 4 + Motion.** Every route is prerendered and refreshed from the database every 5 minutes, so menu pages stay fast and indexable.
-- **Data**: server pages load restaurants through `src/lib/data.ts`, from Supabase when configured, otherwise from `src/data/restaurants.ts`. Types are in `src/lib/types.ts`. Views and other stats are still deterministic mock numbers from `src/data/helpers.ts`.
+- **Data**: server pages load restaurants through `src/lib/data.ts`, from Supabase when configured, otherwise from `src/data/restaurants.ts`. Types are in `src/lib/types.ts`.
 - **Brand color**: each restaurant has one `accent` hex. `src/lib/accent.ts` derives light/dark variants and a readable text color, applied through `[data-accent]` CSS variables.
 - **Owner edits** (claim, sold-out, price, Google link request) go through `src/lib/store.ts`. With Supabase configured they're saved to the database and every visitor sees them right away, because the menu page loads edits in the browser rather than waiting for the 5-minute refresh. Without Supabase they're kept in `localStorage`.
 - **Languages** (`src/i18n`): `config.ts` (locales, cookie, redirects), `dictionaries/en.ts` + `ar.ts` (every UI string; Arabic plurals are handled in `ar.ts`), `format.ts` (AED prices, 12-hour times, dates, `+971` phone numbers; Western digits in both languages, as UAE menus print them). Client components call `useI18n()`, server components `getI18n()` (via `next/root-params`). `/[lang]` and `/ops` are separate root layouts, so `<html lang dir>` is set per language, and unmatched URLs fall to `app/global-not-found.tsx`.
@@ -51,7 +51,8 @@ mealtree lives in its own **`mealtree` schema** inside the existing Ketticho pro
 
 | Table | Purpose | Public access |
 | --- | --- | --- |
-| `mealtree.restaurants` | Restaurant info (with `*_ar` Arabic columns and `currency`, default AED) plus menus (as JSON), `claimed_at`, placeholder `stats` | read |
+| `mealtree.restaurants` | Restaurant info (with `*_ar` Arabic columns and `currency`, default AED) plus menus (as JSON), `claimed_at` | read |
+| `mealtree.events` | Anonymous usage: page views, link clicks, dish opens (see Analytics) | none (write via `track_event`, read aggregates via `restaurant_stats`) |
 | `mealtree.item_overrides` | Per-dish owner edits: `sold_out`, `price` | read |
 | `mealtree.owners` | Verified owner per restaurant: name, role, Google opt-in, SHA-256 hash of the claim token | none |
 
@@ -73,6 +74,15 @@ All writes go through `SECURITY DEFINER` functions: `claim_restaurant`, `owner_s
 
 Adds `name_ar`, `tagline_ar`, `neighborhood_ar`, `address_ar` and `currency` (default `AED`) to `mealtree.restaurants`, makes `Asia/Dubai` the default time zone, and updates `admin_upsert_restaurant` to save them. The 8 SF placeholder restaurants were replaced by the Dubai set.
 
+### Analytics (migration `20260928120000_events.sql`)
+
+Real numbers replace the old placeholder `stats` column (dropped).
+- **What's recorded** (`src/lib/track.ts`): one `view` per restaurant per browser session, `dish_open` when a dish sheet opens, and `link_click` for call, directions, order, reserve and other link buttons. Each event keeps only the traffic source (`utm_source`, else the referring site's hostname), and the page language. No IP, user agent or visitor id.
+- **Not counted**: the owner viewing their own page (their browser holds the claim token), and automated browsers. Tests opt in with `localStorage["mealtree:track-in-tests"]`.
+- **QR scans** are views with `utm_source=qr`, which every table QR code carries. Share links carry `instagram`, `google` or `delivery`.
+- **Reading**: `restaurant_stats(slug)` returns the last 30 days in the restaurant's time zone: daily views, totals, a 14-vs-14-day trend (null until there's a previous period), top dishes and top sources. The claim pitch and dashboard use it (the dashboard refreshes it in the browser); `admin_overview` includes it for `/ops`.
+- `track_event` only accepts known kinds for published restaurants and drops events past 300 a minute per restaurant.
+
 ### Menu photos → Claude
 
 `src/app/ops/extract-action.ts` sends up to 8 photos (downscaled in the browser to 1600px) to `claude-opus-5`. Bilingual menus come back with the Arabic names and descriptions as printed (never translated), prices in AED. It uses structured outputs (zod schema), adaptive thinking at `medium` effort, and server-side refusal fallbacks (`fallbacks: "default"`). The result is a draft; nothing is published until you save. It needs `ANTHROPIC_API_KEY` set on the server. Without it the editor still works, and the photo button shows a clear error.
@@ -91,6 +101,5 @@ Adds `name_ar`, `tagline_ar`, `neighborhood_ar`, `address_ar` and `currency` (de
 - Automated owner verification (SMS/email codes) to replace calling each restaurant, multiple owners per restaurant, an audit log of edits, and rate limits on public endpoints.
 - Uploading your own photos to storage (the editor takes image URLs for now).
 - An ingestion pipeline: menu photo → OCR/LLM extraction → human QA → publish, with a `verifiedAt` date per menu.
-- Real view and QR-scan analytics (`utm_source` is already on every share/QR link).
 - Google Business Profile integration for owners who opt in during the claim flow.
 - Real dish photos for the Dubai set (placeholder data reuses the few Unsplash photos that match), and other emirates beyond Dubai.

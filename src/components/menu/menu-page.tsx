@@ -20,6 +20,7 @@ import { accentStyle } from "@/lib/accent";
 import { cn, itemMinPrice } from "@/lib/format";
 import { parseQuery, scoreItem, sectionText } from "@/lib/search";
 import { useOverrides } from "@/lib/store";
+import { track } from "@/lib/track";
 import type { MenuItem, MenuSection, Restaurant } from "@/lib/types";
 import { type Filter, FilterChips } from "./filter-chips";
 import { InfoSection } from "./info-card";
@@ -174,6 +175,9 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     if (window.scrollY > top) window.scrollTo({ top });
   }, [deferredQuery, filters, menuId]);
 
+  // One anonymous view per session, for the owner's dashboard.
+  useEffect(() => track(r.slug, i18n.locale, { kind: "view" }), [r.slug, i18n.locale]);
+
   // ——— Deep links: /r/slug#dish-<id> ———
   const allItems = useMemo(() => r.menus.flatMap((m) => m.sections.flatMap((s) => s.items)), [r.menus]);
   useEffect(() => {
@@ -181,6 +185,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
       const id = location.hash.match(/^#dish-(.+)$/)?.[1];
       const item = id && allItems.find((i) => i.id === decodeURIComponent(id));
       setOpenItem(item ? applyOverrides(item) : null);
+      if (item) track(r.slug, i18n.locale, { kind: "dish_open", itemId: item.id });
     };
     fromHash();
     window.addEventListener("hashchange", fromHash);
@@ -189,10 +194,14 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openDish = useCallback((item: MenuItem) => {
-    setOpenItem(item);
-    history.replaceState(null, "", `#dish-${item.id}`);
-  }, []);
+  const openDish = useCallback(
+    (item: MenuItem) => {
+      setOpenItem(item);
+      history.replaceState(null, "", `#dish-${item.id}`);
+      track(r.slug, i18n.locale, { kind: "dish_open", itemId: item.id });
+    },
+    [r.slug, i18n.locale],
+  );
   const closeDish = useCallback(() => {
     setOpenItem(null);
     history.replaceState(null, "", location.pathname + location.search);

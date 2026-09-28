@@ -2,7 +2,7 @@
  * Types for the `mealtree` schema (supabase/migrations). Hand-written so the
  * repo doesn't pull in other apps' schemas that share the Supabase project.
  */
-import type { ExternalLink, Hours, Menu, MenuSource, Restaurant } from "@/lib/types";
+import type { ExternalLink, Hours, Menu, MenuSource, Restaurant, RestaurantStats } from "@/lib/types";
 
 export type RestaurantRow = {
   id: string;
@@ -28,7 +28,6 @@ export type RestaurantRow = {
   verified_at: string;
   google_menu_link: boolean;
   menus: Menu[];
-  stats: Restaurant["stats"];
   claimed_at: string | null;
   published: boolean;
   created_at: string;
@@ -62,7 +61,7 @@ export type RemovalRow = {
 };
 
 export type AdminOverview = {
-  restaurants: (Omit<RestaurantRow, "menus"> & { item_count: number })[];
+  restaurants: (Omit<RestaurantRow, "menus"> & { item_count: number; stats: RestaurantStats })[];
   claims: ClaimRow[];
   removals: RemovalRow[];
 };
@@ -109,6 +108,19 @@ export type Database = {
           google_requested_at: string | null;
         }[];
       };
+      track_event: {
+        Args: {
+          p_slug: string;
+          p_kind: "view" | "link_click" | "dish_open";
+          p_item_id?: string | null;
+          p_link_kind?: string | null;
+          p_source?: string | null;
+          p_referrer?: string | null;
+          p_locale?: string | null;
+        };
+        Returns: undefined;
+      };
+      restaurant_stats: { Args: { p_slug: string }; Returns: RestaurantStats | null };
       request_removal: {
         Args: { p_slug: string; p_name: string; p_contact: string; p_reason: string };
         Returns: undefined;
@@ -194,16 +206,18 @@ export function restaurantToInput(r: Restaurant, published = true): RestaurantIn
   };
 }
 
-const EMPTY_STATS: Restaurant["stats"] = {
+const EMPTY_STATS: RestaurantStats = {
   daily: Array(30).fill(0),
   views30d: 0,
-  trendPct: 0,
+  trendPct: null,
   qrScans30d: 0,
   linkClicks30d: 0,
+  topDishes: [],
+  sources: [],
 };
 
-/** Restaurants added in the admin editor have no stats until tracking exists. */
-export function normalizeStats(stats: Partial<Restaurant["stats"]> | null | undefined): Restaurant["stats"] {
+/** Fills gaps so a missing or partial stats object renders as zeros. */
+export function normalizeStats(stats: Partial<RestaurantStats> | null | undefined): RestaurantStats {
   const s = { ...EMPTY_STATS, ...(stats ?? {}) };
   return { ...s, daily: s.daily?.length ? s.daily : EMPTY_STATS.daily };
 }
@@ -233,6 +247,5 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     verifiedAt: row.verified_at,
     googleMenuLink: row.google_menu_link,
     menus: row.menus,
-    stats: normalizeStats(row.stats),
   };
 }

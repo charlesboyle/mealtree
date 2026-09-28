@@ -80,11 +80,19 @@ export type Restaurant = {
   /** Whether the Google Business Profile has a menu link today. */
   googleMenuLink: boolean;
   menus: Menu[];
-  stats: {
-    views30d: number;
-    trendPct: number;
-    daily: number[];
-    qrScans30d: number;
-    linkClicks30d: number;
-  };
+};
+
+/** Last 30 days, computed from real events (see supabase/migrations/…_events.sql). */
+export type RestaurantStats = {
+  /** Views per day, oldest first, in the restaurant's time zone. */
+  daily: number[];
+  views30d: number;
+  /** Last 14 days vs the 14 before; null until there's a previous period. */
+  trendPct: number | null;
+  /** Views that arrived with utm_source=qr (the table QR codes). */
+  qrScans30d: number;
+  linkClicks30d: number;
+  topDishes: { itemId: string; views: number }[];
+  /** utm_source, else the referring site's host, else "direct". */
+  sources: { source: string; views: number }[];
 };

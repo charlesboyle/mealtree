@@ -7,6 +7,7 @@ import { OpenStatus } from "@/components/open-status";
 import { Photo } from "@/components/photo";
 import { useI18n } from "@/i18n/client";
 import { cn, mapsUrl } from "@/lib/format";
+import { track, type TrackLink } from "@/lib/track";
 import type { ExternalLink, Restaurant } from "@/lib/types";
 
 export function RestaurantHeader({
@@ -68,7 +69,15 @@ function Dot() {
   return <span className="mx-1.5 text-ink-3">·</span>;
 }
 
-type Action = { key: string; href: string; label: string; title?: string; icon: React.ElementType; external?: boolean };
+type Action = {
+  key: string;
+  link: TrackLink;
+  href: string;
+  label: string;
+  title?: string;
+  icon: React.ElementType;
+  external?: boolean;
+};
 
 /**
  * Equal-width buttons, icon over label (the Apple Maps pattern): the menu's
@@ -76,12 +85,13 @@ type Action = { key: string; href: string; label: string; title?: string; icon: 
  * Four fit a phone without truncating; Instagram etc. beyond that drop off.
  */
 function ActionRow({ restaurant: r }: { restaurant: Restaurant }) {
-  const { t, pick } = useI18n();
+  const { t, pick, locale } = useI18n();
   const primaryKinds: ExternalLink["kind"][] = ["reserve", "order"];
   const primary = r.links.find((l) => primaryKinds.includes(l.kind));
   const rest = r.links.filter((l) => l !== primary);
   const fromLink = (l: ExternalLink): Action => ({
     key: l.kind + l.url,
+    link: l.kind,
     href: l.url,
     label: t.links[l.kind],
     title: pick(l.label, l.labelAr),
@@ -90,8 +100,8 @@ function ActionRow({ restaurant: r }: { restaurant: Restaurant }) {
   });
   const actions: Action[] = [
     ...(primary ? [fromLink(primary)] : []),
-    { key: "call", href: `tel:${r.phone}`, label: t.menu.call, icon: Phone },
-    { key: "maps", href: mapsUrl(r.address), label: t.menu.directions, icon: MapPin, external: true },
+    { key: "call", link: "call" as const, href: `tel:${r.phone}`, label: t.menu.call, icon: Phone },
+    { key: "maps", link: "maps" as const, href: mapsUrl(r.address), label: t.menu.directions, icon: MapPin, external: true },
     ...rest.map(fromLink),
   ].slice(0, 4);
 
@@ -105,6 +115,7 @@ function ActionRow({ restaurant: r }: { restaurant: Restaurant }) {
             href={a.href}
             title={a.title}
             aria-label={a.title}
+            onClick={() => track(r.slug, locale, { kind: "link_click", link: a.link })}
             {...(a.external ? { target: "_blank", rel: "noopener" } : {})}
             className={cn(
               "pressable flex h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium",

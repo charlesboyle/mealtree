@@ -35,7 +35,8 @@ export function AreaChart({
   const W = 600;
   const H = height;
   const pad = { t: 8, r: 4, b: 22, l: 0 };
-  const max = niceMax(Math.max(...data) * 1.1);
+  // At least 10 so small counts get whole-number ticks (0, 5, 10).
+  const max = Math.max(10, niceMax(Math.max(...data) * 1.1));
   const x = (i: number) => pad.l + (i / (data.length - 1)) * (W - pad.l - pad.r);
   const y = (v: number) => pad.t + (1 - v / max) * (H - pad.t - pad.b);
 

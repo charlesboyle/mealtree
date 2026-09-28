@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n/client";
 import { formatPhone } from "@/i18n/format";
 import { cn, mapsUrl } from "@/lib/format";
 import { nowIn } from "@/lib/hours";
+import { track, type TrackLink } from "@/lib/track";
 import type { Hours, Restaurant } from "@/lib/types";
 
 // The UAE week runs Monday to Sunday (weekend Saturday–Sunday).
@@ -13,6 +14,8 @@ const WEEK: (keyof Hours)[] = [1, 2, 3, 4, 5, 6, 0];
 export function InfoSection({ restaurant: r }: { restaurant: Restaurant }) {
   const i18n = useI18n();
   const { t, pick } = i18n;
+  const click = (link: TrackLink) => () =>
+    track(r.slug, i18n.locale, { kind: "link_click", link });
   const minute = useMinute();
   const today = minute ? nowIn(r.timezone, new Date(minute * 60000)).day : null;
 
@@ -34,13 +37,14 @@ export function InfoSection({ restaurant: r }: { restaurant: Restaurant }) {
       <div className="mt-6 divide-y divide-line border-y border-line">
         <Row
           href={mapsUrl(r.address)}
+          onClick={click("maps")}
           external
           action={t.info.directions}
           primary={pick(r.address, r.addressAr)}
         />
-        <Row href={`tel:${r.phone}`} action={t.info.call} primary={<span className="ltr-isolate">{formatPhone(r.phone)}</span>} />
+        <Row href={`tel:${r.phone}`} onClick={click("call")} action={t.info.call} primary={<span className="ltr-isolate">{formatPhone(r.phone)}</span>} />
         {r.links.map((l) => (
-          <Row key={l.kind + l.url} href={l.url} external action={t.links[l.kind]} primary={pick(l.label, l.labelAr)} />
+          <Row key={l.kind + l.url} href={l.url} onClick={click(l.kind)} external action={t.links[l.kind]} primary={pick(l.label, l.labelAr)} />
         ))}
       </div>
     </section>
@@ -52,8 +56,10 @@ function Row({
   external,
   action,
   primary,
+  onClick,
 }: {
   href: string;
+  onClick: () => void;
   external?: boolean;
   action: string;
   primary: React.ReactNode;
@@ -61,6 +67,7 @@ function Row({
   return (
     <a
       href={href}
+      onClick={onClick}
       {...(external ? { target: "_blank", rel: "noopener" } : {})}
       className="flex items-center gap-4 py-3.5 text-base transition-colors hover:bg-surface-2/50"
     >

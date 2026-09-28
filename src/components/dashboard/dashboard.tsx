@@ -12,28 +12,22 @@ import { formatDayMonth } from "@/i18n/format";
 import { accentStyle } from "@/lib/accent";
 import { cn } from "@/lib/format";
 import { actionErrorMessage, menuActions, useHydrated, useOverrides } from "@/lib/store";
-import type { Restaurant } from "@/lib/types";
+import type { Restaurant, RestaurantStats } from "@/lib/types";
+import { useStats } from "@/lib/use-stats";
 import { AreaChart, Sparkline } from "./area-chart";
 import { MenuEditor } from "./menu-editor";
 import { QrCard } from "./qr-card";
 
-/** Deterministic mock views per dish, weighted toward "popular" items. */
-function topDishes(r: Restaurant, n = 5) {
-  const items = r.menus.flatMap((m) => m.sections.flatMap((s) => s.items));
-  const weights = items.map((i) => {
-    let h = 7;
-    for (const c of i.id) h = (h * 31 + c.charCodeAt(0)) % 997;
-    return (h / 997 + 0.3) * (i.popular ? 2.6 : 1) * (i.image ? 1.4 : 1);
-  });
-  const total = weights.reduce((a, b) => a + b, 0);
-  const pool = r.stats.views30d * 0.62;
-  return items
-    .map((item, i) => ({ item, views: Math.round((weights[i] / total) * pool) }))
-    .sort((a, b) => b.views - a.views)
-    .slice(0, n);
+/** Traffic sources as owners would name them; unknown referrers show their hostname. */
+function sourceKey(source: string) {
+  if (/(^|\.)google\./.test(source) || source === "google") return "google";
+  if (/instagram/.test(source)) return "instagram";
+  if (/whatsapp|^wa\.me$/.test(source)) return "whatsapp";
+  if (/talabat|deliveroo|careem|noon|delivery/.test(source)) return "delivery";
+  return source;
 }
 
-export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
+export function Dashboard({ restaurant: r, initialStats }: { restaurant: Restaurant; initialStats: RestaurantStats }) {
   const i18n = useI18n();
   const { t, pick, href } = i18n;
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
@@ -44,7 +38,8 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
   const name = pick(r.name, r.nameAr);
   // Dates depend on the viewer's clock, so they're filled in after hydration.
   const hydrated = useHydrated();
-  const n = r.stats.daily.length;
+  const stats = useStats(r.slug, initialStats);
+  const n = stats.daily.length;
   const labels = useMemo(() => {
     if (!hydrated) return Array<string>(n).fill("");
     const today = new Date();
@@ -54,14 +49,31 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
       return formatDayMonth(d, i18n.locale);
     });
   }, [hydrated, n, i18n.locale]);
-  const dishes = useMemo(() => topDishes(r), [r]);
+  const dishes = useMemo(() => {
+    const items = new Map(r.menus.flatMap((m) => m.sections.flatMap((s) => s.items)).map((i) => [i.id, i]));
+    return stats.topDishes.flatMap(({ itemId, views }) => {
+      const item = items.get(itemId);
+      return item ? [{ key: itemId, label: pick(item.name, item.nameAr), value: views }] : [];
+    });
+  }, [r.menus, stats.topDishes, pick]);
+  const sources = useMemo(() => {
+    const names = t.dashboard.sourceNames as Record<string, string>;
+    const merged = new Map<string, number>();
+    for (const { source, views } of stats.sources) {
+      const k = sourceKey(source);
+      merged.set(k, (merged.get(k) ?? 0) + views);
+    }
+    return [...merged]
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, value]) => ({ key: k, label: names[k] ?? k, value }));
+  }, [stats.sources, t]);
   const googleLinked = r.googleMenuLink || !!overrides.googleOptIn;
   const greetingName = overrides.ownerName?.split(" ")[0];
 
   const tiles = [
-    { label: t.dashboard.views, value: r.stats.views30d, trend: true },
-    { label: t.dashboard.scans, value: r.stats.qrScans30d },
-    { label: t.dashboard.clicks, value: r.stats.linkClicks30d },
+    { label: t.dashboard.views, value: stats.views30d, trend: true },
+    { label: t.dashboard.scans, value: stats.qrScans30d },
+    { label: t.dashboard.clicks, value: stats.linkClicks30d },
   ];
 
   return (
@@ -127,16 +139,18 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
               <p className="text-sm text-ink-3">{tile.label}</p>
               <div className="mt-1.5 flex items-end justify-between gap-3">
                 <p className="tabular text-3xl font-semibold leading-none">{i18n.compact(tile.value)}</p>
-                {tile.trend && (
+                {tile.trend && stats.views30d > 0 && (
                   <div className="flex items-end gap-3">
-                    <Sparkline data={r.stats.daily.slice(-12)} className="h-7 w-20" />
-                    <span
-                      dir="ltr"
-                      className={cn("text-sm font-semibold", r.stats.trendPct >= 0 ? "text-positive" : "text-danger")}
-                    >
-                      {r.stats.trendPct >= 0 ? "+" : "−"}
-                      {Math.abs(r.stats.trendPct)}%
-                    </span>
+                    <Sparkline data={stats.daily.slice(-12)} className="h-7 w-20" />
+                    {stats.trendPct !== null && (
+                      <span
+                        dir="ltr"
+                        className={cn("text-sm font-semibold", stats.trendPct >= 0 ? "text-positive" : "text-danger")}
+                      >
+                        {stats.trendPct >= 0 ? "+" : "−"}
+                        {Math.abs(stats.trendPct)}%
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -160,29 +174,19 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
           <div className="grid min-w-0 content-start gap-4">
             <Card>
               <CardTitle>{t.dashboard.viewsPerDay}</CardTitle>
-              <AreaChart data={r.stats.daily} labels={labels} valueLabel={t.dashboard.viewsUnit} />
+              <AreaChart data={stats.daily} labels={labels} valueLabel={t.dashboard.viewsUnit} />
+              {stats.views30d === 0 && <p className="mt-3 text-sm text-ink-3">{t.dashboard.noViewsYet}</p>}
             </Card>
             <MenuEditor restaurant={r} canEdit={canEdit} />
           </div>
           <div className="grid min-w-0 content-start gap-4">
             <Card>
               <CardTitle>{t.dashboard.topDishes}</CardTitle>
-              <ol className="space-y-3.5">
-                {dishes.map(({ item, views }) => (
-                  <li key={item.id}>
-                    <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="truncate font-medium">{pick(item.name, item.nameAr)}</span>
-                      <span className="tabular shrink-0 text-ink-2">{i18n.number(views)}</span>
-                    </div>
-                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-accent-soft">
-                      <div
-                        className="h-full animate-[grow_900ms_var(--ease-out-expo)_both] rounded-full bg-accent ltr:origin-left rtl:origin-right"
-                        style={{ width: `${(views / (dishes[0].views || 1)) * 100}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <Meters rows={dishes} empty={t.dashboard.noDishViews} />
+            </Card>
+            <Card>
+              <CardTitle>{t.dashboard.sources}</CardTitle>
+              <Meters rows={sources} empty={t.dashboard.noViewsYet} />
             </Card>
             <QrCard restaurant={r} />
             <ShareCard restaurant={r} />
@@ -190,6 +194,31 @@ export function Dashboard({ restaurant: r }: { restaurant: Restaurant }) {
         </div>
       </main>
     </div>
+  );
+}
+
+/** Ranked bars on a lighter step of the accent, largest first. */
+function Meters({ rows, empty }: { rows: { key: string; label: string; value: number }[]; empty: string }) {
+  const { number } = useI18n();
+  if (!rows.length) return <p className="text-sm text-ink-3">{empty}</p>;
+  const max = rows[0].value || 1;
+  return (
+    <ol className="space-y-3.5">
+      {rows.map((row) => (
+        <li key={row.key}>
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="truncate font-medium">{row.label}</span>
+            <span className="tabular shrink-0 text-ink-2">{number(row.value)}</span>
+          </div>
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-accent-soft">
+            <div
+              className="h-full animate-[grow_900ms_var(--ease-out-expo)_both] rounded-full bg-accent ltr:origin-left rtl:origin-right"
+              style={{ width: `${(row.value / max) * 100}%` }}
+            />
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 

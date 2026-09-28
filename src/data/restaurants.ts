@@ -4,7 +4,7 @@
  * in `src/lib/format.ts`; most scraped menus have none, like real ones.
  */
 import type { Restaurant } from "@/lib/types";
-import { schedule, stats } from "./helpers";
+import { schedule } from "./helpers";
 
 const TZ = "Asia/Dubai";
 // Small places close for Friday prayers.
@@ -214,7 +214,6 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("bait-al-nakheel", 44),
   },
   {
     slug: "qasr-al-shawarma",
@@ -350,7 +349,6 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("qasr-al-shawarma", 138),
   },
   {
     slug: "beit-tayta",
@@ -452,7 +450,6 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("beit-tayta", 96),
   },
   {
     slug: "malabar-tiffin-house",
@@ -544,7 +541,6 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("malabar-tiffin-house", 71),
   },
   {
     slug: "bamiyan-kitchen",
@@ -629,7 +625,6 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("bamiyan-kitchen", 52),
   },
   {
     slug: "hajar-coffee",
@@ -740,7 +735,6 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("hajar-coffee", 88),
   },
   {
     slug: "tsuki-izakaya",
@@ -837,7 +831,6 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("tsuki-izakaya", 64),
   },
   {
     slug: "golestan-kababi",
@@ -916,6 +909,5 @@ export const restaurants: Restaurant[] = [
         ],
       },
     ],
-    stats: stats("golestan-kababi", 58),
   },
 ];

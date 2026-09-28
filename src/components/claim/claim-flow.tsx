@@ -15,7 +15,7 @@ import { maskPhone } from "@/i18n/format";
 import { accentStyle } from "@/lib/accent";
 import { cn } from "@/lib/format";
 import { actionErrorMessage, menuActions, useOverrides } from "@/lib/store";
-import type { Restaurant } from "@/lib/types";
+import type { Restaurant, RestaurantStats } from "@/lib/types";
 import { OtpInput } from "./otp-input";
 
 type Step = "pitch" | "method" | "code" | "details" | "done";
@@ -25,7 +25,7 @@ type Method = "phone" | "email" | "google";
 /** Keeps a phone number in LTR order inside Arabic sentences. */
 const isolate = (s: string) => `⁨${s}⁩`;
 
-export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
+export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; stats: RestaurantStats }) {
   const { t, dir: textDir } = useI18n();
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
   const [step, setStep] = useState<Step>("pitch");
@@ -91,7 +91,7 @@ export function ClaimFlow({ restaurant: r }: { restaurant: Restaurant }) {
             exit="exit"
             transition={{ type: "spring", bounce: 0, duration: 0.35 }}
           >
-            {step === "pitch" && <Pitch restaurant={r} onNext={() => go("method")} />}
+            {step === "pitch" && <Pitch restaurant={r} stats={stats} onNext={() => go("method")} />}
             {step === "method" && (
               <MethodStep restaurant={r} method={method} setMethod={setMethod} onNext={() => go("code")} />
             )}
@@ -125,7 +125,15 @@ function StepTitle({ eyebrow, title, sub }: { eyebrow?: string; title: React.Rea
   );
 }
 
-function Pitch({ restaurant: r, onNext }: { restaurant: Restaurant; onNext: () => void }) {
+function Pitch({
+  restaurant: r,
+  stats,
+  onNext,
+}: {
+  restaurant: Restaurant;
+  stats: RestaurantStats;
+  onNext: () => void;
+}) {
   const { t, pick, href, number } = useI18n();
   const name = pick(r.name, r.nameAr);
   return (
@@ -139,19 +147,21 @@ function Pitch({ restaurant: r, onNext }: { restaurant: Restaurant; onNext: () =
       </div>
 
       <StepTitle
-        title={r.stats.views30d > 0 ? t.claim.viewsTitle(number(r.stats.views30d)) : t.claim.liveTitle}
+        title={stats.views30d > 0 ? t.claim.viewsTitle(number(stats.views30d)) : t.claim.liveTitle}
         sub={t.claim.pitchSub(t.source[r.source])}
       />
 
-      {r.stats.views30d > 0 && (
+      {stats.views30d > 0 && (
         <div className="mt-6 rounded-xl border border-line p-4">
           <div className="flex items-baseline justify-between gap-3 text-sm text-ink-3">
             <span>{t.claim.views30}</span>
-            <span className={cn("font-medium", r.stats.trendPct >= 0 ? "text-positive" : "text-ink-2")}>
-              {t.claim.trend(r.stats.trendPct)}
-            </span>
+            {stats.trendPct !== null && (
+              <span className={cn("font-medium", stats.trendPct >= 0 ? "text-positive" : "text-ink-2")}>
+                {t.claim.trend(stats.trendPct)}
+              </span>
+            )}
           </div>
-          <Sparkline data={r.stats.daily} className="mt-3 h-12 w-full" />
+          <Sparkline data={stats.daily} className="mt-3 h-12 w-full" />
         </div>
       )}
 

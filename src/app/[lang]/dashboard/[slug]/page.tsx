@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { getI18n } from "@/i18n/server";
-import { findRestaurant, listRestaurants } from "@/lib/data";
+import { findRestaurant, getStats, listRestaurants } from "@/lib/data";
 
 // Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
 export const revalidate = 300;
@@ -19,5 +19,5 @@ export async function generateMetadata(props: PageProps<"/[lang]/dashboard/[slug
 export default async function DashboardPage(props: PageProps<"/[lang]/dashboard/[slug]">) {
   const r = await findRestaurant((await props.params).slug);
   if (!r) notFound();
-  return <Dashboard restaurant={r} />;
+  return <Dashboard restaurant={r} initialStats={await getStats(r.slug)} />;
 }
