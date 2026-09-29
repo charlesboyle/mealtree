@@ -1,13 +1,9 @@
-import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
 
-/**
- * IBM Plex has Latin and Arabic cuts drawn as one family, so bilingual menus
- * (and "AED 25" inside Arabic text) keep a single voice.
- */
-export const plex = IBM_Plex_Sans({
-  variable: "--font-plex",
+/** Geist for Latin; IBM Plex Sans Arabic takes over for Arabic script. */
+export const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin", "latin-ext"],
-  weight: "variable",
 });
 
 export const plexArabic = IBM_Plex_Sans_Arabic({
@@ -18,11 +14,10 @@ export const plexArabic = IBM_Plex_Sans_Arabic({
   preload: false,
 });
 
-export const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
+export const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
   preload: false,
 });
 
-export const fontVariables = `${plex.variable} ${plexArabic.variable} ${plexMono.variable}`;
+export const fontVariables = `${geist.variable} ${plexArabic.variable} ${geistMono.variable}`;

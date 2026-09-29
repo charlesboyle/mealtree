@@ -13,9 +13,9 @@ export default async function TermsPage() {
     return (
       <LegalShell title="شروط الاستخدام" lead="شروط بلغة واضحة للزوار والمطاعم. آخر تحديث: سبتمبر 2026.">
         <Prose>
-          <h2>ما هو mealtree</h2>
+          <h2>ما هو nomm</h2>
           <p>
-            ينشر mealtree قوائم طعام المطاعم ليطّلع الزوار على الأطباق والأسعار قبل زيارتهم. نجمع القوائم من زيارات
+            ينشر nomm قوائم طعام المطاعم ليطّلع الزوار على الأطباق والأسعار قبل زيارتهم. نجمع القوائم من زيارات
             شخصية، وصور القوائم المنشورة، ومواقع المطاعم، ومن أصحاب المطاعم أنفسهم.
           </p>
           <h2>قد تكون القوائم قديمة</h2>
@@ -25,7 +25,7 @@ export default async function TermsPage() {
           </p>
           <h2>لسنا تابعين للمطاعم المدرجة</h2>
           <p>
-            نستخدم أسماء المطاعم لتعريفها فقط. إدراج مطعم لا يعني أنه يؤيد mealtree إلى أن يطالب بصفحته.
+            نستخدم أسماء المطاعم لتعريفها فقط. إدراج مطعم لا يعني أنه يؤيد nomm إلى أن يطالب بصفحته.
           </p>
           <h2>للمطاعم</h2>
           <ul>
@@ -44,9 +44,9 @@ export default async function TermsPage() {
   return (
     <LegalShell title="Terms of use" lead="Plain-language terms for diners and restaurants. Last updated September 2026.">
       <Prose>
-        <h2>What mealtree is</h2>
+        <h2>What nomm is</h2>
         <p>
-          mealtree publishes restaurant menus so diners can check dishes and prices before they visit. Menus come from
+          nomm publishes restaurant menus so diners can check dishes and prices before they visit. Menus come from
           in-person visits, public menu photos, restaurant websites, and restaurant owners.
         </p>
         <h2>Menus can be out of date</h2>
@@ -58,7 +58,7 @@ export default async function TermsPage() {
         <h2>We&apos;re not affiliated with listed restaurants</h2>
         <p>
           Restaurant names are used only to identify the restaurant. A listing doesn&apos;t mean the restaurant endorses
-          mealtree until it claims its page.
+          nomm until it claims its page.
         </p>
         <h2>For restaurants</h2>
         <ul>

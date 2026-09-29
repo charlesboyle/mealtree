@@ -13,7 +13,7 @@ export function LoginForm({ next }: { next: string }) {
       <form action={action} className="w-full max-w-sm animate-rise">
         <LogoMark className="size-10" />
         <h1 className="mt-6 text-3xl leading-tight">
-          mealtree ops
+          nomm ops
         </h1>
         <p className="mt-2 text-base text-ink-2">Enter the admin key to manage restaurants, claims, and takedowns.</p>
         <input type="hidden" name="next" value={next} />

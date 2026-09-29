@@ -20,8 +20,8 @@ const places = (n: number) =>
 
 export const ar: Dictionary = {
   meta: {
-    title: "mealtree — قوائم طعام دبي بالأسعار",
-    template: "%s · mealtree",
+    title: "nomm — قوائم طعام دبي بالأسعار",
+    template: "%s · nomm",
     description: "قوائم طعام قابلة للبحث بأسعار وصور حقيقية لمطاعم في أنحاء دبي.",
     menuTitle: (name) => `قائمة ${name} والأسعار`,
     menuDescription: (tagline, name, area) =>
@@ -35,7 +35,7 @@ export const ar: Dictionary = {
     removeDescription: "يمكن لأصحاب المطاعم أن يطلبوا منّا إزالة صفحاتهم.",
   },
   common: {
-    brand: "mealtree",
+    brand: "nomm",
     forRestaurants: "للمطاعم",
     terms: "الشروط",
     privacy: "الخصوصية",
@@ -210,7 +210,7 @@ export const ar: Dictionary = {
     notOwner: "لست صاحب المطعم؟",
     backToMenu: "العودة إلى القائمة",
     viewsTitle: (n) => `حصلت قائمتك على ${n} مشاهدة هذا الشهر.`,
-    liveTitle: "قائمتك متاحة الآن على mealtree.",
+    liveTitle: "قائمتك متاحة الآن على nomm.",
     pitchSub: (source) =>
       `أنشأنا هذه الصفحة من ${source} ليتمكن الضيوف من الاطلاع على أطباقك وأسعارك. طالِب بها لتبقى دقيقة، والأمر مجاني.`,
     views30: "المشاهدات، آخر 30 يومًا",
@@ -339,7 +339,7 @@ export const ar: Dictionary = {
     markedSoldOut: (name) => `${name} نفد`,
   },
   errors: {
-    network: "تعذّر الاتصال بـ mealtree. تحقق من اتصالك وحاول مرة أخرى.",
+    network: "تعذّر الاتصال بـ nomm. تحقق من اتصالك وحاول مرة أخرى.",
     alreadyClaimed: "تمت المطالبة بهذا المطعم مسبقًا.",
     claimPending: "هناك طلب مطالبة بهذا المطعم قيد التحقق الآن.",
     notAuthorized: "صاحب المطعم الموثّق وحده يمكنه تعديل هذه القائمة.",

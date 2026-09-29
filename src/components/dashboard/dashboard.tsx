@@ -79,8 +79,8 @@ export function Dashboard({ restaurant: r, initialStats }: { restaurant: Restaur
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
-          <Link href={href("/")} aria-label="mealtree" className="pressable">
+        <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4 sm:px-5">
+          <Link href={href("/")} aria-label="nomm" className="pressable">
             <LogoMark />
           </Link>
           <span className="text-ink-3">/</span>
@@ -100,7 +100,7 @@ export function Dashboard({ restaurant: r, initialStats }: { restaurant: Restaur
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
+      <main className="mx-auto max-w-2xl px-4 pb-16 pt-6 sm:px-5">
         {overrides.ready && !canEdit && (
           <div className="mb-5 flex animate-fade flex-wrap items-center gap-3 rounded-xl bg-accent-soft px-4 py-3 text-sm text-ink-2">
             <span className="min-w-0 flex-1">
@@ -126,7 +126,7 @@ export function Dashboard({ restaurant: r, initialStats }: { restaurant: Restaur
         </h1>
         <p className="mt-1 text-sm text-ink-3">{t.dashboard.subtitle(i18n.date(r.verifiedAt))}</p>
 
-        <div className="mt-5 grid grid-cols-2 overflow-hidden rounded-xl border border-line lg:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 overflow-hidden rounded-xl border border-line">
           {tiles.map((tile, i) => (
             <div
               key={tile.label}
@@ -170,7 +170,7 @@ export function Dashboard({ restaurant: r, initialStats }: { restaurant: Restaur
           />
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="mt-4 grid grid-cols-1 gap-4">
           <div className="grid min-w-0 content-start gap-4">
             <Card>
               <CardTitle>{t.dashboard.viewsPerDay}</CardTitle>

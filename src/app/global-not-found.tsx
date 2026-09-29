@@ -3,7 +3,7 @@ import Link from "next/link";
 import { fontVariables } from "./fonts";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "Not found · mealtree" };
+export const metadata: Metadata = { title: "Not found · nomm" };
 
 /** For URLs outside /en, /ar and /ops (the proxy redirects almost everything else). */
 export default function GlobalNotFound() {

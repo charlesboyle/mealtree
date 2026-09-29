@@ -1,4 +1,4 @@
-# mealtree: every menu in Dubai, searchable
+# nomm: every menu in Dubai, searchable
 
 *Working name. One page, September 2026.*
 
@@ -26,7 +26,7 @@ One clean, fast menu page per restaurant (like Linktree, but for menus), in Engl
 
 ## What exists today
 
-Bilingual (RTL) public menu pages, cross-restaurant dish search, claim flow, owner dashboard with real analytics (views, QR scans, link clicks, top dishes, traffic sources), inline price and sold-out editing, QR codes, takedown requests, and an admin tool that turns menu photos into structured menus with Claude. Live at mealtree-zeta.vercel.app. Built on Next.js, Supabase and Vercel.
+Bilingual (RTL) public menu pages, cross-restaurant dish search, claim flow, owner dashboard with real analytics (views, QR scans, link clicks, top dishes, traffic sources), inline price and sold-out editing, QR codes, takedown requests, and an admin tool that turns menu photos into structured menus with Claude. Live at nomm-zeta.vercel.app. Built on Next.js, Supabase and Vercel.
 
 ## The test (next 2 weeks)
 

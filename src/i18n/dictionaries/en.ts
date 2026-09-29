@@ -4,8 +4,8 @@ const plural = (n: number, one: string, other: string) => (n === 1 ? one : other
 
 export const en = {
   meta: {
-    title: "mealtree — Dubai menus with prices",
-    template: "%s · mealtree",
+    title: "nomm — Dubai menus with prices",
+    template: "%s · nomm",
     description: "Searchable menus with real prices and photos for restaurants across Dubai.",
     menuTitle: (name: string) => `${name} menu & prices`,
     menuDescription: (tagline: string, name: string, area: string) =>
@@ -16,10 +16,10 @@ export const en = {
     terms: "Terms",
     privacy: "Privacy",
     remove: "Remove a restaurant page",
-    removeDescription: "Restaurant owners can ask us to take their mealtree page down.",
+    removeDescription: "Restaurant owners can ask us to take their nomm page down.",
   },
   common: {
-    brand: "mealtree",
+    brand: "nomm",
     forRestaurants: "For restaurants",
     terms: "Terms",
     privacy: "Privacy",
@@ -174,7 +174,7 @@ export const en = {
     notOwner: "Not the owner?",
     backToMenu: "Back to the menu",
     viewsTitle: (n: string) => `${n} people looked at your menu this month.`,
-    liveTitle: "Your menu is live on mealtree.",
+    liveTitle: "Your menu is live on nomm.",
     pitchSub: (source: string) =>
       `We built this page from ${source} so guests can check your dishes and prices. Claim it to keep it accurate. It's free.`,
     views30: "Views, last 30 days",
@@ -305,7 +305,7 @@ export const en = {
     markedSoldOut: (name: string) => `${name} marked sold out`,
   },
   errors: {
-    network: "Couldn't reach mealtree. Check your connection and try again.",
+    network: "Couldn't reach nomm. Check your connection and try again.",
     alreadyClaimed: "This restaurant was already claimed.",
     claimPending: "Someone already asked to claim this restaurant. We're verifying it now.",
     notAuthorized: "Only the verified owner can edit this menu.",

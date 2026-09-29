@@ -27,15 +27,15 @@
   --on-accent-light: #ffffff;
   --on-accent-dark: #0c0c0b;
 
-  /* Latin first; Arabic glyphs fall through to Plex Sans Arabic. */
-  --font-stack: var(--font-plex), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
+  /* Latin first; Arabic glyphs fall through to IBM Plex Sans Arabic. */
+  --font-stack: var(--font-geist), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
 
   color-scheme: light;
 }
 
 /* In Arabic, digits and punctuation come from the Arabic cut so mixed runs share one rhythm. */
 :root:lang(ar) {
-  --font-stack: var(--font-plex-arabic), var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --font-stack: var(--font-plex-arabic), var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Re-declared on [data-accent] so an inline brand color re-resolves there. */
@@ -141,7 +141,7 @@
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --font-sans: var(--font-stack);
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --animate-rise: rise 420ms var(--ease-out-expo) both;
   --animate-fade: fade 280ms ease-out both;
@@ -185,7 +185,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-    /* Uses unhinted glyph advances; with hinting, Chromium on Linux spaces Plex unevenly ("Direct ions"). */
+    /* Uses unhinted glyph advances; with hinting, Chromium on Linux spaces the font unevenly ("Direct ions"). */
     text-rendering: geometricPrecision;
   }
 

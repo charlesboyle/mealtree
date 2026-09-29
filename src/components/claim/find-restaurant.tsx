@@ -22,11 +22,11 @@ export function FindRestaurant({ restaurants }: { restaurants: Restaurant[] }) {
 
   return (
     <div className="min-h-dvh">
-      <header className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
+      <header className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
         <Logo />
         <LanguageToggle className="-me-2" />
       </header>
-      <main className="mx-auto max-w-lg px-4 pb-16">
+      <main className="mx-auto max-w-2xl px-4 pb-16">
         <p className="mt-6 text-sm font-medium text-brand">{t.find.eyebrow}</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">{t.find.title}</h1>
         <p className="mt-3 text-base text-ink-2">{t.find.lead}</p>

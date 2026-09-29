@@ -53,7 +53,7 @@ export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; st
 
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg">
-      <header className="mx-auto flex h-14 max-w-lg items-center gap-3 px-4">
+      <header className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
         {step !== "pitch" && step !== "done" ? (
           <button
             onClick={back}
@@ -76,7 +76,7 @@ export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; st
         <LanguageToggle className="-me-2" />
       </header>
 
-      <main className="mx-auto max-w-lg overflow-hidden px-4 pb-16">
+      <main className="mx-auto max-w-2xl overflow-hidden px-4 pb-16">
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div
             key={step}

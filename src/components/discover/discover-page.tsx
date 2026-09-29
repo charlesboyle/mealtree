@@ -72,7 +72,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
 
   return (
     <div className="min-h-dvh">
-      <header className="mx-auto flex h-14 max-w-5xl items-center gap-1 px-4 sm:px-6">
+      <header className="mx-auto flex h-14 max-w-2xl items-center gap-1 px-4 sm:px-5">
         <Logo />
         <span className="ms-2 text-sm text-ink-3">{t.common.city}</span>
         <div className="ms-auto flex items-center gap-1">
@@ -86,7 +86,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
         </div>
       </header>
 
-      <section className="mx-auto max-w-5xl px-4 pb-4 pt-6 sm:px-6 sm:pt-12">
+      <section className="mx-auto max-w-2xl px-4 pb-4 pt-6 sm:px-5 sm:pt-12">
         <div className="max-w-2xl">
           <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{t.discover.title}</h1>
           <p className="mt-2 text-base text-ink-2 sm:text-md">{t.discover.lead(restaurants.length)}</p>
@@ -94,7 +94,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
       </section>
 
       <div className="sticky top-0 z-20 bg-bg/95 pb-3 pt-2 backdrop-blur-md">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="mx-auto max-w-2xl px-4 sm:px-5">
           <div className="max-w-2xl">
             <SearchBox value={query} onChange={setQuery} label={t.discover.searchLabel} />
             <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -108,7 +108,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
         </div>
       </div>
 
-      <main className="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+      <main className="mx-auto max-w-2xl px-4 pb-20 sm:px-5">
         {!query && (
           <p className="max-w-2xl pb-2 pt-1 text-sm text-ink-3">
             {t.discover.try}:{" "}
@@ -135,7 +135,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
               {matchedRestaurants.length > 0 && (
                 <div className="mb-8">
                   <SectionLabel>{t.discover.restaurants}</SectionLabel>
-                  <div className="divide-y divide-line sm:grid sm:grid-cols-2 sm:gap-6 sm:divide-y-0">
+                  <div className="divide-y divide-line">
                     {matchedRestaurants.slice(0, 4).map((r) => (
                       <RestaurantCard key={r.slug} restaurant={r} />
                     ))}
@@ -178,7 +178,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
                 {quick.includes("open") ? t.discover.openNow : t.discover.all}
                 <span className="font-normal text-ink-3"> · {t.discover.count(pool.length)}</span>
               </SectionLabel>
-              <div className="divide-y divide-line sm:grid sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 sm:divide-y-0 lg:grid-cols-3">
+              <div className="divide-y divide-line">
                 {pool.map((r, i) => (
                   <RestaurantCard key={r.slug} restaurant={r} priority={i < 3} />
                 ))}
@@ -190,7 +190,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
       </main>
 
       <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex max-w-2xl flex-col gap-3 px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <p>{t.discover.footer}</p>
           <nav className="flex gap-4">
             <Link href={href("/terms")} className="hover:text-ink">

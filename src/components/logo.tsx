@@ -29,7 +29,7 @@ export function Logo({ className }: { className?: string }) {
       className={cn("pressable inline-flex items-center gap-2 text-base font-semibold text-ink", className)}
     >
       <LogoMark />
-      <span lang="en">mealtree</span>
+      <span lang="en">nomm</span>
     </Link>
   );
 }

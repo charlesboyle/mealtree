@@ -558,7 +558,7 @@ function Footer({ restaurant: r, claimed }: { restaurant: Restaurant; claimed: b
       >
         <LogoMark className="size-4" /> {t.menu.madeWith}{" "}
         <span lang="en" className="font-semibold text-ink">
-          mealtree
+          nomm
         </span>
       </Link>
       <nav className="mt-2 flex justify-center gap-4">

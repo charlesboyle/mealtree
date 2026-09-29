@@ -1,8 +1,8 @@
-# mealtree
+# nomm
 
 Menu pages for restaurants, like Linktree but for menus: mobile-first, searchable, with prices and photos. It launches in the UAE: prices are in AED, times are in Dubai time, and every public page is in **English and Arabic (RTL)** with a language toggle. The MVP runs on placeholder data for 8 fictional Dubai restaurants (Emirati, shawarma, Lebanese, Kerala, Afghan, specialty coffee, Japanese, Iranian).
 
-**Live:** https://mealtree-zeta.vercel.app (Vercel project `mealtree`, deploys from this repo; admin at `/ops`).
+**Live:** https://nomm.ae (domain nomm.ae; Vercel project `mealtree`, deploys from this repo; admin at `/ops`). The database schema and env var names still use the old `mealtree` name on purpose; renaming them would need a migration.
 
 ## Run it
 
@@ -47,7 +47,7 @@ Public pages live under `/en/…` and `/ar/…`. A bare URL (`/r/slug` on a QR c
 
 ## Backend (Supabase)
 
-mealtree lives in its own **`mealtree` schema** inside the existing Ketticho project (Pro org). It doesn't touch Ketticho's `public` tables.
+nomm lives in its own **`mealtree` schema** inside the existing Ketticho project (Pro org). It doesn't touch Ketticho's `public` tables.
 
 | Table | Purpose | Public access |
 | --- | --- | --- |
