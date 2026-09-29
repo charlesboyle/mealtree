@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
+import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/components/providers";
 import { dirOf, hasLocale, locales } from "@/i18n/config";
 import { I18nProvider } from "@/i18n/client";
@@ -42,6 +43,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
         <I18nProvider locale={lang}>
           <Providers>{children}</Providers>
         </I18nProvider>
+        <Analytics />
       </body>
     </html>
   );
