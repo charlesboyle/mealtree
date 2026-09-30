@@ -30,6 +30,8 @@ import { RestaurantHeader } from "./restaurant-header";
 
 const TOPBAR = 56;
 const TABBAR = 52;
+/** Extra height of the group row, shown above the section tabs on long menus. */
+const GROUPBAR = 44;
 
 type ViewSection = MenuSection & { key: string; label: string };
 
@@ -96,7 +98,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     return set;
   }, [r.menus]);
 
-  // Long menus can group sections ('Grills', 'Drinks'): groups become a bottom bar, sections stay as pills up top.
+  // Long menus can group sections ('Grills', 'Drinks'): a row of groups above the section tabs.
   const groups = useMemo(() => {
     if (hasQuery || searching) return [];
     const seen = new Map<string, { key: string; label: string; first: string }>();
@@ -104,7 +106,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
       if (s.group && !seen.has(s.group)) seen.set(s.group, { key: s.group, label: pick(s.group, s.groupAr), first: s.key });
     return seen.size > 1 ? [...seen.values()] : [];
   }, [sections, hasQuery, searching, pick]);
-  const tabbar = TABBAR;
+  const tabbar = TABBAR + (groups.length ? GROUPBAR : 0);
 
   const resultCount = sections.reduce((n, s) => n + s.items.length, 0);
   const narrowed = hasQuery || filters.length > 0;
@@ -223,7 +225,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
   };
 
   return (
-    <div data-accent style={style} className={cn("min-h-dvh bg-bg pb-10", groups.length > 0 && "pb-28")}>
+    <div data-accent style={style} className="min-h-dvh bg-bg pb-10">
       <TopBar restaurant={r} name={name} compact={compact} />
 
       <RestaurantHeader restaurant={r} claimed={claimed} titleRef={titleRef} />
@@ -237,6 +239,14 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
         )}
       >
         <div className="mx-auto max-w-2xl px-4 sm:px-5">
+          {groups.length > 0 && (
+            <GroupTabs
+              groups={groups}
+              active={sections.find((s) => s.key === active)?.group}
+              onSelect={(g) => jumpTo(g.first)}
+              label={t.menu.sections}
+            />
+          )}
           <AnimatePresence mode="popLayout" initial={false}>
             {searching ? (
               <motion.div
@@ -357,14 +367,6 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
         <Footer restaurant={r} claimed={claimed} />
       </main>
 
-      {groups.length > 0 && (
-        <GroupBar
-          groups={groups}
-          active={sections.find((sec) => sec.key === active)?.group}
-          onSelect={(g) => jumpTo(g.first)}
-          label={t.menu.sections}
-        />
-      )}
       <ItemSheet item={openItem} onClose={closeDish} claimed={claimed} accentStyle={style} currency={r.currency} />
     </div>
   );
@@ -429,7 +431,7 @@ function TopBar({ restaurant: r, name, compact }: { restaurant: Restaurant; name
   );
 }
 
-function GroupBar({
+function GroupTabs({
   groups,
   active,
   onSelect,
@@ -441,11 +443,11 @@ function GroupBar({
   label: string;
 }) {
   const strip = useRef<HTMLDivElement>(null);
-  const tabs = useRef(new Map<string, HTMLButtonElement>());
+  const chips = useRef(new Map<string, HTMLButtonElement>());
 
-  // Keep the active group centered (rect-based, so it works in RTL too).
+  // Keep the active group in view (rect-based, so it works in RTL too).
   useEffect(() => {
-    const el = active && tabs.current.get(active);
+    const el = active && chips.current.get(active);
     const container = strip.current;
     if (!el || !container) return;
     const a = el.getBoundingClientRect();
@@ -454,38 +456,41 @@ function GroupBar({
   }, [active]);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <div ref={strip} role="tablist" aria-label={label} className="no-scrollbar mx-auto flex max-w-2xl overflow-x-auto">
-        {groups.map((g) => {
-          const on = active === g.key;
-          return (
-            <button
-              key={g.key}
-              ref={(el) => {
-                if (el) tabs.current.set(g.key, el);
-                else tabs.current.delete(g.key);
-              }}
-              role="tab"
-              aria-selected={on}
-              onClick={() => onSelect(g)}
-              className={cn(
-                "pressable relative h-14 shrink-0 whitespace-nowrap px-5 text-sm font-semibold transition-colors duration-200",
-                on ? "text-accent" : "text-ink-3 hover:text-ink-2",
-              )}
-            >
-              {on && (
-                <motion.span
-                  layoutId="group-tab"
-                  className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-accent"
-                  transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
-                />
-              )}
-              {g.label}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+    <div
+      ref={strip}
+      role="tablist"
+      aria-label={label}
+      className="no-scrollbar -mx-4 flex h-11 items-stretch overflow-x-auto px-1 sm:-mx-5 sm:px-2"
+    >
+      {groups.map((g) => {
+        const on = active === g.key;
+        return (
+          <button
+            key={g.key}
+            ref={(el) => {
+              if (el) chips.current.set(g.key, el);
+              else chips.current.delete(g.key);
+            }}
+            role="tab"
+            aria-selected={on}
+            onClick={() => onSelect(g)}
+            className={cn(
+              "pressable relative shrink-0 whitespace-nowrap px-3.5 text-sm font-semibold transition-colors duration-200",
+              on ? "text-ink" : "text-ink-3 hover:text-ink-2",
+            )}
+          >
+            {g.label}
+            {on && (
+              <motion.span
+                layoutId="group-tab"
+                className="absolute inset-x-3.5 -bottom-px h-0.5 rounded-full bg-accent"
+                transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+              />
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
