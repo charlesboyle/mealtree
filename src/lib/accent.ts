@@ -29,6 +29,9 @@ const mix = (a: RGB, b: RGB, t: number): RGB => [
   a[2] + (b[2] - a[2]) * t,
 ];
 
+/** The accent every restaurant page uses while restaurant colors are off. */
+const NEUTRAL_ACCENT = "#1a1917";
+
 const WHITE: RGB = [255, 255, 255];
 const INK: RGB = [23, 20, 15];
 const DARK_BG: RGB = [23, 22, 20];
@@ -41,7 +44,10 @@ const onColor = (bg: RGB) => (contrast(bg, WHITE) >= 3.4 ? "#ffffff" : "#17140f"
  * white and ink depending on contrast.
  */
 export function accentStyle(hex: string): CSSProperties {
-  const base = hexToRgb(hex);
+  // Per-restaurant colors are switched off for now: every page uses the neutral
+  // ink accent. To bring them back, delete this line (and the editor field's removal).
+  const base = hexToRgb(NEUTRAL_ACCENT);
+  void hex;
   let dark = base;
   for (let t = 0.12; contrast(dark, DARK_BG) < 4.5 && t <= 0.9; t += 0.06) {
     dark = mix(base, WHITE, t);

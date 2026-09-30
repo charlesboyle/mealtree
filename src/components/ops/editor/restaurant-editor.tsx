@@ -18,7 +18,6 @@ import { dayNames, parseRanges, rangesToText } from "@/lib/hours";
 import type { RestaurantInput } from "@/lib/supabase/database";
 import type { ExternalLink as Link_, Hours, LinkKind, Menu, MenuSource } from "@/lib/types";
 import { Field, Section, Segmented, TextInput, inputClass } from "./fields";
-import { ACCENTS } from "@/lib/admin/blank";
 import { MenuBuilder, allItemIds } from "./menu-builder";
 import { PhotoImport } from "./photo-import";
 
@@ -216,28 +215,6 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
               <div className="flex gap-3">
                 <Photo id={d.cover ?? undefined} alt="" width={96} className="size-11 shrink-0 rounded-xl" />
                 <TextInput value={d.cover ?? ""} onChange={(e) => set("cover", e.target.value.trim() || null)} placeholder="https://…" />
-              </div>
-            </Field>
-            <Field label="Brand color" className="sm:col-span-2">
-              <div className="flex flex-wrap items-center gap-2">
-                {ACCENTS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    aria-label={`Use ${c}`}
-                    aria-pressed={d.accent.toLowerCase() === c.toLowerCase()}
-                    onClick={() => set("accent", c)}
-                    className={cn(
-                      "pressable size-8 rounded-full ring-offset-2 ring-offset-surface",
-                      d.accent.toLowerCase() === c.toLowerCase() && "ring-2 ring-ink",
-                    )}
-                    style={{ background: c }}
-                  />
-                ))}
-                <label className="pressable relative size-8 overflow-hidden rounded-full ring-1 ring-line-strong" aria-label="Custom color">
-                  <input type="color" value={d.accent} onChange={(e) => set("accent", e.target.value)} className="absolute -inset-2 size-12 cursor-pointer" />
-                </label>
-                <span className="ml-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-on-accent">Preview</span>
               </div>
             </Field>
           </div>
