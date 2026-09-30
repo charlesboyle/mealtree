@@ -4,7 +4,7 @@ import { useMinute } from "@/components/open-status";
 import { useI18n } from "@/i18n/client";
 import { formatPhone } from "@/i18n/format";
 import { cn, mapsUrl } from "@/lib/format";
-import { nowIn } from "@/lib/hours";
+import { hasHours, nowIn } from "@/lib/hours";
 import { track, type TrackLink } from "@/lib/track";
 import type { Hours, Restaurant } from "@/lib/types";
 
@@ -25,6 +25,7 @@ export function InfoSection({ restaurant: r }: { restaurant: Restaurant }) {
         {t.info.title}
       </h2>
 
+      {hasHours(r.hours) && (
       <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
         {WEEK.map((d) => (
           <div key={d} className={cn("contents", today === d ? "font-medium text-ink" : "text-ink-2")}>
@@ -33,8 +34,9 @@ export function InfoSection({ restaurant: r }: { restaurant: Restaurant }) {
           </div>
         ))}
       </dl>
+      )}
 
-      <div className="mt-6 divide-y divide-line border-y border-line">
+      <div className={cn("divide-y divide-line border-y border-line", hasHours(r.hours) ? "mt-6" : "mt-4")}>
         <Row
           href={mapsUrl(r.address)}
           onClick={click("maps")}

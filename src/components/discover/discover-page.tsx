@@ -13,7 +13,7 @@ import { Photo } from "@/components/photo";
 import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
 import { cn } from "@/lib/format";
-import { openStatus } from "@/lib/hours";
+import { hasHours, openStatus } from "@/lib/hours";
 import { type DishHit, parseQuery, scoreRestaurant, searchDishes } from "@/lib/search";
 import type { Restaurant } from "@/lib/types";
 import { RestaurantCard } from "./restaurant-card";
@@ -40,7 +40,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
   const pool = useMemo(() => {
     if (!quick.includes("open") || !minute) return restaurants;
     const now = new Date(minute * 60000);
-    return restaurants.filter((r) => openStatus(r.hours, r.timezone, now).open);
+    return restaurants.filter((r) => hasHours(r.hours) && openStatus(r.hours, r.timezone, now).open);
   }, [restaurants, quick, minute]);
 
   const searching = parsed.tokens.length > 0 || parsed.maxPrice !== undefined;
@@ -99,7 +99,9 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
           <div className="max-w-2xl">
             <SearchBox value={query} onChange={setQuery} label={t.discover.searchLabel} />
             <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-              {(Object.keys(quickLabels) as Quick[]).map((q) => (
+              {(Object.keys(quickLabels) as Quick[])
+                .filter((q) => q !== "open" || restaurants.some((r) => hasHours(r.hours)))
+                .map((q) => (
                 <Chip key={q} on={quick.includes(q)} onClick={() => toggle(q)}>
                   {quickLabels[q]}
                 </Chip>

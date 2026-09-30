@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/format";
-import { describeStatus, openStatus } from "@/lib/hours";
+import { describeStatus, hasHours, openStatus } from "@/lib/hours";
 import type { Hours } from "@/lib/types";
 
 // One shared minute ticker for every badge on the page.
@@ -45,6 +45,7 @@ export function useOpenStatus(hours: Hours, timezone: string) {
 export function OpenStatus({ hours, timezone, className }: { hours: Hours; timezone: string; className?: string }) {
   const i18n = useI18n();
   const status = useOpenStatus(hours, timezone);
+  if (!hasHours(hours)) return null;
   if (!status) return <span className={cn("skeleton inline-block h-3.5 w-24 rounded", className)} />;
   const { headline, detail } = describeStatus(status, i18n);
   const color = !status.open ? "text-danger" : status.soon ? "text-warning" : "text-positive";

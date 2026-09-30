@@ -54,7 +54,7 @@ function jsonLd(r: Restaurant, i18n: Awaited<ReturnType<typeof getI18n>>) {
     priceRange: "$".repeat(r.priceLevel),
     currenciesAccepted: r.currency,
     telephone: r.phone,
-    address: { "@type": "PostalAddress", streetAddress: pick(r.address, r.addressAr), addressLocality: "Dubai", addressCountry: "AE" },
+    address: { "@type": "PostalAddress", streetAddress: pick(r.address, r.addressAr), addressCountry: "AE" },
     image: r.cover ? photoUrl(r.cover, 1200) : undefined,
     openingHours: Object.entries(r.hours).flatMap(([d, ranges]) =>
       ranges.map(([o, c]) => `${dayCodes[Number(d)]} ${o}-${c}`),

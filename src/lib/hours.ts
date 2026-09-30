@@ -25,6 +25,9 @@ export function nowIn(timezone: string, date = new Date()) {
   return { day, minutes: Number(get("hour")) * 60 + Number(get("minute")) };
 }
 
+/** True when at least one day has opening times. Without them we show nothing about hours. */
+export const hasHours = (hours: Hours) => Object.values(hours).some((spans) => spans.length > 0);
+
 export type OpenStatus =
   | { open: true; /** Closing within 45 minutes. */ soon: boolean; until: string; /** Open around the clock today (open time equals close time). */ allDay?: boolean }
   | { open: false; soon: false; /** Days from today (0 = later today), or null if nothing this week. */ next: { offset: number; day: Day; time: string } | null };

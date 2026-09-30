@@ -8,6 +8,7 @@ import { Photo } from "@/components/photo";
 import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
 import { cn } from "@/lib/format";
+import { hasHours } from "@/lib/hours";
 import { countItems } from "@/lib/search";
 import type { Restaurant } from "@/lib/types";
 
@@ -43,8 +44,12 @@ export function RestaurantCard({ restaurant: r, priority }: { restaurant: Restau
           {cuisines(r.cuisine)} <span className="text-ink-3">·</span> {pick(r.neighborhood, r.neighborhoodAr)}
         </p>
         <p className="mt-0.5 flex items-center gap-2 truncate text-sm">
-          <OpenStatus hours={r.hours} timezone={r.timezone} />
-          <span className="text-ink-3">·</span>
+          {hasHours(r.hours) && (
+            <>
+              <OpenStatus hours={r.hours} timezone={r.timezone} />
+              <span className="text-ink-3">·</span>
+            </>
+          )}
           <span className="text-ink-3">{priceLevel(r.priceLevel)}</span>
           <span className="text-ink-3">· {t.card.dishes(countItems(r))}</span>
         </p>
