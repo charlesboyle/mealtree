@@ -19,6 +19,7 @@ import {
   WheatOff,
   type LucideIcon,
   type LucideProps,
+  MapPin,
   Phone,
 } from "lucide-react";
 import type { DietTag, LinkKind } from "@/lib/types";
@@ -53,6 +54,7 @@ export const linkIcon: Record<LinkKind, LucideIcon | typeof InstagramIcon> = {
   website: Globe,
   whatsapp: MessageCircle,
   phone: Phone,
+  maps: MapPin,
 };
 
 export const dietIcon: Record<DietTag, LucideIcon> = {

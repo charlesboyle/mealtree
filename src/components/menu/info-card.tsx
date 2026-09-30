@@ -3,7 +3,7 @@
 import { useMinute } from "@/components/open-status";
 import { useI18n } from "@/i18n/client";
 import { formatPhone } from "@/i18n/format";
-import { cn, mapsUrl } from "@/lib/format";
+import { cn, directionsUrl } from "@/lib/format";
 import { hasHours, nowIn } from "@/lib/hours";
 import { track, type TrackLink } from "@/lib/track";
 import type { Hours, Restaurant } from "@/lib/types";
@@ -38,14 +38,14 @@ export function InfoSection({ restaurant: r }: { restaurant: Restaurant }) {
 
       <div className={cn("divide-y divide-line border-y border-line", hasHours(r.hours) ? "mt-6" : "mt-4")}>
         <Row
-          href={mapsUrl(r.address)}
+          href={directionsUrl(r)}
           onClick={click("maps")}
           external
           action={t.info.directions}
           primary={pick(r.address, r.addressAr)}
         />
         <Row href={`tel:${r.phone}`} onClick={click("call")} action={t.info.call} primary={<span className="ltr-isolate">{formatPhone(r.phone)}</span>} />
-        {r.links.map((l) =>
+        {r.links.filter((l) => l.kind !== "maps").map((l) =>
           l.kind === "phone" ? (
             <Row
               key={l.url}

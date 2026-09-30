@@ -51,7 +51,9 @@ export type LinkKind =
   | "website"
   | "whatsapp"
   /** An extra phone number: `url` is a tel: link and `label` says who answers ("Reception"). */
-  | "phone";
+  | "phone"
+  /** The restaurant's own Google Maps link; Directions uses it instead of searching the address. */
+  | "maps";
 
 export type ExternalLink = { kind: LinkKind; label: string; labelAr?: string; url: string };
 

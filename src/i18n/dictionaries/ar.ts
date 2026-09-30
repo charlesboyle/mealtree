@@ -95,6 +95,7 @@ export const ar: Dictionary = {
     website: "الموقع",
     whatsapp: "واتساب",
     phone: "اتصال",
+    maps: "الاتجاهات",
   },
   source: {
     visit: "زيارة شخصية",

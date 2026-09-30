@@ -7,7 +7,7 @@ import { linkIcon } from "@/components/icons";
 import { OpenStatus } from "@/components/open-status";
 import { Photo } from "@/components/photo";
 import { useI18n } from "@/i18n/client";
-import { cn, mapsUrl } from "@/lib/format";
+import { cn, directionsUrl } from "@/lib/format";
 import { track, type TrackLink } from "@/lib/track";
 import type { ExternalLink, Restaurant } from "@/lib/types";
 
@@ -93,7 +93,7 @@ function ActionRow({ restaurant: r }: { restaurant: Restaurant }) {
   const primaryKinds: ExternalLink["kind"][] = ["reserve", "order"];
   const primary = r.links.find((l) => primaryKinds.includes(l.kind));
   // Extra phone numbers live in the info section, not the four action buttons.
-  const rest = r.links.filter((l) => l !== primary && l.kind !== "phone");
+  const rest = r.links.filter((l) => l !== primary && l.kind !== "phone" && l.kind !== "maps");
   const fromLink = (l: ExternalLink): Action => ({
     key: l.kind + l.url,
     link: l.kind,
@@ -106,7 +106,7 @@ function ActionRow({ restaurant: r }: { restaurant: Restaurant }) {
   const actions: Action[] = [
     ...(primary ? [fromLink(primary)] : []),
     { key: "call", link: "call" as const, href: `tel:${r.phone}`, label: t.menu.call, icon: Phone },
-    { key: "maps", link: "maps" as const, href: mapsUrl(r.address), label: t.menu.directions, icon: MapPin, external: true },
+    { key: "maps", link: "maps" as const, href: directionsUrl(r), label: t.menu.directions, icon: MapPin, external: true },
     ...rest.map(fromLink),
   ].slice(0, 4);
 

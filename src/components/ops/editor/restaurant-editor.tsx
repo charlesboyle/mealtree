@@ -29,6 +29,7 @@ const LINK_KINDS: { kind: LinkKind; label: string }[] = [
   { kind: "website", label: "Website" },
   { kind: "whatsapp", label: "WhatsApp" },
   { kind: "phone", label: "Extra phone" },
+  { kind: "maps", label: "Google Maps link" },
 ];
 
 type Errors = Partial<Record<"name" | "slug" | "address" | "phone" | "neighborhood" | "hours" | "menu" | "links", string>>;

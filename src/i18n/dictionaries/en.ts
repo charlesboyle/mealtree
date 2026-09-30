@@ -80,6 +80,7 @@ export const en = {
     website: "Website",
     whatsapp: "WhatsApp",
     phone: "Call",
+    maps: "Directions",
   } satisfies Record<LinkKind, string>,
   source: {
     visit: "an in-person visit",

@@ -98,6 +98,11 @@ export function mapsUrl(address: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }
 
+/** Directions target: the restaurant's own Maps link when we have one, else a search on its address. */
+export function directionsUrl(r: { address: string; links: { kind: string; url: string }[] }) {
+  return r.links.find((l) => l.kind === "maps")?.url ?? mapsUrl(r.address);
+}
+
 export function cn(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
 }
