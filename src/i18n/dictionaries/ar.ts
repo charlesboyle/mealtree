@@ -94,6 +94,7 @@ export const ar: Dictionary = {
     instagram: "إنستغرام",
     website: "الموقع",
     whatsapp: "واتساب",
+    phone: "اتصال",
   },
   source: {
     visit: "زيارة شخصية",

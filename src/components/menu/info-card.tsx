@@ -43,9 +43,23 @@ export function InfoSection({ restaurant: r }: { restaurant: Restaurant }) {
           primary={pick(r.address, r.addressAr)}
         />
         <Row href={`tel:${r.phone}`} onClick={click("call")} action={t.info.call} primary={<span className="ltr-isolate">{formatPhone(r.phone)}</span>} />
-        {r.links.map((l) => (
-          <Row key={l.kind + l.url} href={l.url} onClick={click(l.kind)} external action={t.links[l.kind]} primary={pick(l.label, l.labelAr)} />
-        ))}
+        {r.links.map((l) =>
+          l.kind === "phone" ? (
+            <Row
+              key={l.url}
+              href={l.url}
+              onClick={click("call")}
+              action={t.links.phone}
+              primary={
+                <>
+                  {pick(l.label, l.labelAr)} <span className="ltr-isolate text-ink-2">{formatPhone(l.url.replace(/^tel:/, ""))}</span>
+                </>
+              }
+            />
+          ) : (
+            <Row key={l.kind + l.url} href={l.url} onClick={click(l.kind)} external action={t.links[l.kind]} primary={pick(l.label, l.labelAr)} />
+          ),
+        )}
       </div>
     </section>
   );

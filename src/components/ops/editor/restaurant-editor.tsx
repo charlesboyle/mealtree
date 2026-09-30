@@ -29,6 +29,7 @@ const LINK_KINDS: { kind: LinkKind; label: string }[] = [
   { kind: "instagram", label: "Instagram" },
   { kind: "website", label: "Website" },
   { kind: "whatsapp", label: "WhatsApp" },
+  { kind: "phone", label: "Extra phone" },
 ];
 
 type Errors = Partial<Record<"name" | "slug" | "address" | "phone" | "neighborhood" | "hours" | "menu" | "links", string>>;
@@ -45,7 +46,8 @@ function validate(d: RestaurantInput, hoursText: Record<number, string>): Errors
   if (!items.length) e.menu = "Add at least one dish";
   else if (items.some((i) => !i.name.trim()) || d.menus.some((m) => m.sections.some((s) => !s.name.trim())))
     e.menu = "Every section and dish needs a name";
-  if (d.links.some((l) => !/^https?:\/\/\S+$/.test(l.url))) e.links = "Links must start with https://";
+  if (d.links.some((l) => !(l.kind === "phone" ? /^tel:\+?\d+$/ : /^https?:\/\/\S+$/).test(l.url)))
+    e.links = "Links must start with https:// (extra phones: tel:+971…)";
   return e;
 }
 
@@ -289,9 +291,9 @@ export function RestaurantEditor({ initial, isNew }: { initial: RestaurantInput;
                   <TextInput value={l.label} onChange={(e) => update({ label: e.target.value })} placeholder="Button label" aria-label="Button label" className="hidden sm:block" />
                   <TextInput
                     value={l.url}
-                    invalid={showErrors && !/^https?:\/\/\S+$/.test(l.url)}
+                    invalid={showErrors && !(l.kind === "phone" ? /^tel:\+?\d+$/ : /^https?:\/\/\S+$/).test(l.url)}
                     onChange={(e) => update({ url: e.target.value.trim() })}
-                    placeholder="https://…"
+                    placeholder={l.kind === "phone" ? "tel:+971…" : "https://…"}
                     aria-label="URL"
                   />
                   <button type="button" onClick={() => set("links", d.links.filter((_, j) => j !== i))} aria-label="Remove link" className="grid size-10 place-items-center rounded-lg text-ink-3 hover:bg-danger/10 hover:text-danger">

@@ -79,6 +79,7 @@ export const en = {
     instagram: "Instagram",
     website: "Website",
     whatsapp: "WhatsApp",
+    phone: "Call",
   } satisfies Record<LinkKind, string>,
   source: {
     visit: "an in-person visit",

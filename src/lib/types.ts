@@ -46,7 +46,9 @@ export type LinkKind =
   | "order"
   | "instagram"
   | "website"
-  | "whatsapp";
+  | "whatsapp"
+  /** An extra phone number: `url` is a tel: link and `label` says who answers ("Reception"). */
+  | "phone";
 
 export type ExternalLink = { kind: LinkKind; label: string; labelAr?: string; url: string };
 

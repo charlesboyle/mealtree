@@ -88,7 +88,8 @@ function ActionRow({ restaurant: r }: { restaurant: Restaurant }) {
   const { t, pick, locale } = useI18n();
   const primaryKinds: ExternalLink["kind"][] = ["reserve", "order"];
   const primary = r.links.find((l) => primaryKinds.includes(l.kind));
-  const rest = r.links.filter((l) => l !== primary);
+  // Extra phone numbers live in the info section, not the four action buttons.
+  const rest = r.links.filter((l) => l !== primary && l.kind !== "phone");
   const fromLink = (l: ExternalLink): Action => ({
     key: l.kind + l.url,
     link: l.kind,
