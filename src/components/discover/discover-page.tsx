@@ -90,7 +90,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
       <section className="mx-auto max-w-2xl px-4 pb-4 pt-6 sm:px-5 sm:pt-12">
         <div className="max-w-2xl">
           <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">{t.discover.title}</h1>
-          <p className="mt-2 text-base text-ink-2 sm:text-md">{t.discover.lead(restaurants.length)}</p>
+          <p className="mt-2 text-base text-ink-2 sm:text-md">{t.discover.lead()}</p>
         </div>
       </section>
 
@@ -192,7 +192,15 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
 
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-2xl flex-col gap-3 px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <p>{t.discover.footer}</p>
+          <div className="space-y-1">
+            <p>{t.discover.footer}</p>
+            <p>
+              {t.discover.feedback}{" "}
+              <a href="mailto:hello@applied.llc" className="text-ink-2 underline underline-offset-2 hover:text-ink">
+                hello@applied.llc
+              </a>
+            </p>
+          </div>
           <nav className="flex gap-4">
             <Link href={href("/terms")} className="hover:text-ink">
               {t.common.terms}

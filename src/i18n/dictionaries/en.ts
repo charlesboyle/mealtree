@@ -4,12 +4,12 @@ const plural = (n: number, one: string, other: string) => (n === 1 ? one : other
 
 export const en = {
   meta: {
-    title: "nomm — Dubai menus with prices",
+    title: "nomm — UAE menus with prices",
     template: "%s · nomm",
-    description: "Searchable menus with real prices and photos for restaurants across Dubai.",
+    description: "Searchable menus with real prices for restaurants across the UAE, in English and Arabic.",
     menuTitle: (name: string) => `${name} menu & prices`,
     menuDescription: (tagline: string, name: string, area: string) =>
-      `${tagline} See the full ${name} menu with prices in AED — ${area}, Dubai.`,
+      `${tagline} See the full ${name} menu with prices in AED — ${area}.`,
     claimTitle: (name: string) => `Claim ${name}`,
     dashboardTitle: (name: string) => `${name} dashboard`,
     forRestaurants: "For restaurants",
@@ -34,7 +34,7 @@ export const en = {
     clearSearch: "Clear search",
     linkCopied: "Link copied",
     genericError: "Something went wrong. Please try again.",
-    city: "Dubai",
+    city: "UAE",
   },
   price: {
     levels: ["Budget", "Mid-range", "Upscale", "Fine dining"],
@@ -90,12 +90,11 @@ export const en = {
   /** Cuisine names are stored in English; other languages translate them here. */
   cuisines: {} as Record<string, string>,
   discover: {
-    title: "Dubai menus, with prices",
-    lead: (n: number) =>
-      `Real prices and photos from ${n} places around the city. Search for a dish, not a restaurant.`,
+    title: "Find the dish. See the price.",
+    lead: () => "Search menus by dish or budget, in English and Arabic. Real prices, straight from the menu.",
     searchLabel: "Search dishes or restaurants",
     try: "Try",
-    examples: ["shawarma under 15", "karak", "biryani", "luqaimat", "flat white", "vegan"],
+    examples: ["biryani under 20", "shawarma", "karak", "fresh juice", "grilled fish", "kunafa"],
     quick: {
       open: "Open now",
       under25: (p: string) => `Under ${p}`,
@@ -112,6 +111,7 @@ export const en = {
     noMatchFilters: "No dishes match these filters",
     noMatchHint: "Try a broader word, like “chicken” or “rice”.",
     footer: "Menus come from in-person visits, photos and owners. Prices may change.",
+    feedback: "Feedback?",
   },
   card: {
     dishes: (n: number) => `${n} ${plural(n, "dish", "dishes")}`,
