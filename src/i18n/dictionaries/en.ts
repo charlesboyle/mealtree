@@ -110,7 +110,6 @@ export const en = {
     noMatchQuery: (q: string) => `No dishes match “${q}”`,
     noMatchFilters: "No dishes match these filters",
     noMatchHint: "Try a broader word, like “chicken” or “rice”.",
-    footer: "Menus come from in-person visits, photos and owners. Prices may change.",
     feedback: "Feedback?",
   },
   card: {

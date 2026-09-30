@@ -195,7 +195,6 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-2xl flex-col gap-3 px-4 py-8 text-sm text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="space-y-1">
-            <p>{t.discover.footer}</p>
             <p>
               {t.discover.feedback}{" "}
               <a href="mailto:hello@applied.llc" className="text-ink-2 underline underline-offset-2 hover:text-ink">
