@@ -10,8 +10,8 @@
   --ink-3: #8c8781;
   --line: rgb(26 25 23 / 0.09);
   --line-strong: rgb(26 25 23 / 0.16);
-  --brand: #13734b;
-  --brand-soft: #e6f2ec;
+  --brand: #dc2d28;
+  --brand-soft: #fdecea;
   --on-brand: #ffffff;
   --positive: #16794c;
   --warning: #a35c00;
@@ -22,8 +22,8 @@
   --shadow-lg: 0 24px 56px -16px rgb(26 25 23 / 0.3), 0 6px 16px -8px rgb(26 25 23 / 0.1);
 
   /* Per-restaurant accent, overridden inline on menu pages. */
-  --accent-light: #13734b;
-  --accent-dark: #5bd197;
+  --accent-light: #dc2d28;
+  --accent-dark: #ff6b63;
   --on-accent-light: #ffffff;
   --on-accent-dark: #0c0c0b;
 
@@ -58,8 +58,8 @@
     --ink-3: #7d7871;
     --line: rgb(255 255 255 / 0.08);
     --line-strong: rgb(255 255 255 / 0.15);
-    --brand: #5bd197;
-    --brand-soft: #14261d;
+    --brand: #ff6b63;
+    --brand-soft: #2a1412;
     --on-brand: #0c0c0b;
     --positive: #5bd197;
     --warning: #f0a53a;
