@@ -26,7 +26,7 @@ export function nowIn(timezone: string, date = new Date()) {
 }
 
 export type OpenStatus =
-  | { open: true; /** Closing within 45 minutes. */ soon: boolean; until: string }
+  | { open: true; /** Closing within 45 minutes. */ soon: boolean; until: string; /** Open around the clock today (open time equals close time). */ allDay?: boolean }
   | { open: false; soon: false; /** Days from today (0 = later today), or null if nothing this week. */ next: { offset: number; day: Day; time: string } | null };
 
 export function openStatus(hours: Hours, timezone: string, date = new Date()): OpenStatus {
@@ -41,7 +41,10 @@ export function openStatus(hours: Hours, timezone: string, date = new Date()): O
   for (const [o, c] of hours[day]) {
     const open = toMin(o);
     const close = toMin(c) <= open ? toMin(c) + 1440 : toMin(c);
-    if (minutes >= open && minutes < close) return closing(close - minutes, c);
+    if (minutes >= open && minutes < close) {
+      if (toMin(c) === open) return { open: true, soon: false, until: c, allDay: true };
+      return closing(close - minutes, c);
+    }
   }
 
   // Closed: find the next opening in the coming week.
@@ -56,6 +59,7 @@ export function openStatus(hours: Hours, timezone: string, date = new Date()): O
 /** "Open" + "until 2 AM", "Closed" + "opens tomorrow 7 AM", in the viewer's language. */
 export function describeStatus(s: OpenStatus, i18n: I18n) {
   const t = i18n.t.hours;
+  if (s.open && s.allDay) return { headline: t.open24, detail: "" };
   if (s.open) return { headline: s.soon ? t.closingSoon : t.open, detail: t.until(i18n.time(s.until)) };
   if (!s.next) return { headline: t.closed, detail: t.temporarily };
   const time = i18n.time(s.next.time);

@@ -51,8 +51,12 @@ export function OpenStatus({ hours, timezone, className }: { hours: Hours; timez
   return (
     <span className={cn("animate-fade whitespace-nowrap text-ink-2", className)}>
       <span className={cn("font-medium", color)}>{headline}</span>
-      <span className="mx-1 text-ink-3">·</span>
-      {detail}
+      {detail && (
+        <>
+          <span className="mx-1 text-ink-3">·</span>
+          {detail}
+        </>
+      )}
     </span>
   );
 }

@@ -24,6 +24,9 @@ export type MenuSection = {
   id: string;
   name: string;
   nameAr?: string;
+  /** Optional tab group for long menus ('Grills', 'Drinks'). Sections of one group must be adjacent. */
+  group?: string;
+  groupAr?: string;
   description?: string;
   descriptionAr?: string;
   items: MenuItem[];

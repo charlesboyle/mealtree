@@ -30,6 +30,8 @@ import { RestaurantHeader } from "./restaurant-header";
 
 const TOPBAR = 56;
 const TABBAR = 52;
+/** Extra height of the group row, shown above the section tabs on long menus. */
+const GROUPBAR = 44;
 
 type ViewSection = MenuSection & { key: string; label: string };
 
@@ -96,6 +98,16 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     return set;
   }, [r.menus]);
 
+  // Long menus can group sections ('Grills', 'Drinks'): a row of groups above the section tabs.
+  const groups = useMemo(() => {
+    if (hasQuery || searching) return [];
+    const seen = new Map<string, { key: string; label: string; first: string }>();
+    for (const s of sections)
+      if (s.group && !seen.has(s.group)) seen.set(s.group, { key: s.group, label: pick(s.group, s.groupAr), first: s.key });
+    return seen.size > 1 ? [...seen.values()] : [];
+  }, [sections, hasQuery, searching, pick]);
+  const tabbar = TABBAR + (groups.length ? GROUPBAR : 0);
+
   const resultCount = sections.reduce((n, s) => n + s.items.length, 0);
   const narrowed = hasQuery || filters.length > 0;
 
@@ -124,7 +136,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
       let current: string | undefined = sections[0]?.key;
       for (const s of sections) {
         const el = document.getElementById(`sec-${s.key}`);
-        if (el && el.getBoundingClientRect().top - (TOPBAR + TABBAR) - 32 <= 0) current = s.key;
+        if (el && el.getBoundingClientRect().top - (TOPBAR + tabbar) - 32 <= 0) current = s.key;
       }
       if (atBottom && window.scrollY > 0) current = sections.at(-1)?.key;
       setActive(current);
@@ -141,14 +153,14 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [sections]);
+  }, [sections, tabbar]);
 
   const jumpTo = (key: string) => {
     const el = document.getElementById(`sec-${key}`);
     if (!el) return;
     lock.current = key;
     setActive(key);
-    const top = el.getBoundingClientRect().top + window.scrollY - (TOPBAR + TABBAR) + 1;
+    const top = el.getBoundingClientRect().top + window.scrollY - (TOPBAR + tabbar) + 1;
     window.scrollTo({ top, behavior: "smooth" });
     const release = () => {
       lock.current = null;
@@ -227,6 +239,14 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
         )}
       >
         <div className="mx-auto max-w-2xl px-4 sm:px-5">
+          {groups.length > 0 && (
+            <GroupTabs
+              groups={groups}
+              active={sections.find((s) => s.key === active)?.group}
+              onSelect={(g) => jumpTo(g.first)}
+              label={t.menu.sections}
+            />
+          )}
           <AnimatePresence mode="popLayout" initial={false}>
             {searching ? (
               <motion.div
@@ -281,7 +301,9 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
                     <span className="absolute end-2 top-3 size-2 rounded-full bg-accent ring-2 ring-bg" />
                   )}
                 </button>
-                <SectionTabs sections={sections} active={active} onSelect={jumpTo} label={t.menu.sections} />
+                <SectionTabs
+                  sections={groups.length ? sections.filter((s) => s.group === sections.find((x) => x.key === active)?.group) : sections}
+                  active={active} onSelect={jumpTo} label={t.menu.sections} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -405,6 +427,62 @@ function TopBar({ restaurant: r, name, compact }: { restaurant: Restaurant; name
           <Share className="size-[18px]" strokeWidth={2} />
         </button>
       </div>
+    </div>
+  );
+}
+
+function GroupTabs({
+  groups,
+  active,
+  onSelect,
+  label,
+}: {
+  groups: { key: string; label: string; first: string }[];
+  active?: string;
+  onSelect: (group: { key: string; label: string; first: string }) => void;
+  label: string;
+}) {
+  const strip = useRef<HTMLDivElement>(null);
+  const chips = useRef(new Map<string, HTMLButtonElement>());
+
+  // Keep the active group in view (rect-based, so it works in RTL too).
+  useEffect(() => {
+    const el = active && chips.current.get(active);
+    const container = strip.current;
+    if (!el || !container) return;
+    const a = el.getBoundingClientRect();
+    const c = container.getBoundingClientRect();
+    container.scrollBy({ left: a.left + a.width / 2 - (c.left + c.width / 2), behavior: "smooth" });
+  }, [active]);
+
+  return (
+    <div
+      ref={strip}
+      role="tablist"
+      aria-label={label}
+      className="no-scrollbar -mx-4 flex h-11 items-center gap-2 overflow-x-auto px-4 sm:-mx-5 sm:px-5"
+    >
+      {groups.map((g) => {
+        const on = active === g.key;
+        return (
+          <button
+            key={g.key}
+            ref={(el) => {
+              if (el) chips.current.set(g.key, el);
+              else chips.current.delete(g.key);
+            }}
+            role="tab"
+            aria-selected={on}
+            onClick={() => onSelect(g)}
+            className={cn(
+              "pressable h-8 shrink-0 whitespace-nowrap rounded-full px-3.5 text-sm font-medium transition-colors duration-200",
+              on ? "bg-accent text-on-accent" : "bg-surface-2 text-ink-2 hover:bg-surface-3",
+            )}
+          >
+            {g.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
