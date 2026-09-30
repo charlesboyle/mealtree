@@ -1,6 +1,7 @@
 "use client";
 
 import { BadgeCheck, MapPin, Phone } from "lucide-react";
+import { Fragment } from "react";
 import Link from "next/link";
 import { linkIcon } from "@/components/icons";
 import { OpenStatus } from "@/components/open-status";
@@ -48,13 +49,16 @@ export function RestaurantHeader({
             />
           )}
         </h1>
-        <p className="mt-1.5 text-base text-ink-2">{pick(r.tagline, r.taglineAr)}</p>
+        {pick(r.tagline, r.taglineAr) && <p className="mt-1.5 text-base text-ink-2">{pick(r.tagline, r.taglineAr)}</p>}
         <p className="mt-3 text-sm text-ink-2">
-          {cuisines(r.cuisine)}
-          <Dot />
-          {pick(r.neighborhood, r.neighborhoodAr)}
-          <Dot />
-          {priceLevel(r.priceLevel)}
+          {[cuisines(r.cuisine), pick(r.neighborhood, r.neighborhoodAr), priceLevel(r.priceLevel)]
+            .filter(Boolean)
+            .map((part, i) => (
+              <Fragment key={i}>
+                {i > 0 && <Dot />}
+                {part}
+              </Fragment>
+            ))}
         </p>
         <OpenStatus hours={r.hours} timezone={r.timezone} className="mt-1 block text-sm" />
 

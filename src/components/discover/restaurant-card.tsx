@@ -41,7 +41,9 @@ export function RestaurantCard({ restaurant: r, priority }: { restaurant: Restau
           {r.claimed && <BadgeCheck className="size-4 shrink-0 fill-accent text-bg" strokeWidth={2} aria-label={t.card.verified} />}
         </h3>
         <p className="truncate text-sm text-ink-2">
-          {cuisines(r.cuisine)} <span className="text-ink-3">·</span> {pick(r.neighborhood, r.neighborhoodAr)}
+          {cuisines(r.cuisine)}
+          {r.cuisine.length > 0 && <span className="text-ink-3"> · </span>}
+          {pick(r.neighborhood, r.neighborhoodAr)}
         </p>
         <p className="mt-0.5 flex items-center gap-2 truncate text-sm">
           {hasHours(r.hours) && (
