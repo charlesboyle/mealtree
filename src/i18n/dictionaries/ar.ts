@@ -125,6 +125,9 @@ export const ar: Dictionary = {
     Breakfast: "فطور",
     Seafood: "مأكولات بحرية",
     Juices: "عصائر",
+    Chinese: "صيني",
+    Desserts: "حلويات",
+    Sandwiches: "ساندويتشات",
   },
   discover: {
     title: "قوائم طعام دبي، بالأسعار",
