@@ -41,7 +41,6 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
   const claimed = r.claimed || overrides.claimed;
   const name = pick(r.name, r.nameAr);
 
-  const [menuId, setMenuId] = useState(r.menus[0].id);
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [filters, setFilters] = useState<Filter[]>([]);
@@ -60,13 +59,11 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     [overrides],
   );
 
-  // A search looks through every menu (food + drinks); filters stay on the current one.
+  // All menus (food, drinks…) read as one continuous list with one row of section tabs.
   const sections: ViewSection[] = useMemo(() => {
-    const menus = hasQuery ? r.menus : r.menus.filter((m) => m.id === menuId);
-    const multi = hasQuery && r.menus.length > 1;
-    return menus.flatMap((m) =>
+    return r.menus.flatMap((m) =>
       m.sections
-        .map((s) => {
+        .map((s, index) => {
           const text = sectionText(s);
           const items = s.items
             .map(applyOverrides)
@@ -80,11 +77,13 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
             .sort((a, b) => (hasQuery ? b.score - a.score : 0))
             .map(({ item }) => item);
           const label = pick(s.name, s.nameAr);
-          return { ...s, items, key: `${m.id}:${s.id}`, label: multi ? `${pick(m.name, m.nameAr)} · ${label}` : label };
+          // A menu's own note (e.g. breakfast hours) rides on its first section.
+          const menuNote = index === 0 && m.note ? { description: m.note, descriptionAr: m.noteAr } : {};
+          return { ...s, ...(s.description ? {} : menuNote), items, key: `${m.id}:${s.id}`, label };
         })
         .filter((s) => s.items.length > 0),
     );
-  }, [r.menus, menuId, hasQuery, parsed, filters, applyOverrides, pick]);
+  }, [r.menus, hasQuery, parsed, filters, applyOverrides, pick]);
 
   const available = useMemo(() => {
     const set = new Set<Filter>();
@@ -99,8 +98,6 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
 
   const resultCount = sections.reduce((n, s) => n + s.items.length, 0);
   const narrowed = hasQuery || filters.length > 0;
-  const currentMenu = r.menus.find((m) => m.id === menuId);
-  const note = currentMenu?.note ? pick(currentMenu.note, currentMenu.noteAr) : undefined;
 
   // ——— Top bar fills in once the restaurant name scrolls under it ———
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -173,7 +170,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     if (!el) return;
     const top = el.getBoundingClientRect().top + window.scrollY - TOPBAR;
     if (window.scrollY > top) window.scrollTo({ top });
-  }, [deferredQuery, filters, menuId]);
+  }, [deferredQuery, filters]);
 
   // One anonymous view per session, for the owner's dashboard.
   useEffect(() => track(r.slug, i18n.locale, { kind: "view" }), [r.slug, i18n.locale]);
@@ -293,11 +290,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
 
       <main className="mx-auto max-w-2xl px-4 sm:px-5">
         <div className="space-y-3 pt-4">
-          {r.menus.length > 1 && !hasQuery && (
-            <MenuSwitcher menus={r.menus} value={menuId} onChange={setMenuId} label={t.menu.menuSwitch} />
-          )}
           <FilterChips available={available} active={filters} onToggle={toggleFilter} />
-          {note && !hasQuery && <p className="text-sm text-ink-3">{note}</p>}
         </div>
 
         {narrowed && (
@@ -475,45 +468,6 @@ function SectionTabs({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function MenuSwitcher({
-  menus,
-  value,
-  onChange,
-  label,
-}: {
-  menus: Restaurant["menus"];
-  value: string;
-  onChange: (id: string) => void;
-  label: string;
-}) {
-  const { pick } = useI18n();
-  return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg bg-surface-2 p-0.5">
-      {menus.map((m) => (
-        <button
-          key={m.id}
-          role="radio"
-          aria-checked={value === m.id}
-          onClick={() => onChange(m.id)}
-          className={cn(
-            "relative h-8 rounded-md px-4 text-sm font-medium transition-colors",
-            value === m.id ? "text-ink" : "text-ink-3 hover:text-ink-2",
-          )}
-        >
-          {value === m.id && (
-            <motion.span
-              layoutId="menu-switch"
-              className="absolute inset-0 rounded-md bg-surface shadow-sm ring-1 ring-line"
-              transition={{ type: "spring", bounce: 0.15, duration: 0.35 }}
-            />
-          )}
-          <span className="relative">{pick(m.name, m.nameAr)}</span>
-        </button>
-      ))}
     </div>
   );
 }

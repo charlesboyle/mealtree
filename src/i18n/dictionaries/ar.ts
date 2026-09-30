@@ -159,7 +159,6 @@ export const ar: Dictionary = {
     copied: "تم نسخ رابط القائمة",
     searchPlaceholder: (name) => `ابحث في ${name}`,
     searchLabel: "ابحث في هذه القائمة",
-    menuSwitch: "القائمة",
     sections: "أقسام القائمة",
     results: dishes,
     clearFilters: "مسح الفلاتر",

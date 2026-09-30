@@ -123,7 +123,6 @@ export const en = {
     copied: "Menu link copied",
     searchPlaceholder: (name: string) => `Search ${name}`,
     searchLabel: "Search this menu",
-    menuSwitch: "Menu",
     sections: "Menu sections",
     results: (n: number) => `${n} ${plural(n, "dish", "dishes")}`,
     clearFilters: "Clear filters",
