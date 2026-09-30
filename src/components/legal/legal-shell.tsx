@@ -3,22 +3,33 @@
 import Link from "next/link";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Logo } from "@/components/logo";
+import { PageTransition } from "@/components/page-transition";
 import { useI18n } from "@/i18n/client";
 
-export function LegalShell({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
+export function LegalShell({
+  title,
+  lead,
+  children,
+}: {
+  title: string;
+  lead?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="min-h-dvh">
-      <header className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4 sm:px-5">
-        <Logo />
-        <LanguageToggle className="-me-2" />
-      </header>
-      <main className="mx-auto max-w-2xl px-4 pb-20 sm:px-5">
-        <h1 className="mt-6 text-3xl font-bold tracking-tight">{title}</h1>
-        {lead && <p className="mt-3 text-md text-ink-2">{lead}</p>}
-        <div className="mt-8">{children}</div>
-      </main>
-      <LegalFooter />
-    </div>
+    <PageTransition>
+      <div className="min-h-dvh">
+        <header className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4 sm:px-5">
+          <Logo />
+          <LanguageToggle className="-me-2" />
+        </header>
+        <main className="mx-auto max-w-2xl px-4 pb-20 sm:px-5">
+          <h1 className="mt-6 text-3xl font-bold tracking-tight">{title}</h1>
+          {lead && <p className="mt-3 text-md text-ink-2">{lead}</p>}
+          <div className="mt-8">{children}</div>
+        </main>
+        <LegalFooter />
+      </div>
+    </PageTransition>
   );
 }
 

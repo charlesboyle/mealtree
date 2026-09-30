@@ -379,6 +379,7 @@ function TopBar({ restaurant: r, name, compact }: { restaurant: Restaurant; name
       <div className="mx-auto flex h-14 max-w-2xl items-center gap-1 px-2 sm:px-3">
         <Link
           href={href("/")}
+          transitionTypes={["nav-back"]}
           aria-label={t.menu.allRestaurants}
           className={cn("pressable grid size-10 place-items-center rounded-full", control)}
         >
@@ -496,7 +497,7 @@ function Footer({ restaurant: r, claimed }: { restaurant: Restaurant; claimed: b
       {!claimed && (
         <p className="mt-1">
           {t.menu.footerClaim}{" "}
-          <Link href={href(`/claim/${r.slug}`)} className="font-medium text-accent hover:underline">
+          <Link href={href(`/claim/${r.slug}`)} transitionTypes={["nav-forward"]} className="font-medium text-accent hover:underline">
             {t.menu.footerClaimLink}
           </Link>{" "}
           {t.menu.footerOr}{" "}

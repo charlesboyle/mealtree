@@ -79,6 +79,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
           <LanguageToggle />
           <Link
             href={href("/claim")}
+            transitionTypes={["nav-forward"]}
             className="pressable inline-flex h-9 items-center rounded-lg px-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink"
           >
             {t.common.forRestaurants}

@@ -145,7 +145,7 @@ function TrustNote({ restaurant: r, claimed }: { restaurant: Restaurant; claimed
     <p className="mt-4 text-xs text-ink-3">
       <span className="font-medium text-ink-2">{t.menu.unofficial}.</span>{" "}
       {t.menu.checkedFrom(date(r.verifiedAt), t.source[r.source])}{" "}
-      <Link href={href(`/claim/${r.slug}`)} className="font-medium text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink">
+      <Link href={href(`/claim/${r.slug}`)} transitionTypes={["nav-forward"]} className="font-medium text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink">
         {t.menu.ownThis}
       </Link>
     </p>

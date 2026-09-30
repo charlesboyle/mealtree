@@ -26,6 +26,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <Link
       href={href("/")}
+      transitionTypes={["nav-back"]}
       className={cn("pressable inline-flex items-center gap-2 text-base font-semibold text-ink", className)}
     >
       <LogoMark />

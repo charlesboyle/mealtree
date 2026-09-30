@@ -183,7 +183,7 @@ function Pitch({
         </Button>
         <p className="mt-3 text-center text-sm text-ink-3">
           {t.claim.free} {t.claim.notOwner}{" "}
-          <Link href={href(`/r/${r.slug}`)} className="font-medium text-ink-2 underline-offset-2 hover:underline">
+          <Link href={href(`/r/${r.slug}`)} transitionTypes={["nav-back"]} className="font-medium text-ink-2 underline-offset-2 hover:underline">
             {t.claim.backToMenu}
           </Link>
         </p>

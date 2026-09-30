@@ -262,3 +262,66 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ——— Page transitions: a short directional slide (see components/page-transition.tsx) ———
+   Forward slides content toward the start of the reading direction's opposite edge;
+   Arabic mirrors it. The overlay never blocks taps, and reduced motion turns it all off. */
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes vt-slide {
+  from {
+    translate: var(--slide-offset);
+  }
+  to {
+    translate: 0;
+  }
+}
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(.nav-forward) {
+  --slide-offset: -40px;
+  animation:
+    140ms ease-in both vt-fade reverse,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --slide-offset: 40px;
+  animation:
+    200ms ease-out 100ms both vt-fade,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide;
+}
+::view-transition-old(.nav-back) {
+  --slide-offset: 40px;
+  animation:
+    140ms ease-in both vt-fade reverse,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --slide-offset: -40px;
+  animation:
+    200ms ease-out 100ms both vt-fade,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both vt-slide;
+}
+:root:lang(ar)::view-transition-old(.nav-forward),
+:root:lang(ar)::view-transition-new(.nav-back) {
+  --slide-offset: 40px;
+}
+:root:lang(ar)::view-transition-new(.nav-forward),
+:root:lang(ar)::view-transition-old(.nav-back) {
+  --slide-offset: -40px;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

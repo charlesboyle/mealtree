@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PageTransition } from "@/components/page-transition";
 import { ClaimFlow } from "@/components/claim/claim-flow";
 import { getI18n } from "@/i18n/server";
 import { findRestaurant, getStats, listRestaurants } from "@/lib/data";
@@ -19,5 +20,9 @@ export async function generateMetadata(props: PageProps<"/[lang]/claim/[slug]">)
 export default async function ClaimPage(props: PageProps<"/[lang]/claim/[slug]">) {
   const r = await findRestaurant((await props.params).slug);
   if (!r) notFound();
-  return <ClaimFlow restaurant={r} stats={await getStats(r.slug)} />;
+  return (
+    <PageTransition>
+      <ClaimFlow restaurant={r} stats={await getStats(r.slug)} />
+    </PageTransition>
+  );
 }

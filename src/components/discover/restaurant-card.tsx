@@ -19,6 +19,7 @@ export function RestaurantCard({ restaurant: r, priority }: { restaurant: Restau
     <Link
       data-accent
       href={href(`/r/${r.slug}`)}
+      transitionTypes={["nav-forward"]}
       style={accentStyle(r.accent)}
       className="group flex items-center gap-4 py-3 outline-offset-4 sm:block sm:rounded-xl sm:py-0"
     >

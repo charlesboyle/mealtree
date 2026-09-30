@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PageTransition } from "@/components/page-transition";
 import { MenuPage } from "@/components/menu/menu-page";
 import { getI18n } from "@/i18n/server";
 import { findRestaurant, listRestaurants } from "@/lib/data";
@@ -87,7 +88,9 @@ export default async function RestaurantPage(props: PageProps<"/[lang]/r/[slug]"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(r, i18n)).replace(/</g, "\\u003c") }}
       />
-      <MenuPage restaurant={r} />
+      <PageTransition>
+        <MenuPage restaurant={r} />
+      </PageTransition>
     </>
   );
 }

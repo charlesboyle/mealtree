@@ -1,3 +1,4 @@
+import { PageTransition } from "@/components/page-transition";
 import { DiscoverPage } from "@/components/discover/discover-page";
 import { listRestaurants } from "@/lib/data";
 
@@ -5,5 +6,9 @@ import { listRestaurants } from "@/lib/data";
 export const revalidate = 300;
 
 export default async function Home() {
-  return <DiscoverPage restaurants={await listRestaurants()} />;
+  return (
+    <PageTransition>
+      <DiscoverPage restaurants={await listRestaurants()} />
+    </PageTransition>
+  );
 }

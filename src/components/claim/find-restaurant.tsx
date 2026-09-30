@@ -36,6 +36,7 @@ export function FindRestaurant({ restaurants }: { restaurants: Restaurant[] }) {
             <li key={r.slug} data-accent style={accentStyle(r.accent)}>
               <Link
                 href={href(`/claim/${r.slug}`)}
+                transitionTypes={["nav-forward"]}
                 className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-surface-2/60"
               >
                 <RestaurantThumb restaurant={r} className="size-11 shrink-0 rounded-lg" />
