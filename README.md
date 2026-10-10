@@ -1,6 +1,6 @@
 # nomm
 
-Menu pages for restaurants, like Linktree but for menus: mobile-first, searchable, with prices and photos. It launches in the UAE: prices are in AED, times are in Dubai time, and every public page is in **English and Arabic (RTL)** with a language toggle. The MVP runs on placeholder data for 8 fictional Dubai restaurants (Emirati, shawarma, Lebanese, Kerala, Afghan, specialty coffee, Japanese, Iranian).
+Menu pages for restaurants, like Linktree but for menus: mobile-first, searchable, with prices. It launches in the UAE (Abu Dhabi first): prices are in AED and every public page is in **English and Arabic (RTL)** with a language toggle. Live restaurants are real menus sent by owners; the original 8 Dubai placeholders are unpublished in the database (`src/data/restaurants.ts` is only the offline fallback).
 
 **Live:** https://nomm.ae (domain nomm.ae; Vercel project `mealtree`, deploys from this repo; admin at `/ops`). The database schema and env var names still use the old `mealtree` name on purpose; renaming them would need a migration.
 
@@ -22,7 +22,7 @@ Public pages live under `/en/…` and `/ar/…`. A bare URL (`/r/slug` on a QR c
 | Route | What it is |
 | --- | --- |
 | `/[lang]` | Discover: search dishes across every restaurant in either language ("shawarma under 15", "برياني أقل من 30 درهم", "karak", "rice"), plus quick filters (open now, price caps, vegetarian). |
-| `/[lang]/r/[slug]` | The public menu page. Includes links (reserve, order, call, directions), open/closed status in the restaurant's timezone, sticky section tabs that follow your scroll, menu search, diet filters, a dish detail sheet you drag down to close, deep links (`#dish-<id>`), a "report wrong info" form, hours and location, and schema.org `Restaurant` + `Menu` JSON-LD. |
+| `/[lang]/r/[slug]` | The public menu page. Includes links (reserve, order, call, directions), sticky section tabs that follow your scroll (long menus get a row of group tabs above the section pills), menu search, diet filters, a dish detail sheet you drag down to close, deep links (`#dish-<id>`), a "report wrong info" form, location and phone numbers, and hours only when we have them, and schema.org `Restaurant` + `Menu` JSON-LD. |
 | `/[lang]/claim` | Owner-side search: find your restaurant. |
 | `/[lang]/claim/[slug]` | Claim flow: pitch (real view count) → choose verification method → 6-digit code → name/role, plus opt-in to add the menu link to Google Business Profile → done. |
 | `/[lang]/dashboard/[slug]` | Owner dashboard: views, QR scans, link clicks, a daily-views chart, most-viewed dishes, inline price edits, sold-out switches, a downloadable table QR code, and share links tagged by channel. |
@@ -35,7 +35,7 @@ Public pages live under `/en/…` and `/ar/…`. A bare URL (`/r/slug` on a QR c
 
 - **Next.js 16 (App Router) + React 19 + Tailwind CSS 4 + Motion.** Every route is prerendered and refreshed from the database every 5 minutes, so menu pages stay fast and indexable.
 - **Data**: server pages load restaurants through `src/lib/data.ts`, from Supabase when configured, otherwise from `src/data/restaurants.ts`. Types are in `src/lib/types.ts`.
-- **Brand color**: each restaurant has one `accent` hex. `src/lib/accent.ts` derives light/dark variants and a readable text color, applied through `[data-accent]` CSS variables.
+- **Colors**: the nomm brand color is `--brand` in `globals.css`. Restaurant pages use one neutral accent for now (`NEUTRAL_ACCENT` in `src/lib/accent.ts`); per-restaurant colors are switched off, and the stored `accent` values are unused.
 - **Owner edits** (claim, sold-out, price, Google link request) go through `src/lib/store.ts`. With Supabase configured they're saved to the database and every visitor sees them right away, because the menu page loads edits in the browser rather than waiting for the 5-minute refresh. Without Supabase they're kept in `localStorage`.
 - **Languages** (`src/i18n`): `config.ts` (locales, cookie, redirects), `dictionaries/en.ts` + `ar.ts` (every UI string; Arabic plurals are handled in `ar.ts`), `format.ts` (AED prices, 12-hour times, dates, `+971` phone numbers; Western digits in both languages, as UAE menus print them). Client components call `useI18n()`, server components `getI18n()` (via `next/root-params`). `/[lang]` and `/ops` are separate root layouts, so `<html lang dir>` is set per language, and unmatched URLs fall to `app/global-not-found.tsx`.
 - **Bilingual content**: restaurants have `nameAr`, `taglineAr`, `neighborhoodAr`, `addressAr`; menus, sections, dishes and options have `nameAr` / `descriptionAr` / `labelAr` inside the menu JSON. Arabic pages show the Arabic text when it exists and fall back to English; the dish sheet shows the other language's name too, for ordering. Cuisine names are translated in the dictionary.
@@ -96,10 +96,25 @@ Real numbers replace the old placeholder `stats` column (dropped).
 
 **Known gaps:** there's no rate limiting on claims or takedown requests yet. Someone could file junk claims, which would block the real owner until you reject them in `/ops`. Add rate limiting, and real SMS/email codes, before scaling up outreach.
 
+## Adding restaurants
+
+Menus arrive as JSON drafts (`{"restaurant", "menus", "needs_review"}`, from `wa-outreach/db_ready/`). Held-out items (`needs_review`) are never published.
+
+```bash
+python3 scripts/prepare-menu.py <draft.json> <out.json>   # merge size rows into options, unique ids, Title Case
+node scripts/import-restaurants.mjs [--dry] <out.json>…   # upsert through admin_upsert_restaurant
+```
+
+- The import uses `MEALTREE_ADMIN_TOKEN` from `.env.local` (git-ignored). Register its SHA-256 in `mealtree.admin_keys`; delete the row to revoke. It never needs the `service_role` key.
+- **Hours** are optional: with none, the page shows no hours, open/closed status, or "Open now" entry. Cuisine and tagline can stay empty. A 24-hour place is stored as `00:00`–`00:00` every day.
+- **Maps links** live in `links` as `{"kind":"maps"}` and drive the Directions button. Preferred: the owner's `maps.app.goo.gl` share link. Fallback: `google.com/maps?cid=<id>` (the same listing; checked for four venues). Without either, Directions searches the address.
+- **Extra phones** are `{"kind":"phone","url":"tel:+971…"}` links. **Long menus** can set `group` / `groupAr` on sections (sections of a group must be adjacent); multi-menu restaurants group by menu.
+- Dev server note: `.next/dev/cache/fetch-cache` holds database reads; delete it and restart `next dev` to see fresh data.
+
 ## Not built yet (next steps)
 
 - Automated owner verification (SMS/email codes) to replace calling each restaurant, multiple owners per restaurant, an audit log of edits, and rate limits on public endpoints.
 - Uploading your own photos to storage (the editor takes image URLs for now).
 - An ingestion pipeline: menu photo → OCR/LLM extraction → human QA → publish, with a `verifiedAt` date per menu.
 - Google Business Profile integration for owners who opt in during the claim flow.
-- Real dish photos for the Dubai set (placeholder data reuses the few Unsplash photos that match), and other emirates beyond Dubai.
+- Dish photos (most menus have none), and a restaurant-color feature (deliberately off for now).
