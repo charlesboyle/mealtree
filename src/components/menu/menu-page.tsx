@@ -29,9 +29,9 @@ import { ItemSheet } from "./item-sheet";
 import { RestaurantHeader } from "./restaurant-header";
 
 const TOPBAR = 56;
+/** Sticky navigation: one row (52) on short menus; group tabs / search (44) plus section pills (48) otherwise. */
 const TABBAR = 52;
-/** Extra height of the group row, shown above the section tabs on long menus. */
-const GROUPBAR = 44;
+const TABBAR_TWO_ROWS = 92;
 
 type ViewSection = MenuSection & { key: string; label: string };
 
@@ -100,13 +100,13 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
 
   // Long menus can group sections ('Grills', 'Drinks'): a row of groups above the section tabs.
   const groups = useMemo(() => {
-    if (hasQuery || searching) return [];
     const seen = new Map<string, { key: string; label: string; first: string }>();
     for (const s of sections)
       if (s.group && !seen.has(s.group)) seen.set(s.group, { key: s.group, label: pick(s.group, s.groupAr), first: s.key });
     return seen.size > 1 ? [...seen.values()] : [];
-  }, [sections, hasQuery, searching, pick]);
-  const tabbar = TABBAR + (groups.length ? GROUPBAR : 0);
+  }, [sections, pick]);
+  const twoRows = groups.length > 0 || searching;
+  const tabbar = twoRows ? TABBAR_TWO_ROWS : TABBAR;
 
   const resultCount = sections.reduce((n, s) => n + s.items.length, 0);
   const narrowed = hasQuery || filters.length > 0;
@@ -127,6 +127,13 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
 
   // ——— Scroll spy ———
   const [active, setActive] = useState<string | undefined>(sections[0]?.key);
+  const activeGroup = sections.find((sec) => sec.key === active)?.group;
+  // Short menus show every section as a pill; grouped ones show the active group's. A search shows the sections that have matches, with counts.
+  const pillSections = hasQuery
+    ? sections.map((sec) => ({ ...sec, label: `${sec.label} ${sec.items.length}` }))
+    : groups.length
+      ? sections.filter((sec) => sec.group === activeGroup)
+      : sections;
   const lock = useRef<string | null>(null);
   useEffect(() => {
     let raf = 0;
@@ -224,6 +231,48 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     setQuery("");
   };
 
+  const searchButton = (
+    <button
+      onClick={() => setSearching(true)}
+      aria-label={t.menu.searchLabel}
+      className="pressable relative -me-2 grid w-10 shrink-0 place-items-center text-ink"
+    >
+      <Search className="size-5" strokeWidth={2} />
+      {filters.length > 0 && <span className="absolute end-2 top-2.5 size-2 rounded-full bg-accent ring-2 ring-bg" />}
+    </button>
+  );
+
+  const searchBar = (
+    <div className="flex flex-1 items-center gap-2">
+      <label className="flex h-9 flex-1 items-center gap-2 rounded-lg bg-surface-2 px-3 focus-within:ring-2 focus-within:ring-accent">
+        <Search className="size-4 shrink-0 text-ink-3" strokeWidth={2.2} />
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Escape" && closeSearch()}
+          placeholder={t.menu.searchPlaceholder(name)}
+          enterKeyHint="search"
+          className="h-full min-w-0 flex-1 bg-transparent text-md text-ink outline-none placeholder:text-ink-3 [&::-webkit-search-cancel-button]:hidden"
+          type="search"
+          aria-label={t.menu.searchLabel}
+        />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            aria-label={t.common.clearSearch}
+            className="grid size-5 place-items-center rounded-full bg-ink-3 text-surface"
+          >
+            <X className="size-3" strokeWidth={3} />
+          </button>
+        )}
+      </label>
+      <button onClick={closeSearch} className="pressable h-9 px-1 text-base font-medium text-ink">
+        {t.common.cancel}
+      </button>
+    </div>
+  );
+
   return (
     <div data-accent style={style} className="min-h-dvh bg-bg pb-10">
       <TopBar restaurant={r} name={name} compact={compact} />
@@ -234,79 +283,38 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
       <div ref={menuStart} className="h-4" />
       <div
         className={cn(
-          "sticky top-14 z-30 border-b bg-bg transition-[border-color,box-shadow] duration-300",
-          compact ? "border-line" : "border-transparent",
+          "sticky top-14 z-30 bg-bg transition-[border-color,box-shadow] duration-300",
+          !twoRows && cn("border-b", compact ? "border-line" : "border-transparent"),
         )}
       >
         <div className="mx-auto max-w-2xl px-4 sm:px-5">
-          {groups.length > 0 && (
-            <GroupTabs
-              groups={groups}
-              active={sections.find((s) => s.key === active)?.group}
-              onSelect={(g) => jumpTo(g.first)}
-              label={t.menu.sections}
-            />
+          {twoRows ? (
+            <>
+              <div className="flex h-11 items-stretch border-b border-line">
+                {searching ? (
+                  searchBar
+                ) : (
+                  <>
+                    <GroupTabs
+                      groups={groups}
+                      active={activeGroup}
+                      onSelect={(g) => jumpTo(g.first)}
+                      label={t.menu.sections}
+                    />
+                    {searchButton}
+                  </>
+                )}
+              </div>
+              <div className="flex h-12 items-stretch">
+                <SectionTabs sections={pillSections} active={active} onSelect={jumpTo} label={t.menu.sections} />
+              </div>
+            </>
+          ) : (
+            <div className="flex h-13 items-stretch">
+              <SectionTabs sections={pillSections} active={active} onSelect={jumpTo} label={t.menu.sections} />
+              {searchButton}
+            </div>
           )}
-          <AnimatePresence mode="popLayout" initial={false}>
-            {searching ? (
-              <motion.div
-                key="search"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                className="flex h-13 items-center gap-2"
-              >
-                <label className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-surface-2 px-3 focus-within:ring-2 focus-within:ring-accent">
-                  <Search className="size-4 shrink-0 text-ink-3" strokeWidth={2.2} />
-                  <input
-                    autoFocus
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Escape" && closeSearch()}
-                    placeholder={t.menu.searchPlaceholder(name)}
-                    enterKeyHint="search"
-                    className="h-full min-w-0 flex-1 bg-transparent text-md text-ink outline-none placeholder:text-ink-3 [&::-webkit-search-cancel-button]:hidden"
-                    type="search"
-                    aria-label={t.menu.searchLabel}
-                  />
-                  {query && (
-                    <button
-                      onClick={() => setQuery("")}
-                      aria-label={t.common.clearSearch}
-                      className="grid size-5 place-items-center rounded-full bg-ink-3 text-surface"
-                    >
-                      <X className="size-3" strokeWidth={3} />
-                    </button>
-                  )}
-                </label>
-                <button onClick={closeSearch} className="pressable h-10 px-2 text-base font-medium text-ink">
-                  {t.common.cancel}
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="tabs"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                className="flex h-13 items-stretch"
-              >
-                <button
-                  onClick={() => setSearching(true)}
-                  aria-label={t.menu.searchLabel}
-                  className="pressable relative -ms-2 grid w-10 shrink-0 place-items-center text-ink"
-                >
-                  <Search className="size-5" strokeWidth={2} />
-                  {filters.length > 0 && (
-                    <span className="absolute end-2 top-3 size-2 rounded-full bg-accent ring-2 ring-bg" />
-                  )}
-                </button>
-                <SectionTabs
-                  sections={groups.length ? sections.filter((s) => s.group === sections.find((x) => x.key === active)?.group) : sections}
-                  active={active} onSelect={jumpTo} label={t.menu.sections} />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 
@@ -460,7 +468,7 @@ function GroupTabs({
       ref={strip}
       role="tablist"
       aria-label={label}
-      className="no-scrollbar -mx-4 flex h-11 items-stretch overflow-x-auto px-1 sm:-mx-5 sm:px-2"
+      className="no-scrollbar -ms-3.5 flex h-11 min-w-0 flex-1 items-stretch overflow-x-auto"
     >
       {groups.map((g) => {
         const on = active === g.key;
@@ -539,8 +547,8 @@ function SectionTabs({
             aria-selected={on}
             onClick={() => onSelect(s.key)}
             className={cn(
-              "relative h-8 shrink-0 rounded-full px-3.5 text-sm font-medium transition-colors duration-200",
-              on ? "bg-accent-soft text-accent" : "text-ink-3 hover:text-ink-2",
+              "relative h-8 shrink-0 self-center rounded-full border px-3.5 text-sm font-medium transition-colors duration-200",
+              on ? "border-line-strong text-ink" : "border-transparent text-ink-3 hover:text-ink-2",
             )}
           >
             <span className="whitespace-nowrap">{s.label}</span>
