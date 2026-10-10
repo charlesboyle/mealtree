@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, MapPin, Phone } from "lucide-react";
+import { BadgeCheck, Images, MapPin, Phone } from "lucide-react";
 import { Fragment, useState } from "react";
 import Link from "next/link";
 import { linkIcon } from "@/components/icons";
@@ -150,22 +150,26 @@ function TrustNote({ restaurant: r, claimed }: { restaurant: Restaurant; claimed
   }
   const link = "font-medium text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink";
   return (
-    <p className="mt-4 text-xs text-ink-3">
-      <span className="font-medium text-ink-2">{t.menu.unofficial}.</span>{" "}
-      {r.menuFiles ? (
-        <>
-          {t.menu.menuReceived(date(r.menuFiles.received))}{" "}
-          <button type="button" onClick={() => setOriginal(true)} className={link}>
-            {t.menu.viewOriginal}
-          </button>
-          <OriginalMenuSheet files={r.menuFiles} open={original} onClose={() => setOriginal(false)} />
-        </>
-      ) : (
-        <>{t.menu.pricesMayChange}</>
-      )}{" "}
-      <Link href={href(`/claim/${r.slug}`)} transitionTypes={["nav-forward"]} className={link}>
-        {t.menu.ownThis}
-      </Link>
-    </p>
+    <div className="mt-4 space-y-2 text-xs text-ink-3">
+      {r.menuFiles ? <p>{t.menu.lastUpdated(date(r.menuFiles.received))}</p> : <p>{t.menu.pricesMayChange}</p>}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {r.menuFiles && (
+          <>
+            <button
+              type="button"
+              onClick={() => setOriginal(true)}
+              className="pressable inline-flex h-8 items-center gap-1.5 rounded-full border border-line-strong px-3 font-medium text-ink hover:bg-surface-2"
+            >
+              <Images className="size-3.5" strokeWidth={2} aria-hidden />
+              {t.menu.viewOriginal}
+            </button>
+            <OriginalMenuSheet files={r.menuFiles} open={original} onClose={() => setOriginal(false)} />
+          </>
+        )}
+        <Link href={href(`/claim/${r.slug}`)} transitionTypes={["nav-forward"]} className={link}>
+          {t.menu.ownThis}
+        </Link>
+      </div>
+    </div>
   );
 }

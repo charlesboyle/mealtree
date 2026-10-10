@@ -303,7 +303,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
                 )}
               </div>
               <div className="flex h-12 items-stretch">
-                <SectionTabs sections={pillSections} active={active} onSelect={jumpTo} label={t.menu.sections} />
+                <SectionTabs sections={pillSections} active={active} onSelect={jumpTo} label={t.menu.sections} edgeToEdge />
               </div>
             </>
           ) : (
@@ -504,11 +504,14 @@ function SectionTabs({
   active,
   onSelect,
   label,
+  edgeToEdge,
 }: {
   sections: ViewSection[];
   active?: string;
   onSelect: (key: string) => void;
   label: string;
+  /** Let the strip run to both screen edges so pills aren't clipped at the page gutter. */
+  edgeToEdge?: boolean;
 }) {
   const strip = useRef<HTMLDivElement>(null);
   const tabs = useRef(new Map<string, HTMLButtonElement>());
@@ -529,7 +532,12 @@ function SectionTabs({
       ref={strip}
       role="tablist"
       aria-label={label}
-      className="no-scrollbar relative -me-4 flex flex-1 items-center gap-1.5 overflow-x-auto pe-4 [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:-me-5 sm:pe-5 rtl:[mask-image:linear-gradient(to_left,black_calc(100%-24px),transparent)]"
+      className={cn(
+        "no-scrollbar relative -ms-4 flex flex-1 items-center gap-1.5 overflow-x-auto ps-4 sm:-ms-5 sm:ps-5",
+        edgeToEdge
+          ? "-me-4 pe-4 sm:-me-5 sm:pe-5"
+          : "-me-4 pe-4 [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:-me-5 sm:pe-5 rtl:[mask-image:linear-gradient(to_left,black_calc(100%-24px),transparent)]",
+      )}
     >
       {sections.map((s) => {
         const on = active === s.key;
