@@ -180,7 +180,7 @@ export const ar: Dictionary = {
     menuReceived: (date) => `بناءً على القائمة المستلمة في ${date}.`,
     viewOriginal: "عرض القائمة الأصلية",
     originalTitle: "القائمة الأصلية",
-    originalNote: (date) => `القائمة التي استلمناها في ${date}، كما أُرسلت.`,
+    originalNote: (date) => `آخر تحديث: ${date}`,
     originalPage: (n, total) => `صفحة ${n} من ${total}`,
     ownThis: "هل تملك هذا المطعم؟",
     claimCta: "طالِب بهذه الصفحة",

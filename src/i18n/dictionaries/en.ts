@@ -140,7 +140,7 @@ export const en = {
     menuReceived: (date: string) => `Based on the menu received ${date}.`,
     viewOriginal: "View original menu",
     originalTitle: "Original menu",
-    originalNote: (date: string) => `The menu we received on ${date}, shown as it was sent.`,
+    originalNote: (date: string) => `Last updated: ${date}`,
     originalPage: (n: number, total: number) => `Page ${n} of ${total}`,
     ownThis: "Own this restaurant?",
     claimCta: "Claim this page",

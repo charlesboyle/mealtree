@@ -235,7 +235,7 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     <button
       onClick={() => setSearching(true)}
       aria-label={t.menu.searchLabel}
-      className="pressable relative -me-2 grid w-10 shrink-0 place-items-center text-ink"
+      className="pressable pointer-events-auto relative -me-2 grid w-10 shrink-0 place-items-center bg-bg text-ink"
     >
       <Search className="size-5" strokeWidth={2} />
       {filters.length > 0 && <span className="absolute end-2 top-2.5 size-2 rounded-full bg-accent ring-2 ring-bg" />}
@@ -282,15 +282,12 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
       {/* ——— Sticky menu navigation ——— */}
       <div ref={menuStart} className="h-4" />
       <div
-        className={cn(
-          "sticky top-14 z-30 bg-bg transition-[border-color,box-shadow] duration-300",
-          !twoRows && cn("border-b", compact ? "border-line" : "border-transparent"),
-        )}
+        className="pointer-events-none sticky top-14 z-30"
       >
         <div className="mx-auto max-w-2xl px-4 sm:px-5">
           {twoRows ? (
             <>
-              <div className="flex h-11 items-stretch border-b border-line">
+              <div className="pointer-events-auto -mx-4 flex h-11 items-stretch border-b border-line bg-bg px-4 sm:-mx-5 sm:px-5">
                 {searching ? (
                   searchBar
                 ) : (
@@ -547,8 +544,8 @@ function SectionTabs({
             aria-selected={on}
             onClick={() => onSelect(s.key)}
             className={cn(
-              "relative h-8 shrink-0 self-center rounded-full border px-3.5 text-sm font-medium transition-colors duration-200",
-              on ? "border-line-strong text-ink" : "border-transparent text-ink-3 hover:text-ink-2",
+              "pointer-events-auto relative h-8 shrink-0 self-center rounded-full border bg-bg px-3.5 text-sm font-medium shadow-sm transition-colors duration-200",
+              on ? "border-line-strong text-ink" : "border-line text-ink-3 hover:text-ink-2",
             )}
           >
             <span className="whitespace-nowrap">{s.label}</span>
