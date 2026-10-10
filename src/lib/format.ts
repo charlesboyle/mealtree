@@ -103,6 +103,11 @@ export function directionsUrl(r: { address: string; links: { kind: string; url: 
   return r.links.find((l) => l.kind === "maps")?.url ?? mapsUrl(r.address);
 }
 
+/** Public URL of a page of the original menu in the `menus` Storage bucket. */
+export function menuFileUrl(path: string) {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/menus/${path}`;
+}
+
 export function cn(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
 }

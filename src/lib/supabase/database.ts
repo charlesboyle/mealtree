@@ -2,7 +2,7 @@
  * Types for the `mealtree` schema (supabase/migrations). Hand-written so the
  * repo doesn't pull in other apps' schemas that share the Supabase project.
  */
-import type { ExternalLink, Hours, Menu, MenuSource, Restaurant, RestaurantStats } from "@/lib/types";
+import type { ExternalLink, Hours, Menu, MenuFiles, MenuSource, Restaurant, RestaurantStats } from "@/lib/types";
 
 export type RestaurantRow = {
   id: string;
@@ -28,6 +28,7 @@ export type RestaurantRow = {
   verified_at: string;
   google_menu_link: boolean;
   menus: Menu[];
+  menu_files: MenuFiles | null;
   claimed_at: string | null;
   published: boolean;
   created_at: string;
@@ -245,6 +246,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     claimed: row.claimed_at !== null,
     source: row.source,
     verifiedAt: row.verified_at,
+    menuFiles: row.menu_files ?? undefined,
     googleMenuLink: row.google_menu_link,
     menus: row.menus,
   };

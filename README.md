@@ -109,6 +109,12 @@ node scripts/import-restaurants.mjs [--dry] <out.json>…   # upsert through adm
 - **Hours** are optional: with none, the page shows no hours, open/closed status, or "Open now" entry. Cuisine and tagline can stay empty. A 24-hour place is stored as `00:00`–`00:00` every day.
 - **Maps links** live in `links` as `{"kind":"maps"}` and drive the Directions button. Preferred: the owner's `maps.app.goo.gl` share link. Fallback: `google.com/maps?cid=<id>` (the same listing; checked for four venues). Without either, Directions searches the address.
 - **Extra phones** are `{"kind":"phone","url":"tel:+971…"}` links. **Long menus** can set `group` / `groupAr` on sections (sections of a group must be adjacent); multi-menu restaurants group by menu.
+- **Original menu files**: every listing keeps the pages we built it from (`menu_files`: pages in the public Storage bucket `menus`, plus the date the restaurant sent them). The page says "Based on the menu received <date>" with a "View original menu" gallery; it never claims we checked prices. Use the file's WhatsApp date (else the day it was saved), not the extraction date.
+  ```bash
+  python3 scripts/prepare-menu-files.py <out_dir> <slug> <YYYY-MM-DD> <menu.pdf|photo.jpg>…   # needs: pip install pymupdf pillow
+  node scripts/upload-menu-files.mjs <out_dir> [slug…]
+  ```
+  Uploads are gated by the same admin token (sent as an `x-admin-token` header, checked in the database; see `supabase/migrations/20261010100000_menu_files.sql`).
 - Dev server note: `.next/dev/cache/fetch-cache` holds database reads; delete it and restart `next dev` to see fresh data.
 
 ## Not built yet (next steps)

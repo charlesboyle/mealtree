@@ -59,6 +59,9 @@ export type ExternalLink = { kind: LinkKind; label: string; labelAr?: string; ur
 
 export type MenuSource = "visit" | "photos" | "website" | "owner";
 
+/** The original menu we built a page from: one image per page, and when the restaurant sent it. */
+export type MenuFiles = { received: string; files: { path: string; type: "image" | "pdf" }[] };
+
 export type Restaurant = {
   slug: string;
   name: string;
@@ -87,6 +90,8 @@ export type Restaurant = {
   /** Whether the Google Business Profile has a menu link today. */
   googleMenuLink: boolean;
   menus: Menu[];
+  /** Original menu pages (Storage bucket `menus`), shown under "View original". */
+  menuFiles?: MenuFiles;
 };
 
 /** Last 30 days, computed from real events (see supabase/migrations/…_events.sql). */

@@ -1,10 +1,11 @@
 "use client";
 
 import { BadgeCheck, MapPin, Phone } from "lucide-react";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { linkIcon } from "@/components/icons";
 import { OpenStatus } from "@/components/open-status";
+import { OriginalMenuSheet } from "./original-menu";
 import { Photo } from "@/components/photo";
 import { useI18n } from "@/i18n/client";
 import { cn, directionsUrl } from "@/lib/format";
@@ -138,6 +139,7 @@ function ActionRow({ restaurant: r }: { restaurant: Restaurant }) {
 
 function TrustNote({ restaurant: r, claimed }: { restaurant: Restaurant; claimed: boolean }) {
   const { t, pick, date, href } = useI18n();
+  const [original, setOriginal] = useState(false);
   if (claimed) {
     return (
       <p className="mt-4 flex items-center gap-1.5 text-xs text-ink-3">
@@ -146,11 +148,22 @@ function TrustNote({ restaurant: r, claimed }: { restaurant: Restaurant; claimed
       </p>
     );
   }
+  const link = "font-medium text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink";
   return (
     <p className="mt-4 text-xs text-ink-3">
       <span className="font-medium text-ink-2">{t.menu.unofficial}.</span>{" "}
-      {t.menu.checkedFrom(date(r.verifiedAt), t.source[r.source])}{" "}
-      <Link href={href(`/claim/${r.slug}`)} transitionTypes={["nav-forward"]} className="font-medium text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink">
+      {r.menuFiles ? (
+        <>
+          {t.menu.menuReceived(date(r.menuFiles.received))}{" "}
+          <button type="button" onClick={() => setOriginal(true)} className={link}>
+            {t.menu.viewOriginal}
+          </button>
+          <OriginalMenuSheet files={r.menuFiles} open={original} onClose={() => setOriginal(false)} />
+        </>
+      ) : (
+        <>{t.menu.pricesMayChange}</>
+      )}{" "}
+      <Link href={href(`/claim/${r.slug}`)} transitionTypes={["nav-forward"]} className={link}>
         {t.menu.ownThis}
       </Link>
     </p>
