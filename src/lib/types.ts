@@ -57,7 +57,7 @@ export type LinkKind =
 
 export type ExternalLink = { kind: LinkKind; label: string; labelAr?: string; url: string };
 
-export type MenuSource = "visit" | "photos" | "website" | "owner";
+export type MenuSource = "visit" | "photos" | "website" | "owner" | "menu";
 
 /** The original menu we built a page from: one image per page, and when the restaurant sent it. */
 export type MenuFiles = { received: string; files: { path: string; type: "image" | "pdf" }[] };

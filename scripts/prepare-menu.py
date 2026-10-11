@@ -9,6 +9,7 @@ Usage: python3 scripts/prepare-menu.py <draft.json> <out.json>
 - ALL CAPS names become Title Case (known acronyms kept).
 - Missing hours stay empty (the app then shows nothing about hours); cuisine and tagline stay empty.
 - Held-out items (needs_review) are never included.
+- `source` comes from the draft's restaurant.source (e.g. "menu" for a menu a venue sent us); default "owner".
 """
 import collections
 import json
@@ -127,7 +128,7 @@ def main(src, dst):
         "slug": r["slug"], "name": r["name"], "name_ar": r.get("name_ar") or None, "tagline": "", "cuisine": [],
         "price_level": 2, "neighborhood": r["neighborhood"], "address": r["address"], "phone": r["phone"],
         "timezone": "Asia/Dubai", "currency": r.get("currency", "AED"), "hours": {str(i): [] for i in range(7)},
-        "links": links, "source": "owner", "verified_at": r["verified_at"], "menus": menus, "published": True,
+        "links": links, "source": r.get("source") or "owner", "verified_at": r["verified_at"], "menus": menus, "published": True,
     }
     json.dump(row, open(dst, "w", encoding="utf-8"), ensure_ascii=False)
     items = [i for m in menus for s in m["sections"] for i in s["items"]]

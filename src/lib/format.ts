@@ -65,6 +65,7 @@ export const sourceLabel: Record<MenuSource, string> = {
   photos: "Menu photos",
   website: "Restaurant website",
   owner: "Restaurant owner",
+  menu: "Menu received",
 };
 
 /** ٠-٩ and ۰-۹ → 0-9, so "١٥" and "15" search the same. */

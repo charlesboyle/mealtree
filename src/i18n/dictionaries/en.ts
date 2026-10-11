@@ -87,6 +87,7 @@ export const en = {
     photos: "menu photos",
     website: "the restaurant's website",
     owner: "the owner",
+    menu: "a menu we received",
   } satisfies Record<MenuSource, string>,
   /** Cuisine names are stored in English; other languages translate them here. */
   cuisines: {} as Record<string, string>,

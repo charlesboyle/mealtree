@@ -102,6 +102,7 @@ export const ar: Dictionary = {
     photos: "صور القائمة",
     website: "موقع المطعم",
     owner: "صاحب المطعم",
+    menu: "قائمة وصلتنا",
   },
   cuisines: {
     Emirati: "إماراتي",
