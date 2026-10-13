@@ -20,8 +20,16 @@ export function itemMinPrice(item: MenuItem) {
 }
 
 /** Photos are either full https URLs or Unsplash photo ids (placeholder data). */
+/**
+ * Dish photos in our Storage bucket come with a small copy at `…/dishes/<restaurant>/thumb/<file>` (~16 KB), so
+ * list rows (88 px) do not download the full ~100 KB image. Always upload both when adding a dish photo.
+ */
+function dishThumb(url: string) {
+  return url.replace(/(\/storage\/v1\/object\/public\/menus\/dishes\/[^/]+)\/([^/]+)$/, "$1/thumb/$2");
+}
+
 export function photoUrl(id: string, width: number) {
-  if (/^https?:\/\//.test(id)) return id;
+  if (/^https?:\/\//.test(id)) return width <= 200 ? dishThumb(id) : id;
   return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${width}&q=70`;
 }
 

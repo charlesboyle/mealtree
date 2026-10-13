@@ -102,7 +102,7 @@ export const ar: Dictionary = {
     photos: "صور القائمة",
     website: "موقع المطعم",
     owner: "صاحب المطعم",
-    menu: "قائمة وصلتنا",
+    menu: "القائمة",
   },
   cuisines: {
     Emirati: "إماراتي",
@@ -176,7 +176,7 @@ export const ar: Dictionary = {
     directions: "الاتجاهات",
     verified: "موثّق من صاحب المطعم",
     managedBy: (name, date) => `يديرها ${name} · آخر تحديث ${date}`,
-    lastUpdated: (date) => `آخر تحديث: ${date}`,
+    lastUpdated: (date, source) => (source ? `آخر تحديث ${date} من ${source}` : `آخر تحديث: ${date}`),
     pricesMayChange: "قد تكون الأسعار تغيّرت.",
     viewOriginal: "عرض القائمة الأصلية",
     originalTitle: "القائمة الأصلية",

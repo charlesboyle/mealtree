@@ -151,7 +151,7 @@ function TrustNote({ restaurant: r, claimed }: { restaurant: Restaurant; claimed
   const link = "font-medium text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-ink";
   return (
     <div className="mt-4 space-y-2 text-xs text-ink-3">
-      {r.menuFiles ? <p>{t.menu.lastUpdated(date(r.menuFiles.received))}</p> : <p>{t.menu.pricesMayChange}</p>}
+      {r.menuFiles ? <p>{t.menu.lastUpdated(date(r.menuFiles.received), t.source[r.source])}</p> : <p>{t.menu.pricesMayChange}</p>}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {r.menuFiles && (
           <>

@@ -87,7 +87,7 @@ export const en = {
     photos: "menu photos",
     website: "the restaurant's website",
     owner: "the owner",
-    menu: "a menu we received",
+    menu: "the menu",
   } satisfies Record<MenuSource, string>,
   /** Cuisine names are stored in English; other languages translate them here. */
   cuisines: {} as Record<string, string>,
@@ -136,7 +136,7 @@ export const en = {
     directions: "Directions",
     verified: "Verified by owner",
     managedBy: (name: string, date: string) => `Managed by ${name} · updated ${date}`,
-    lastUpdated: (date: string) => `Last updated: ${date}`,
+    lastUpdated: (date: string, source?: string) => (source ? `Last updated ${date} from ${source}` : `Last updated: ${date}`),
     pricesMayChange: "Prices may have changed.",
     viewOriginal: "View original menu",
     originalTitle: "Original menu",
