@@ -8,7 +8,7 @@ Usage: python3 scripts/prepare-menu.py <draft.json> <out.json>
 - Item ids are made unique across the whole restaurant (the app needs that).
 - ALL CAPS names become Title Case (known acronyms kept).
 - Missing hours stay empty (the app then shows nothing about hours); cuisine and tagline stay empty.
-- Held-out items (needs_review) are never included.
+- Held-out items (needs_review) are never included. Dishes with a null price are kept (price null -> the app shows "Ask"); size rows only merge into variants when every size has a price.
 - `source` comes from the draft's restaurant.source (e.g. "menu" for a menu a venue sent us); default "owner".
 """
 import collections
@@ -53,6 +53,8 @@ def label(tok):
 
 
 def num(x):
+    if x is None:
+        return None  # unpriced dish: the app shows "Ask"
     return int(x) if float(x) == int(x) else round(float(x), 2)
 
 
@@ -68,7 +70,7 @@ def build(draft):
                 groups.setdefault(key, []).append((it, mt))
             items = []
             for key, lst in groups.items():
-                if key[0] == "v" and len(lst) > 1 and len({mt.group(2).strip().lower() for _, mt in lst}) == len(lst):
+                if key[0] == "v" and len(lst) > 1 and all(it["price"] is not None for it, _ in lst) and len({mt.group(2).strip().lower() for _, mt in lst}) == len(lst):
                     first = lst[0][0]
                     base = lst[0][1].group(1).strip()
                     out = {"id": slug(base), "name": tcase(base)}
