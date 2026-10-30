@@ -10,12 +10,17 @@ export default async function PrivacyPage() {
   const { locale } = await getI18n();
   if (locale === "ar") {
     return (
-      <LegalShell title="الخصوصية" lead="ما الذي نجمعه ولماذا. آخر تحديث: سبتمبر 2026.">
+      <LegalShell title="الخصوصية" lead="ما الذي نجمعه ولماذا. آخر تحديث: أكتوبر 2026.">
         <Prose>
           <h2>الزوار</h2>
           <p>
             لا تحتاج إلى حساب لتصفّح القوائم. إن قسنا مشاهدات الصفحات أو مسح رموز QR، فنقيسها بشكل إجمالي لنُري المطاعم
             عدد مرات مشاهدة قوائمها. لا نبيع البيانات الشخصية ولا نعرض إعلانات.
+          </p>
+          <h2>التحليلات</h2>
+          <p>
+            نستخدم أدوات تحليلات، منها تسجيلات مجهولة للجلسات، لنفهم كيف يُستخدم الموقع ونحسّنه. نُخفي ما يُكتب في
+            النماذج، ولا نستخدم هذه البيانات للإعلانات.
           </p>
           <h2>أصحاب المطاعم</h2>
           <p>
@@ -26,7 +31,7 @@ export default async function PrivacyPage() {
           <p>نحتفظ بالاسم ووسيلة التواصل اللذين تقدّمهما لتأكيد الإزالة، ثم نحتفظ بسجل حتى لا تُدرج الصفحة مجددًا.</p>
           <h2>مزوّدو الخدمة</h2>
           <p>
-            تُخزَّن القوائم لدى Supabase وتُقدَّم عبر Vercel. قد تُعالَج صور القوائم التي نجمعها بواسطة Claude من Anthropic
+            تُخزَّن القوائم لدى Supabase وتُقدَّم عبر Vercel، وتعالج PostHog التحليلات. قد تُعالَج صور القوائم التي نجمعها بواسطة Claude من Anthropic
             لنسخ محتواها، ولا تُستخدم الصور للتعرّف على الأشخاص.
           </p>
         </Prose>
@@ -34,12 +39,17 @@ export default async function PrivacyPage() {
     );
   }
   return (
-    <LegalShell title="Privacy" lead="What we collect, and why. Last updated September 2026.">
+    <LegalShell title="Privacy" lead="What we collect, and why. Last updated October 2026.">
       <Prose>
         <h2>Diners</h2>
         <p>
           You don&apos;t need an account to browse menus. If we measure page views or QR scans, we do it in aggregate,
           to show restaurants how often their menu is seen. We don&apos;t sell personal data or show ads.
+        </p>
+        <h2>Analytics</h2>
+        <p>
+          We use analytics tools, including anonymous session recordings, to understand how the site is used and to
+          improve it. Text typed into forms is masked, and we don&apos;t use this data for advertising.
         </p>
         <h2>Restaurant owners</h2>
         <p>
@@ -54,7 +64,7 @@ export default async function PrivacyPage() {
         </p>
         <h2>Service providers</h2>
         <p>
-          Menus are stored with Supabase and served by Vercel. Menu photos we collect may be processed by Anthropic&apos;s
+          Menus are stored with Supabase and served by Vercel, and PostHog processes analytics. Menu photos we collect may be processed by Anthropic&apos;s
           Claude to transcribe them; photos aren&apos;t used to identify people.
         </p>
       </Prose>

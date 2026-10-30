@@ -3,6 +3,7 @@
 import { Copy, Download } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 import { useToast } from "@/components/providers";
 import { Card, CardTitle } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
@@ -37,6 +38,7 @@ export function QrCard({ restaurant: r }: { restaurant: Restaurant }) {
     a.download = `${r.slug}-menu-qr.svg`;
     a.click();
     URL.revokeObjectURL(a.href);
+    posthog.capture("qr_code_downloaded", { restaurant_slug: r.slug });
     toast(t.dashboard.qrDownloaded);
   };
 

@@ -3,12 +3,15 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
+import { posthogLogger, posthogLoggerProvider, SeverityNumber } from "../../../instrumentation";
 import { requireAdmin } from "@/lib/admin/server";
 import type { DietTag, Hours, Menu, MenuItem } from "@/lib/types";
 
 const MAX_PHOTOS = 8;
 const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 type MediaType = (typeof MEDIA_TYPES)[number];
+
+const client = new Anthropic();
 
 const Priced = z.object({
   label: z.string(),
@@ -183,7 +186,12 @@ export async function extractMenu(form: FormData): Promise<ExtractResult> {
     });
   }
 
-  const client = new Anthropic();
+  posthogLogger?.emit({
+    body: "menu_extraction_requested",
+    severityNumber: SeverityNumber.INFO,
+    attributes: { photo_count: images.length },
+  });
+
   try {
     const response = await client.beta.messages.parse({
       model: "claude-opus-5",
@@ -220,6 +228,13 @@ export async function extractMenu(form: FormData): Promise<ExtractResult> {
 
     const menus = toMenus(data);
     if (!menus.length) return { ok: false, error: "No dishes found. Make sure the photos show the menu itself." };
+
+    posthogLogger?.emit({
+      body: "menu_extraction_completed",
+      severityNumber: SeverityNumber.INFO,
+      attributes: { menu_count: menus.length, warning_count: data.warnings.length },
+    });
+
     return {
       ok: true,
       menus,
@@ -240,7 +255,13 @@ export async function extractMenu(form: FormData): Promise<ExtractResult> {
     if (error instanceof Anthropic.APIConnectionError) return { ok: false, error: "Couldn't reach the Anthropic API." };
     if (error instanceof Anthropic.APIError) return { ok: false, error: `Anthropic API error ${error.status}.` };
     // Most likely the reply didn't validate against the schema.
+    posthogLogger?.emit({
+      body: "menu_extraction_unexpected_failure",
+      severityNumber: SeverityNumber.ERROR,
+    });
     console.error("Menu extraction failed", error);
     return { ok: false, error: "Couldn't turn the photos into a menu. Try again, or with fewer photos." };
+  } finally {
+    await posthogLoggerProvider?.forceFlush();
   }
 }

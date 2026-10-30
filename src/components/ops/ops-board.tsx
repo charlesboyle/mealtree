@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useMemo, useState, useTransition } from "react";
 import { reviewClaim, resolveRemoval, setPublished, signOut } from "@/app/ops/actions";
 import { Logo } from "@/components/logo";
@@ -73,10 +74,16 @@ function useAction() {
   const toast = useToast();
   const [pending, start] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
-  const run = (key: string, fn: () => Promise<{ ok: boolean; error?: string }>, success: string) => {
+  const run = (
+    key: string,
+    fn: () => Promise<{ ok: boolean; error?: string }>,
+    success: string,
+    onSuccess?: () => void,
+  ) => {
     setBusy(key);
     start(async () => {
       const res = await fn();
+      if (res.ok) onSuccess?.();
       toast(res.ok ? success : (res.error ?? "Something went wrong"));
       router.refresh();
       setBusy(null);
@@ -340,14 +347,22 @@ function Claims({ claims, hydrated }: { claims: ClaimRow[]; hydrated: boolean })
                 </p>
                 <div className="mt-3 flex gap-2">
                   <button
-                    onClick={() => run(`a:${c.id}`, () => reviewClaim(c.id, c.slug, true), `${c.restaurant} verified`)}
+                    onClick={() =>
+                      run(`a:${c.id}`, () => reviewClaim(c.id, c.slug, true), `${c.restaurant} verified`, () =>
+                        posthog.capture("claim_reviewed", { restaurant_slug: c.slug, approved: true }),
+                      )
+                    }
                     disabled={!!busy}
                     className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-positive text-sm font-semibold text-white disabled:opacity-50 sm:flex-none sm:px-5"
                   >
                     {busy === `a:${c.id}` ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" strokeWidth={2.6} />} Approve
                   </button>
                   <button
-                    onClick={() => run(`r:${c.id}`, () => reviewClaim(c.id, c.slug, false), "Claim rejected")}
+                    onClick={() =>
+                      run(`r:${c.id}`, () => reviewClaim(c.id, c.slug, false), "Claim rejected", () =>
+                        posthog.capture("claim_reviewed", { restaurant_slug: c.slug, approved: false }),
+                      )
+                    }
                     disabled={!!busy}
                     className="pressable flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-2 text-sm font-semibold text-ink disabled:opacity-50 sm:flex-none sm:px-5"
                   >
@@ -394,14 +409,22 @@ function Removals({ removals, hydrated }: { removals: RemovalRow[]; hydrated: bo
           {q.reason && <p className="mt-3 whitespace-pre-wrap rounded-xl bg-surface-2 px-3 py-2 text-sm text-ink-2">{q.reason}</p>}
           <div className="mt-3 flex gap-2">
             <button
-              onClick={() => run(`rm:${q.id}`, () => resolveRemoval(q.id, q.slug, true), "Page hidden")}
+              onClick={() =>
+                run(`rm:${q.id}`, () => resolveRemoval(q.id, q.slug, true), "Page hidden", () =>
+                  posthog.capture("removal_request_resolved", { has_restaurant: Boolean(q.slug), removed: true }),
+                )
+              }
               disabled={!!busy}
               className="pressable flex h-10 items-center gap-1.5 rounded-full bg-danger px-5 text-sm font-semibold text-white disabled:opacity-50"
             >
               {busy === `rm:${q.id}` ? <Loader2 className="size-4 animate-spin" /> : <EyeOff className="size-4" strokeWidth={2.2} />} Hide page
             </button>
             <button
-              onClick={() => run(`d:${q.id}`, () => resolveRemoval(q.id, q.slug, false), "Request dismissed")}
+              onClick={() =>
+                run(`d:${q.id}`, () => resolveRemoval(q.id, q.slug, false), "Request dismissed", () =>
+                  posthog.capture("removal_request_resolved", { has_restaurant: Boolean(q.slug), removed: false }),
+                )
+              }
               disabled={!!busy}
               className="pressable h-10 rounded-full bg-surface-2 px-5 text-sm font-semibold disabled:opacity-50"
             >

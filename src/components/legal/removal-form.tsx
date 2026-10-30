@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
+import posthog from "posthog-js";
 import { Field, TextArea, TextInput, inputClass } from "@/components/ops/editor/fields";
 import { useI18n } from "@/i18n/client";
 import { getBrowserClient } from "@/lib/supabase/client";
@@ -36,6 +37,7 @@ export function RemovalForm({ restaurants, initialSlug }: { restaurants: Option[
       setError(t.removal.failed);
       return;
     }
+    posthog.capture("removal_request_submitted", { restaurant_slug: slug });
     setStatus("sent");
   };
 

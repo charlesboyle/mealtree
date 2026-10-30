@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Check, Loader2, Mail, MessageSquareText, ShieldCheck, Store } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Sparkline } from "@/components/dashboard/area-chart";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -103,6 +104,12 @@ export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; st
                 setName={setName}
                 onNext={async (googleOptIn, role) => {
                   await menuActions.claim(r.slug, { name: name.trim(), role, method, googleOptIn });
+                  posthog.capture("restaurant_claim_submitted", {
+                    restaurant_slug: r.slug,
+                    verification_method: method,
+                    claimant_role: role,
+                    google_menu_link_requested: googleOptIn,
+                  });
                   go("done");
                 }}
               />
