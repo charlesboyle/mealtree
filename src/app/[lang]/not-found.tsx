@@ -1,24 +1,39 @@
+import { MapPinOffIcon } from "lucide-react";
 import Link from "next/link";
 import { lang } from "next/root-params";
-import { LogoMark } from "@/components/logo";
+import { EmptyState } from "@/components/empty-state";
+import { SiteShell } from "@/components/site-shell";
 import { hasLocale, makeI18n } from "@/i18n";
+
+const content = {
+  en: {
+    title: "We can’t find that page",
+    body: "The restaurant may have left nomm, or the link is broken.",
+    cta: "Go to Discover",
+  },
+  ar: {
+    title: "لا نجد هذه الصفحة",
+    body: "ربما غادر المطعم nomm، أو أن الرابط معطّل.",
+    cta: "العودة إلى الاستكشاف",
+  },
+};
 
 export default async function NotFound() {
   const locale = await lang();
-  const { t, href } = makeI18n(hasLocale(locale) ? locale : "en");
+  const { locale: l, href } = makeI18n(hasLocale(locale) ? locale : "en");
+  const c = content[l];
   return (
-    <main className="grid min-h-dvh place-items-center px-6 text-center">
-      <div className="animate-rise">
-        <LogoMark className="mx-auto size-9" />
-        <h1 className="mt-6 text-2xl font-bold tracking-tight">{t.notFound.title}</h1>
-        <p className="mt-2 text-base text-ink-2">{t.notFound.body}</p>
-        <Link
-          href={href("/")}
-          className="pressable mt-6 inline-flex h-11 items-center rounded-xl bg-ink px-5 text-sm font-medium text-bg"
-        >
-          {t.notFound.cta}
-        </Link>
-      </div>
-    </main>
+    <SiteShell>
+      <main className="mx-auto max-w-xl px-4 py-16">
+        <EmptyState icon={MapPinOffIcon} title={c.title} body={c.body}>
+          <Link
+            href={href("/")}
+            className="inline-flex h-11 items-center rounded-full bg-tomato px-6 text-sm font-semibold text-white transition-colors duration-150 hover:bg-tomato-dark"
+          >
+            {c.cta}
+          </Link>
+        </EmptyState>
+      </main>
+    </SiteShell>
   );
 }

@@ -21,11 +21,11 @@ export function SearchBox({
   return (
     <label
       className={cn(
-        "flex h-12 items-center gap-3 rounded-xl border border-line-strong bg-surface px-3.5 shadow-sm transition-[border-color,box-shadow] duration-200 focus-within:border-ink-3 focus-within:shadow-md",
+        "flex h-11 items-center gap-3 rounded-full bg-soft px-4 transition-[background-color,box-shadow] duration-150 focus-within:bg-white focus-within:shadow-pill focus-within:ring-1 focus-within:ring-line",
         className,
       )}
     >
-      <Search className="size-5 shrink-0 text-ink-3" strokeWidth={2} />
+      <Search className="size-4 shrink-0 text-muted" aria-hidden />
       <input
         type="search"
         value={value}
@@ -35,14 +35,14 @@ export function SearchBox({
         aria-label={label}
         enterKeyHint="search"
         autoComplete="off"
-        className="h-full min-w-0 flex-1 bg-transparent text-md text-ink outline-none placeholder:text-ink-3 [&::-webkit-search-cancel-button]:hidden"
+        className="h-full min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
       />
       {value && (
         <button
           type="button"
           onClick={() => onChange("")}
           aria-label={t.common.clearSearch}
-          className="grid size-6 place-items-center rounded-full bg-surface-3 text-ink-2 hover:text-ink"
+          className="grid size-6 place-items-center rounded-full bg-line text-plum transition-transform active:scale-90"
         >
           <X className="size-3.5" strokeWidth={2.6} />
         </button>

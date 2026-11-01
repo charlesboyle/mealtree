@@ -77,7 +77,12 @@ Accuracy matters more than completeness: diners will see these prices.
 - Prices are in AED (dirhams, "Dhs", "د.إ"). Give plain numbers without currency symbols; read Arabic-Indic digits (١٢) as normal numbers. "Market price" or a missing price means price null with a price_note.
 - Sizes or options with their own prices (Small/Large, Glass/Bottle, Half/Whole) go in variants; the base price is the cheapest.
 - Priced extras ("add chicken +3") go in add_ons.
-- Only add dietary tags the menu itself marks. Don't infer vegan from ingredients.
+- Tags (vegetarian, vegan, gluten-free, spicy, nuts) feed the diner filters and mood rails, so tag every dish that qualifies:
+  - spicy: a chili icon or "spicy/hot" label, or a name or description that clearly says it is hot (chili, chilli, jalapeño, sriracha, harissa, schezwan, peri-peri, "extra hot", curry heat levels). Leave mild dishes untagged.
+  - vegetarian: marked as such, or the name and description clearly show no meat, poultry, fish or gelatin (salads, cheese, vegetable, egg and dessert dishes).
+  - vegan, gluten-free: only when the menu marks them or the description says so. Never infer these from ingredients; people rely on them for allergies.
+  - nuts: the description names nuts (almond, cashew, peanut, pistachio, walnut, hazelnut, pecan) or the menu marks nut content.
+  When unsure, leave the tag off.
 - Keep the menu's section order. Use separate menus only when the photos clearly show separate menus (e.g. lunch vs. drinks).
 - Several photos may overlap or show the same page twice; list each dish once.
 - If something is blurry, cut off, or you're unsure of a price, still include your best reading and add a warning naming the dish.`;

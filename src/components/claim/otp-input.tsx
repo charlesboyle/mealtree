@@ -49,8 +49,8 @@ export function OtpInput({
             <div
               key={i}
               className={cn(
-                "relative grid aspect-[4/5] place-items-center rounded-xl bg-surface text-2xl font-semibold ring-1 transition-[box-shadow,--tw-ring-color] duration-150",
-                error ? "ring-danger" : current ? "ring-2 ring-accent peer-focus:ring-accent" : "ring-line-strong",
+                "relative grid aspect-[4/5] place-items-center rounded-xl bg-plum/[0.05] text-2xl font-semibold text-plum ring-1 transition-[box-shadow,--tw-ring-color] duration-150",
+                error ? "ring-danger" : current ? "bg-white ring-2 ring-tomato peer-focus:ring-tomato" : "ring-transparent",
               )}
             >
               {char ? (
@@ -65,7 +65,7 @@ export function OtpInput({
                 </motion.span>
               ) : (
                 current &&
-                !disabled && <span className="h-7 w-0.5 animate-[fade_1s_ease-in-out_infinite_alternate] rounded-full bg-accent" />
+                !disabled && <span className="h-7 w-0.5 animate-[fade_1s_ease-in-out_infinite_alternate] rounded-full bg-tomato" />
               )}
             </div>
           );

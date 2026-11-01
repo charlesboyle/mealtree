@@ -7,6 +7,8 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/format";
 import { useHydrated } from "@/lib/store";
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function useMediaQuery(query: string) {
   return useSyncExternalStore(
     (cb) => {
@@ -29,10 +31,13 @@ export function Sheet({
   label,
   children,
   header,
+  footer,
   className,
   style,
   closeTone = "image",
   closeLabel = "Close",
+  look = "sheet",
+  dragToClose,
 }: {
   open: boolean;
   onClose: () => void;
@@ -40,11 +45,21 @@ export function Sheet({
   children: React.ReactNode;
   /** Rendered above the scroll area and used as the drag handle on phones. */
   header?: React.ReactNode;
+  /** Pinned below the scroll area (actions that must stay in reach). */
+  footer?: React.ReactNode;
   className?: string;
   /** Portaled to <body>, so page-level CSS variables (accent) are passed here. */
   style?: React.CSSProperties;
   closeTone?: "image" | "surface";
   closeLabel?: string;
+  /**
+   * `sheet` is the standard bottom sheet. `modal` and `viewer` give the content full control of the
+   * panel's look (close button, handle, classes) and keep only the dialog behavior: scroll lock,
+   * Escape, focus trap. `modal` fades the scrim and slides the panel up 40px; `viewer` is a bare fade.
+   */
+  look?: "sheet" | "modal" | "viewer";
+  /** `modal` only: drag the panel down to dismiss. */
+  dragToClose?: boolean;
 }) {
   const hydrated = useHydrated();
   const desktop = useMediaQuery("(min-width: 640px)");
@@ -56,7 +71,28 @@ export function Sheet({
     const prevOverflow = document.documentElement.style.overflow;
     const prevFocus = document.activeElement as HTMLElement | null;
     document.documentElement.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return onClose();
+      if (e.key !== "Tab") return;
+      // Keep Tab inside the dialog.
+      const root = panel.current;
+      if (!root) return;
+      const focusable = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+      if (!focusable.length) return e.preventDefault();
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === root)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (!root.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     requestAnimationFrame(() => panel.current?.focus({ preventScroll: true }));
     return () => {
@@ -67,6 +103,73 @@ export function Sheet({
   }, [open, onClose]);
 
   if (!hydrated) return null;
+
+  if (look !== "sheet") {
+    const EASE = [0.23, 1, 0.32, 1] as const;
+    return createPortal(
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className={look === "viewer" ? "fixed inset-0 z-50" : "fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6"}
+            style={style}
+            data-accent={style ? "" : undefined}
+            exit={{ opacity: 1 }}
+          >
+            {look === "modal" && (
+              <motion.div
+                className="absolute inset-0 bg-ink/50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25, ease: EASE }}
+                onClick={onClose}
+                aria-hidden
+              />
+            )}
+            <motion.div
+              ref={panel}
+              role="dialog"
+              aria-modal="true"
+              aria-label={label}
+              tabIndex={-1}
+              {...(look === "modal"
+                ? {
+                    // Phones slide the panel up from the bottom edge and back down; larger screens ease it in place.
+                    ...(desktop
+                      ? {
+                          initial: { y: 24, opacity: 0, scale: 0.97 },
+                          animate: { y: 0, opacity: 1, scale: 1 },
+                          exit: { y: 16, opacity: 0, scale: 0.98, transition: { duration: 0.2, ease: EASE } },
+                          transition: { type: "spring" as const, duration: 0.4, bounce: 0.1 },
+                        }
+                      : {
+                          initial: { y: "105%" },
+                          animate: { y: 0 },
+                          exit: { y: "105%", transition: { duration: 0.28, ease: [0.32, 0.72, 0, 1] as const } },
+                          transition: { type: "spring" as const, duration: 0.45, bounce: 0.06 },
+                        }),
+                  }
+                : {})}
+              {...(look === "modal" && dragToClose
+                ? {
+                    drag: "y" as const,
+                    dragConstraints: { top: 0, bottom: 0 },
+                    dragElastic: { top: 0, bottom: 0.6 },
+                    onDragEnd: (_: unknown, info: { offset: { y: number }; velocity: { y: number } }) => {
+                      if (info.offset.y > 100 || info.velocity.y > 600) onClose();
+                    },
+                  }
+                : {})}
+              className={cn("outline-none", look === "viewer" ? "absolute inset-0" : "relative", className)}
+            >
+              {children}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body,
+    );
+  }
 
   return createPortal(
     <AnimatePresence>
@@ -121,7 +224,7 @@ export function Sheet({
                 onClick={onClose}
                 aria-label={closeLabel}
                 className={cn(
-                  "pressable absolute end-3 top-3 z-20 grid size-9 place-items-center rounded-full",
+                  "pressable absolute end-3 top-3 z-20 grid size-11 place-items-center rounded-full",
                   closeTone === "image"
                     ? "bg-black/45 text-white hover:bg-black/60"
                     : "bg-surface-2 text-ink-2 hover:bg-surface-3 hover:text-ink",
@@ -130,6 +233,7 @@ export function Sheet({
                 <X className="size-[18px]" strokeWidth={2.2} />
               </button>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+              {footer && <div className="shrink-0">{footer}</div>}
             </motion.div>
           </div>
         </div>

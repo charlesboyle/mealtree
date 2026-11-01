@@ -1,8 +1,8 @@
-import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Geist_Mono, IBM_Plex_Sans_Arabic, Plus_Jakarta_Sans } from "next/font/google";
 
-/** Geist for Latin; IBM Plex Sans Arabic takes over for Arabic script. */
-export const geist = Geist({
-  variable: "--font-geist",
+/** Plus Jakarta Sans for Latin; IBM Plex Sans Arabic takes over for Arabic script. */
+export const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin", "latin-ext"],
 });
 
@@ -20,4 +20,4 @@ export const geistMono = Geist_Mono({
   preload: false,
 });
 
-export const fontVariables = `${geist.variable} ${plexArabic.variable} ${geistMono.variable}`;
+export const fontVariables = `${jakarta.variable} ${plexArabic.variable} ${geistMono.variable}`;

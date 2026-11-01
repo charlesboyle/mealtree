@@ -20,7 +20,7 @@ export async function generateMetadata(props: LayoutProps<"/[lang]">): Promise<M
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
     title: { default: t.title, template: t.template },
     description: t.description,
-    alternates: { languages: { en: "/en", ar: "/ar" } },
+    twitter: { card: "summary_large_image" },
   };
 }
 

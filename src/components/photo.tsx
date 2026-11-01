@@ -16,6 +16,8 @@ export function Photo({
   className,
   priority,
   fallback,
+  imgClassName,
+  placeholderWidth,
 }: {
   id?: string;
   alt: string;
@@ -24,6 +26,10 @@ export function Photo({
   priority?: boolean;
   /** Shown centered on the tint when there's no photo (e.g. a cuisine glyph). */
   fallback?: React.ReactNode;
+  /** Extra classes for the image itself, e.g. a hover zoom. */
+  imgClassName?: string;
+  /** A smaller size the browser likely already has (e.g. the list thumbnail), shown blurred until this one loads. */
+  placeholderWidth?: number;
 }) {
   const [state, setState] = useState<"loading" | "loaded" | "error">("loading");
   const failed = !id || state === "error";
@@ -33,7 +39,18 @@ export function Photo({
       {failed && fallback && <div className="absolute inset-0 grid place-items-center text-accent">{fallback}</div>}
       {!failed && (
         <>
-          {state === "loading" && <div className="skeleton absolute inset-0" />}
+          {placeholderWidth ? (
+            // eslint-disable-next-line @next/next/no-img-element -- same CDN URL the list already loaded
+            <img
+              src={photoUrl(id, placeholderWidth)}
+              srcSet={photoSrcSet(id, placeholderWidth)}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 size-full scale-105 object-cover blur-md"
+            />
+          ) : (
+            state === "loading" && <div className="skeleton absolute inset-0" />
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element -- remote CDN already sizes images */}
           <img
             src={photoUrl(id, width)}
@@ -51,6 +68,7 @@ export function Photo({
             className={cn(
               "absolute inset-0 size-full object-cover transition-opacity duration-500",
               state === "loaded" ? "opacity-100" : "opacity-0",
+              imgClassName,
             )}
           />
         </>

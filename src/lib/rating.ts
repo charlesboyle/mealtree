@@ -1,0 +1,16 @@
+import type { Restaurant } from "@/lib/types";
+
+const PRIOR_WEIGHT = 20;
+const PRIOR_MEAN = 4;
+
+/**
+ * Orders by rating, pulling scores based on few ratings toward the average so a
+ * 5.0 from two people doesn't outrank a 4.6 from hundreds. Unrated ones go last.
+ */
+export function byRating(restaurants: Restaurant[]): Restaurant[] {
+  const score = (r: Restaurant) =>
+    r.rating === undefined
+      ? -1
+      : ((r.ratingCount ?? 0) * r.rating + PRIOR_WEIGHT * PRIOR_MEAN) / ((r.ratingCount ?? 0) + PRIOR_WEIGHT);
+  return [...restaurants].sort((a, b) => score(b) - score(a));
+}

@@ -29,6 +29,8 @@ export type RestaurantRow = {
   google_menu_link: boolean;
   menus: Menu[];
   menu_files: MenuFiles | null;
+  rating: number | null;
+  rating_count: number | null;
   claimed_at: string | null;
   published: boolean;
   created_at: string;
@@ -223,6 +225,9 @@ export function normalizeStats(stats: Partial<RestaurantStats> | null | undefine
   return { ...s, daily: s.daily?.length ? s.daily : EMPTY_STATS.daily };
 }
 
+/** Zones ("Khalifa City - SE45", "Al Danah - Zone 1") are too fine for diners; keep the district. */
+const broadArea = (area: string) => area.split(" - ")[0].trim();
+
 export function rowToRestaurant(row: RestaurantRow): Restaurant {
   return {
     slug: row.slug,
@@ -232,8 +237,8 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     taglineAr: row.tagline_ar ?? undefined,
     cuisine: row.cuisine,
     priceLevel: row.price_level as Restaurant["priceLevel"],
-    neighborhood: row.neighborhood,
-    neighborhoodAr: row.neighborhood_ar ?? undefined,
+    neighborhood: broadArea(row.neighborhood),
+    neighborhoodAr: row.neighborhood_ar ? broadArea(row.neighborhood_ar) : undefined,
     address: row.address,
     addressAr: row.address_ar ?? undefined,
     phone: row.phone,
@@ -247,6 +252,8 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     source: row.source,
     verifiedAt: row.verified_at,
     menuFiles: row.menu_files ?? undefined,
+    rating: row.rating ?? undefined,
+    ratingCount: row.rating_count ?? undefined,
     googleMenuLink: row.google_menu_link,
     menus: row.menus,
   };

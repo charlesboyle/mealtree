@@ -26,11 +26,11 @@ export function LanguageToggle({ className }: { className?: string }) {
         e.currentTarget.href = switchLocalePath(pathname, to) + location.search + location.hash;
       }}
       className={cn(
-        "pressable inline-flex h-9 items-center rounded-lg px-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink",
+        "pressable inline-flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-xs font-medium tracking-wide text-ink-2/70 hover:bg-surface-2 hover:text-ink",
         className,
       )}
     >
-      {t.common.switchTo}
+      {to === "ar" ? "AR" : "EN"}
     </a>
   );
 }

@@ -85,6 +85,9 @@ export type Restaurant = {
   hours: Hours;
   links: ExternalLink[];
   claimed: boolean;
+  /** Score out of 5 and how many ratings it is based on; both absent when unrated. */
+  rating?: number;
+  ratingCount?: number;
   source: MenuSource;
   verifiedAt: string;
   /** Whether the Google Business Profile has a menu link today. */

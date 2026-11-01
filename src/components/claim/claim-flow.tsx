@@ -5,7 +5,7 @@ import { ArrowLeft, Check, Loader2, Mail, MessageSquareText, ShieldCheck, Store 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkline } from "@/components/dashboard/area-chart";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Logo } from "@/components/logo";
@@ -13,7 +13,6 @@ import { RestaurantThumb } from "@/components/photo";
 import { Button, Switch } from "@/components/ui";
 import { useI18n } from "@/i18n/client";
 import { maskPhone } from "@/i18n/format";
-import { accentStyle } from "@/lib/accent";
 import { cn } from "@/lib/format";
 import { actionErrorMessage, menuActions, useOverrides } from "@/lib/store";
 import type { Restaurant, RestaurantStats } from "@/lib/types";
@@ -28,7 +27,6 @@ const isolate = (s: string) => `⁨${s}⁩`;
 
 export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; stats: RestaurantStats }) {
   const { t, dir: textDir } = useI18n();
-  const style = useMemo(() => accentStyle(r.accent), [r.accent]);
   const [step, setStep] = useState<Step>("pitch");
   const [dir, setDir] = useState(1);
   const [method, setMethod] = useState<Method>("phone");
@@ -48,27 +46,27 @@ export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; st
   // Server data can be a few minutes old, so also trust the live claim state.
   const claimedByOther = r.claimed || (live.claimed && !live.isOwner);
   if (step !== "done") {
-    if (live.pendingReview) return <AlreadyClaimed restaurant={r} style={style} pending />;
-    if (claimedByOther && !live.isOwner) return <AlreadyClaimed restaurant={r} style={style} />;
+    if (live.pendingReview) return <AlreadyClaimed restaurant={r} pending />;
+    if (claimedByOther && !live.isOwner) return <AlreadyClaimed restaurant={r} />;
   }
 
   return (
-    <div data-accent style={style} className="min-h-dvh bg-bg">
-      <header className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
+    <div className="min-h-dvh bg-cream">
+      <header className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4 sm:px-6">
         {step !== "pitch" && step !== "done" ? (
           <button
             onClick={back}
             aria-label={t.common.back}
-            className="pressable -ms-2 grid size-10 place-items-center rounded-full hover:bg-surface-2"
+            className="-ms-2 grid size-10 place-items-center rounded-full text-plum transition-[background-color,transform] duration-150 hover:bg-soft active:scale-90"
           >
             <ArrowLeft className="size-5 rtl:-scale-x-100" strokeWidth={2} />
           </button>
         ) : (
           <Logo />
         )}
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-surface-3">
+        <div className="h-1 flex-1 overflow-hidden rounded-full bg-line">
           <motion.div
-            className="h-full rounded-full bg-accent"
+            className="h-full rounded-full bg-tomato"
             initial={false}
             animate={{ width: `${Math.max(progress, 0.06) * 100}%` }}
             transition={{ type: "spring", bounce: 0, duration: 0.5 }}
@@ -77,7 +75,7 @@ export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; st
         <LanguageToggle className="-me-2" />
       </header>
 
-      <main className="mx-auto max-w-2xl overflow-hidden px-4 pb-16">
+      <main className="mx-auto max-w-2xl overflow-hidden px-4 pb-16 sm:px-6">
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div
             key={step}
@@ -125,9 +123,9 @@ export function ClaimFlow({ restaurant: r, stats }: { restaurant: Restaurant; st
 function StepTitle({ eyebrow, title, sub }: { eyebrow?: string; title: React.ReactNode; sub?: React.ReactNode }) {
   return (
     <div className="pt-6">
-      {eyebrow && <p className="text-sm text-ink-3">{eyebrow}</p>}
-      <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">{title}</h1>
-      {sub && <p className="mt-3 text-base text-ink-2">{sub}</p>}
+      {eyebrow && <p className="text-sm font-medium text-tomato">{eyebrow}</p>}
+      <h1 className="mt-1 text-2xl font-bold tracking-[-0.02em] text-plum sm:text-3xl">{title}</h1>
+      {sub && <p className="mt-3 text-base leading-relaxed text-muted">{sub}</p>}
     </div>
   );
 }
@@ -145,11 +143,11 @@ function Pitch({
   const name = pick(r.name, r.nameAr);
   return (
     <div>
-      <div className="mt-4 flex items-center gap-3">
-        <RestaurantThumb restaurant={r} className="size-12 shrink-0 rounded-lg" />
+      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-paper p-3">
+        <RestaurantThumb restaurant={r} className="size-12 shrink-0 rounded-xl" />
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold">{name}</p>
-          <p className="truncate text-sm text-ink-3">{pick(r.address, r.addressAr)}</p>
+          <p className="truncate text-base font-semibold text-plum">{name}</p>
+          <p className="truncate text-sm text-muted">{pick(r.address, r.addressAr)}</p>
         </div>
       </div>
 
@@ -159,8 +157,8 @@ function Pitch({
       />
 
       {stats.views30d > 0 && (
-        <div className="mt-6 rounded-xl border border-line p-4">
-          <div className="flex items-baseline justify-between gap-3 text-sm text-ink-3">
+        <div className="mt-6 rounded-2xl bg-paper p-4">
+          <div className="flex items-baseline justify-between gap-3 text-sm text-muted">
             <span>{t.claim.views30}</span>
             {stats.trendPct !== null && (
               <span className={cn("font-medium", stats.trendPct >= 0 ? "text-positive" : "text-ink-2")}>
@@ -172,25 +170,25 @@ function Pitch({
         </div>
       )}
 
-      <ul className="mt-6 divide-y divide-line">
+      <ul className="mt-6 divide-y divide-line rounded-2xl bg-white px-4 shadow-card">
         {t.claim.benefits.map((b) => (
           <li key={b.title} className="flex gap-3 py-3.5">
-            <Check className="mt-0.5 size-4.5 shrink-0 text-accent" strokeWidth={2.4} />
+            <Check className="mt-0.5 size-4.5 shrink-0 text-fresh" strokeWidth={2.4} />
             <div>
-              <p className="text-base font-medium text-ink">{b.title}</p>
-              <p className="mt-0.5 text-sm text-ink-2">{b.body}</p>
+              <p className="text-base font-semibold text-plum">{b.title}</p>
+              <p className="mt-0.5 text-sm text-muted">{b.body}</p>
             </div>
           </li>
         ))}
       </ul>
 
-      <div className="sticky bottom-0 -mx-4 mt-6 bg-bg px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
-        <Button variant="accent" className="w-full" onClick={onNext}>
+      <div className="sticky bottom-0 -mx-4 mt-6 bg-cream px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+        <Button variant="accent" className={cn(BTN, "w-full")} onClick={onNext}>
           {t.claim.cta(name)}
         </Button>
-        <p className="mt-3 text-center text-sm text-ink-3">
+        <p className="mt-3 text-center text-sm text-muted">
           {t.claim.free} {t.claim.notOwner}{" "}
-          <Link href={href(`/r/${r.slug}`)} transitionTypes={["nav-back"]} className="font-medium text-ink-2 underline-offset-2 hover:underline">
+          <Link href={href(`/r/${r.slug}`)} className="font-medium text-plum underline underline-offset-2">
             {t.claim.backToMenu}
           </Link>
         </p>
@@ -235,34 +233,34 @@ function MethodStep({
               aria-checked={on}
               onClick={() => setMethod(o.id)}
               className={cn(
-                "pressable flex w-full items-center gap-3.5 rounded-xl border p-4 text-start",
-                on ? "border-accent bg-accent-soft" : "border-line-strong hover:border-ink-3",
+                "flex w-full items-center gap-3.5 rounded-2xl border p-4 text-start transition-[background-color,border-color,transform] duration-150 active:scale-[0.99]",
+                on ? "border-tomato bg-tomato/[0.06]" : "border-line bg-white hover:bg-soft",
               )}
             >
-              <o.icon className={cn("size-5 shrink-0", on ? "text-accent" : "text-ink-3")} strokeWidth={1.9} />
+              <o.icon className={cn("size-5 shrink-0", on ? "text-tomato" : "text-muted")} strokeWidth={1.9} />
               <span className="min-w-0 flex-1">
-                <span className="flex flex-wrap items-center gap-x-2 text-base font-medium text-ink">
+                <span className="flex flex-wrap items-center gap-x-2 text-base font-semibold text-plum">
                   {o.title}
-                  {o.badge && <span className="text-xs font-medium text-accent">{o.badge}</span>}
+                  {o.badge && <span className="text-xs font-medium text-fresh">{o.badge}</span>}
                 </span>
-                <span className="mt-0.5 block text-sm text-ink-3">{o.body}</span>
+                <span className="mt-0.5 block text-sm text-muted">{o.body}</span>
               </span>
               <span
                 className={cn(
                   "grid size-5 shrink-0 place-items-center rounded-full border-[1.5px]",
-                  on ? "border-accent bg-accent" : "border-line-strong",
+                  on ? "border-tomato bg-tomato" : "border-line",
                 )}
               >
-                {on && <Check className="size-3 text-on-accent" strokeWidth={3.5} />}
+                {on && <Check className="size-3 text-white" strokeWidth={3.5} />}
               </span>
             </button>
           );
         })}
       </div>
-      <Button variant="accent" className="mt-8 w-full" onClick={onNext}>
+      <Button variant="accent" className={cn(BTN, "mt-8 w-full")} onClick={onNext}>
         {method === "google" ? t.claim.continueGoogle : t.claim.sendCode}
       </Button>
-      <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-ink-3">
+      <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-muted">
         <ShieldCheck className="size-4" strokeWidth={2} /> {t.claim.privacyNote}
       </p>
     </div>
@@ -318,23 +316,29 @@ function CodeStep({ restaurant: r, method, onNext }: { restaurant: Restaurant; m
       </div>
       <div className="mt-5 flex h-6 items-center justify-center text-sm">
         {status === "checking" ? (
-          <span className="flex animate-fade items-center gap-2 text-ink-2">
+          <span className="flex animate-fade items-center gap-2 text-muted">
             <Loader2 className="size-4 animate-spin" /> {t.claim.verifying}
           </span>
         ) : status === "error" ? (
           <span className="animate-fade text-danger">{t.claim.codeError}</span>
         ) : resendIn > 0 ? (
-          <span className="tabular text-ink-3">{t.claim.resendIn(`0:${String(resendIn).padStart(2, "0")}`)}</span>
+          <span className="tabular text-muted">{t.claim.resendIn(`0:${String(resendIn).padStart(2, "0")}`)}</span>
         ) : (
-          <button onClick={() => setResendIn(30)} className="font-medium text-accent">
+          <button onClick={() => setResendIn(30)} className="font-medium text-tomato transition-opacity active:opacity-60">
             {t.claim.resend}
           </button>
         )}
       </div>
-      <p className="mt-10 rounded-lg bg-surface-2 px-4 py-3 text-center text-xs text-ink-3">{t.claim.demoNote}</p>
+      <p className="mt-10 rounded-2xl bg-paper px-4 py-3 text-center text-xs text-muted">{t.claim.demoNote}</p>
     </div>
   );
 }
+
+const BTN_BASE = "inline-flex h-12 items-center justify-center rounded-full px-6 text-base font-semibold";
+const BTN =
+  "!bg-tomato !text-white shadow-card transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.98]";
+const BTN_SECONDARY =
+  "!bg-plum/[0.05] !text-plum transition-[background-color,transform] duration-150 hover:!bg-plum/[0.09] active:scale-[0.98]";
 
 const ROLES = ["Owner", "Manager", "Staff"];
 
@@ -368,19 +372,19 @@ function DetailsStep({
     <div>
       <StepTitle eyebrow={t.claim.step(3, 3)} title={t.claim.detailsTitle} sub={t.claim.detailsSub} />
       <label className="mt-6 block">
-        <span className="text-sm font-medium text-ink-2">{t.claim.yourName}</span>
+        <span className="text-[13px] font-medium text-plum">{t.claim.yourName}</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
           autoComplete="name"
           placeholder={t.claim.namePlaceholder}
-          className="mt-1.5 h-12 w-full rounded-xl border border-line-strong bg-surface px-4 text-md text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-3 focus:border-accent focus:ring-2 focus:ring-accent-line"
+          className="mt-1.5 h-12 w-full rounded-xl bg-plum/[0.05] px-4 text-[15px] text-plum outline-none transition-colors duration-150 placeholder:text-muted focus:bg-plum/[0.08]"
         />
       </label>
       <div className="mt-5">
-        <span className="text-sm font-medium text-ink-2">{t.claim.yourRole}</span>
-        <div className="mt-1.5 flex w-full rounded-xl bg-surface-2 p-1">
+        <span className="text-[13px] font-medium text-plum">{t.claim.yourRole}</span>
+        <div className="mt-1.5 flex w-full rounded-xl bg-plum/[0.05] p-1">
           {ROLES.map((x) => (
             <button
               key={x}
@@ -388,13 +392,13 @@ function DetailsStep({
               aria-pressed={role === x}
               className={cn(
                 "relative h-10 flex-1 rounded-lg text-sm font-medium transition-colors",
-                role === x ? "text-ink" : "text-ink-3",
+                role === x ? "text-plum" : "text-muted",
               )}
             >
               {role === x && (
                 <motion.span
                   layoutId="role"
-                  className="absolute inset-0 rounded-lg bg-surface shadow-sm ring-1 ring-line"
+                  className="absolute inset-0 rounded-lg bg-white shadow-pill"
                   transition={{ type: "spring", bounce: 0.15, duration: 0.35 }}
                 />
               )}
@@ -405,10 +409,10 @@ function DetailsStep({
       </div>
 
       {!r.googleMenuLink && (
-        <div className="mt-6 flex gap-4 rounded-xl border border-line p-4">
+        <div className="mt-6 flex gap-4 rounded-2xl bg-paper p-4">
           <div className="min-w-0 flex-1">
-            <p className="text-base font-medium text-ink">{t.claim.googleTitle}</p>
-            <p className="mt-1 text-sm text-ink-3">{t.claim.googleBody}</p>
+            <p className="text-base font-semibold text-plum">{t.claim.googleTitle}</p>
+            <p className="mt-1 text-sm text-muted">{t.claim.googleBody}</p>
           </div>
           <Switch checked={google} onChange={setGoogle} label={t.claim.googleLabel} />
         </div>
@@ -419,7 +423,7 @@ function DetailsStep({
           {error}
         </p>
       )}
-      <Button variant="accent" className="mt-8 w-full" disabled={!name.trim() || pending} onClick={finish}>
+      <Button variant="accent" className={cn(BTN, "mt-8 w-full")} disabled={!name.trim() || pending} onClick={finish}>
         {pending ? <Loader2 className="size-5 animate-spin" /> : t.claim.finish}
       </Button>
     </div>
@@ -437,7 +441,7 @@ function Done({ restaurant: r, name, pending }: { restaurant: Restaurant; name: 
         initial={{ scale: 0.7, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", bounce: 0.35, duration: 0.5 }}
-        className="grid size-16 place-items-center rounded-full bg-accent text-on-accent"
+        className="grid size-16 place-items-center rounded-full bg-fresh text-white"
       >
         <svg
           viewBox="0 0 24 24"
@@ -456,17 +460,17 @@ function Done({ restaurant: r, name, pending }: { restaurant: Restaurant; name: 
           />
         </svg>
       </motion.div>
-      <h1 className="mt-7 text-3xl font-bold tracking-tight">
+      <h1 className="mt-7 text-2xl font-bold tracking-[-0.02em] text-plum sm:text-3xl">
         {pending ? t.claim.thanks(first) : t.claim.youreIn(first)}
       </h1>
-      <p className="mt-3 max-w-sm text-base text-ink-2">
+      <p className="mt-3 max-w-sm text-base leading-relaxed text-muted">
         {pending ? t.claim.pendingBody(isolate(maskPhone(r.phone)), rName) : t.claim.approvedBody(rName)}
       </p>
       <div className="mt-8 flex w-full flex-col gap-2">
-        <Button variant="accent" onClick={() => router.push(href(`/dashboard/${r.slug}`))}>
+        <Button variant="accent" className={BTN} onClick={() => router.push(href(`/dashboard/${r.slug}`))}>
           {pending ? t.claim.previewDashboard : t.claim.openDashboard}
         </Button>
-        <Button variant="secondary" onClick={() => router.push(href(`/r/${r.slug}`))}>
+        <Button variant="secondary" className={BTN_SECONDARY} onClick={() => router.push(href(`/r/${r.slug}`))}>
           {t.claim.viewMenu}
         </Button>
       </div>
@@ -476,33 +480,31 @@ function Done({ restaurant: r, name, pending }: { restaurant: Restaurant; name: 
 
 function AlreadyClaimed({
   restaurant: r,
-  style,
   pending,
 }: {
   restaurant: Restaurant;
-  style: React.CSSProperties;
   pending?: boolean;
 }) {
   const { t, pick, href } = useI18n();
   const name = pick(r.name, r.nameAr);
   return (
-    <div data-accent style={style} className="grid min-h-dvh place-items-center bg-bg px-6 text-center">
+    <div className="grid min-h-dvh place-items-center bg-cream px-6 text-center">
       <div className="max-w-sm animate-rise">
-        <ShieldCheck className="mx-auto size-8 text-accent" strokeWidth={1.8} />
-        <h1 className="mt-5 text-2xl font-bold tracking-tight">
+        <ShieldCheck className="mx-auto size-8 text-fresh" strokeWidth={1.8} />
+        <h1 className="mt-5 text-2xl font-bold tracking-[-0.02em] text-plum">
           {pending ? t.claim.pendingTitle : t.claim.claimedTitle(name)}
         </h1>
-        <p className="mt-3 text-base text-ink-2">{pending ? t.claim.pendingAlready(name) : t.claim.claimedBody}</p>
+        <p className="mt-3 text-base leading-relaxed text-muted">{pending ? t.claim.pendingAlready(name) : t.claim.claimedBody}</p>
         <div className="mt-8 flex flex-col gap-2">
           <Link
             href={href(`/dashboard/${r.slug}`)}
-            className="pressable inline-flex h-12 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-on-accent"
+            className={cn(BTN_BASE, BTN)}
           >
             {pending ? t.claim.previewDashboard : t.claim.viewDashboard}
           </Link>
           <Link
             href={href(`/r/${r.slug}`)}
-            className="pressable inline-flex h-12 items-center justify-center rounded-xl bg-surface-2 px-6 text-base font-semibold"
+            className={cn(BTN_BASE, BTN_SECONDARY)}
           >
             {t.claim.backToMenu}
           </Link>

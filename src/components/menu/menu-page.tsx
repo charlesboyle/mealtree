@@ -1,181 +1,193 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, Search, Share, X } from "lucide-react";
-import Link from "next/link";
-import {
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { LanguageToggle } from "@/components/language-toggle";
-import { LogoMark } from "@/components/logo";
+import { Search, X } from "lucide-react";
+import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { BagBar } from "@/components/bag-bar";
+import { BagSheet } from "@/components/bag-sheet";
+import { ContactSheet } from "@/components/contact-sheet";
+import { DishSheet } from "@/components/dish-sheet";
+import { OriginalMenuSheet } from "@/components/original-menu";
 import { useToast } from "@/components/providers";
+import { Rail } from "@/components/rail";
+import { RestaurantCard } from "@/components/restaurant-card";
 import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
-import { cn, itemMinPrice } from "@/lib/format";
+import { optionGroups, orderMessage, type Selections, useBag, whatsappNumber, whatsappUrl } from "@/lib/bag";
+import { itemMinPrice } from "@/lib/format";
 import { parseQuery, scoreItem, sectionText } from "@/lib/search";
 import { useOverrides } from "@/lib/store";
 import { track } from "@/lib/track";
-import type { MenuItem, MenuSection, Restaurant } from "@/lib/types";
+import type { MenuItem, MenuSection as MenuSectionData, Restaurant } from "@/lib/types";
 import { type Filter, FilterChips } from "./filter-chips";
-import { InfoSection } from "./info-card";
-import { ItemRow } from "./item-row";
-import { ItemSheet } from "./item-sheet";
-import { RestaurantHeader } from "./restaurant-header";
+import { MenuIndexSheet } from "./menu-index-sheet";
+import { OwnerPrompt } from "./owner-prompt";
+import { MenuNav, type MenuTab } from "./menu-nav";
+import { MenuPopular } from "./menu-popular";
+import { MenuSection } from "./menu-section";
+import { MenuSideNav } from "./menu-side-nav";
+import { MenuSourceNote } from "./menu-source-note";
+import { MenuTopBar } from "./menu-top-bar";
+import { RestaurantHero } from "./restaurant-hero";
+import { useMenuScroll } from "./use-menu-scroll";
 
-const TOPBAR = 56;
-/** Sticky navigation: one row (52) on short menus; group tabs / search (44) plus section pills (48) otherwise. */
-const TABBAR = 52;
-const TABBAR_TWO_ROWS = 92;
+type ViewSection = MenuSectionData & { key: string; label: string; groupLabel?: string };
 
-type ViewSection = MenuSection & { key: string; label: string };
-
-export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
+export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more: Restaurant[] }) {
   const i18n = useI18n();
   const { t, pick } = i18n;
+  const toast = useToast();
   const style = useMemo(() => accentStyle(r.accent), [r.accent]);
   const overrides = useOverrides(r.slug);
   const claimed = r.claimed || overrides.claimed;
   const name = pick(r.name, r.nameAr);
 
   const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
   const [filters, setFilters] = useState<Filter[]>([]);
-  const [openItem, setOpenItem] = useState<MenuItem | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<"bag" | "contact" | "index" | "original" | null>(null);
+  const closeSheet = useCallback(() => setSheet(null), []);
   const deferredQuery = useDeferredValue(query);
   const parsed = useMemo(() => parseQuery(deferredQuery), [deferredQuery]);
   const hasQuery = parsed.tokens.length > 0 || parsed.maxPrice !== undefined;
+  const narrowed = hasQuery || filters.length > 0;
 
-  const applyOverrides = useCallback(
-    (item: MenuItem): MenuItem => {
-      const soldOut = overrides.soldOut[item.id];
-      const price = overrides.price[item.id];
-      if (soldOut === undefined && price === undefined) return item;
-      return { ...item, soldOut: soldOut ?? item.soldOut, price: price ?? item.price };
-    },
-    [overrides],
+  // Every dish with the owner's live edits (sold out, price) applied.
+  const itemsById = useMemo(() => {
+    const map = new Map<string, MenuItem>();
+    for (const m of r.menus)
+      for (const s of m.sections)
+        for (const item of s.items) {
+          const soldOut = overrides.soldOut[item.id];
+          const price = overrides.price[item.id];
+          map.set(item.id, soldOut === undefined && price === undefined ? item : { ...item, soldOut: soldOut ?? item.soldOut, price: price ?? item.price });
+        }
+    return map;
+  }, [r.menus, overrides]);
+
+  // All menus (food, drinks…) read as one continuous list.
+  const sections: ViewSection[] = useMemo(
+    () =>
+      r.menus.flatMap((m) =>
+        m.sections
+          .map((s, index) => {
+            const text = sectionText(s);
+            const items = s.items
+              .map((i) => itemsById.get(i.id) ?? i)
+              .map((item) => ({ item, score: scoreItem(item, text, parsed.tokens) }))
+              .filter(({ item, score }) => {
+                if (score <= 0) return false;
+                const min = itemMinPrice(item);
+                if (parsed.maxPrice !== undefined && (min === null || min > parsed.maxPrice)) return false;
+                return filters.every((f) => item.tags?.includes(f));
+              })
+              .sort((a, b) => (hasQuery ? b.score - a.score : 0))
+              .map(({ item }) => item);
+            // A menu's own note (e.g. breakfast hours) rides on its first section.
+            const menuNote = index === 0 && m.note ? { description: m.note, descriptionAr: m.noteAr } : {};
+            return {
+              ...s,
+              ...(s.description ? {} : menuNote),
+              items,
+              key: `${m.id}:${s.id}`,
+              label: pick(s.name, s.nameAr),
+              groupLabel: s.group ? pick(s.group, s.groupAr) : undefined,
+            };
+          })
+          .filter((s) => s.items.length > 0),
+      ),
+    [r.menus, itemsById, hasQuery, parsed, filters, pick],
   );
-
-  // All menus (food, drinks…) read as one continuous list with one row of section tabs.
-  const sections: ViewSection[] = useMemo(() => {
-    return r.menus.flatMap((m) =>
-      m.sections
-        .map((s, index) => {
-          const text = sectionText(s);
-          const items = s.items
-            .map(applyOverrides)
-            .map((item) => ({ item, score: scoreItem(item, text, parsed.tokens) }))
-            .filter(({ item, score }) => {
-              if (score <= 0) return false;
-              const min = itemMinPrice(item);
-              if (parsed.maxPrice !== undefined && (min === null || min > parsed.maxPrice)) return false;
-              return filters.every((f) => (f === "popular" ? item.popular : item.tags?.includes(f)));
-            })
-            .sort((a, b) => (hasQuery ? b.score - a.score : 0))
-            .map(({ item }) => item);
-          const label = pick(s.name, s.nameAr);
-          // A menu's own note (e.g. breakfast hours) rides on its first section.
-          const menuNote = index === 0 && m.note ? { description: m.note, descriptionAr: m.noteAr } : {};
-          return { ...s, ...(s.description ? {} : menuNote), items, key: `${m.id}:${s.id}`, label };
-        })
-        .filter((s) => s.items.length > 0),
-    );
-  }, [r.menus, hasQuery, parsed, filters, applyOverrides, pick]);
 
   const available = useMemo(() => {
     const set = new Set<Filter>();
-    for (const m of r.menus)
-      for (const s of m.sections)
-        for (const i of s.items) {
-          if (i.popular) set.add("popular");
-          i.tags?.forEach((tag) => set.add(tag));
-        }
+    for (const i of itemsById.values()) {
+      i.tags?.forEach((tag) => set.add(tag));
+    }
     return set;
-  }, [r.menus]);
+  }, [itemsById]);
 
-  // Long menus can group sections ('Grills', 'Drinks'): a row of groups above the section tabs.
-  const groups = useMemo(() => {
-    const seen = new Map<string, { key: string; label: string; first: string }>();
-    for (const s of sections)
-      if (s.group && !seen.has(s.group)) seen.set(s.group, { key: s.group, label: pick(s.group, s.groupAr), first: s.key });
-    return seen.size > 1 ? [...seen.values()] : [];
-  }, [sections, pick]);
-  const twoRows = groups.length > 0 || searching;
-  const tabbar = twoRows ? TABBAR_TWO_ROWS : TABBAR;
+  const popular = useMemo(
+    () => (narrowed ? [] : [...itemsById.values()].filter((i) => i.popular && !i.soldOut)),
+    [narrowed, itemsById],
+  );
 
-  const resultCount = sections.reduce((n, s) => n + s.items.length, 0);
-  const narrowed = hasQuery || filters.length > 0;
+  const tabs: MenuTab[] = useMemo(
+    () => [
+      ...(popular.length ? [{ id: "sec-popular", label: t.menu.popular }] : []),
+      ...sections.map((s) => ({ id: `sec-${s.key}`, label: s.label, count: s.items.length })),
+    ],
+    [popular.length, sections, t],
+  );
+  const { active, jumpTo } = useMenuScroll(useMemo(() => tabs.map((x) => x.id), [tabs]));
 
-  // ——— Top bar fills in once the restaurant name scrolls under it ———
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const [compact, setCompact] = useState(false);
+  // ——— Ordering ———
+  const number = whatsappNumber(r);
+  const ordering = number !== null;
+  const bag = useBag(r.slug, itemsById);
+  const whatsappHref = number ? whatsappUrl(number, bag.count ? orderMessage(r, bag.lines, i18n) : undefined) : null;
+  const trackWhatsapp = () => track(r.slug, i18n.locale, { kind: "link_click", link: "whatsapp" });
+
+  // ——— Dish sheet and deep links ———
+  const openItem = openId ? (itemsById.get(openId) ?? null) : null;
+
   useEffect(() => {
-    const el = titleRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setCompact(e.boundingClientRect.bottom < TOPBAR), {
-      rootMargin: `-${TOPBAR}px 0px 0px 0px`,
-      threshold: [0, 1],
-    });
-    io.observe(el);
-    return () => io.disconnect();
+    const fromHash = () => {
+      const id = location.hash.match(/^#dish-(.+)$/)?.[1];
+      const found = id ? decodeURIComponent(id) : null;
+      setOpenId(found && itemsById.has(found) ? found : null);
+      if (found && itemsById.has(found)) track(r.slug, i18n.locale, { kind: "dish_open", itemId: found });
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+    // Only on mount; later opens are driven by taps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ——— Scroll spy ———
-  const [active, setActive] = useState<string | undefined>(sections[0]?.key);
-  const activeGroup = sections.find((sec) => sec.key === active)?.group;
-  // Short menus show every section as a pill; grouped ones show the active group's. A search shows the sections that have matches, with counts.
-  const pillSections = hasQuery
-    ? sections.map((sec) => ({ ...sec, label: `${sec.label} ${sec.items.length}` }))
-    : groups.length
-      ? sections.filter((sec) => sec.group === activeGroup)
-      : sections;
-  const lock = useRef<string | null>(null);
-  useEffect(() => {
-    let raf = 0;
-    const measure = () => {
-      if (lock.current) return;
-      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-      let current: string | undefined = sections[0]?.key;
-      for (const s of sections) {
-        const el = document.getElementById(`sec-${s.key}`);
-        if (el && el.getBoundingClientRect().top - (TOPBAR + tabbar) - 32 <= 0) current = s.key;
-      }
-      if (atBottom && window.scrollY > 0) current = sections.at(-1)?.key;
-      setActive(current);
-    };
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [sections, tabbar]);
+  const openDish = useCallback(
+    (item: MenuItem) => {
+      setOpenId(item.id);
+      history.replaceState(null, "", `#dish-${item.id}`);
+      track(r.slug, i18n.locale, { kind: "dish_open", itemId: item.id });
+    },
+    [r.slug, i18n.locale],
+  );
+  const closeDish = useCallback(() => {
+    setOpenId(null);
+    history.replaceState(null, "", location.pathname + location.search);
+  }, []);
+  const quickAdd = useCallback(
+    (item: MenuItem) => {
+      if (optionGroups(item).length) openDish(item);
+      else bag.add(item.id);
+    },
+    [bag, openDish],
+  );
+  const quickRemove = useCallback((item: MenuItem) => bag.removeOne(item.id), [bag]);
+  const addConfigured = useCallback(
+    (item: MenuItem, selections: Selections, qty: number) => bag.add(item.id, selections, qty),
+    [bag],
+  );
 
-  const jumpTo = (key: string) => {
-    const el = document.getElementById(`sec-${key}`);
+  // ——— Chrome ———
+  const sentinel = useRef<HTMLDivElement>(null);
+  const [heroPassed, setHeroPassed] = useState(false);
+  // The contents switch on 48px before the hero clears the bar, so they are ready the moment it is uncovered. Checking the sentinel
+  // on every scroll frame (not via IntersectionObserver, which lags on fast flings) keeps the compact
+  // bar in lockstep with the strip, so there is never a frame where one is stuck without the other.
+  useEffect(() => {
+    const el = sentinel.current;
     if (!el) return;
-    lock.current = key;
-    setActive(key);
-    const top = el.getBoundingClientRect().top + window.scrollY - (TOPBAR + tabbar) + 1;
-    window.scrollTo({ top, behavior: "smooth" });
-    const release = () => {
-      lock.current = null;
-      window.removeEventListener("scrollend", release);
+    const check = () => setHeroPassed(el.getBoundingClientRect().top <= 96);
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => {
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
     };
-    window.addEventListener("scrollend", release);
-    setTimeout(release, 1000);
-  };
+  }, []);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   // Keep results in view as they shrink: snap back to the top of the menu.
   const menuStart = useRef<HTMLDivElement>(null);
@@ -187,199 +199,13 @@ export function MenuPage({ restaurant: r }: { restaurant: Restaurant }) {
     }
     const el = menuStart.current;
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - TOPBAR;
+    const top = el.getBoundingClientRect().top + window.scrollY - 100;
     if (window.scrollY > top) window.scrollTo({ top });
   }, [deferredQuery, filters]);
 
   // One anonymous view per session, for the owner's dashboard.
   useEffect(() => track(r.slug, i18n.locale, { kind: "view" }), [r.slug, i18n.locale]);
 
-  // ——— Deep links: /r/slug#dish-<id> ———
-  const allItems = useMemo(() => r.menus.flatMap((m) => m.sections.flatMap((s) => s.items)), [r.menus]);
-  useEffect(() => {
-    const fromHash = () => {
-      const id = location.hash.match(/^#dish-(.+)$/)?.[1];
-      const item = id && allItems.find((i) => i.id === decodeURIComponent(id));
-      setOpenItem(item ? applyOverrides(item) : null);
-      if (item) track(r.slug, i18n.locale, { kind: "dish_open", itemId: item.id });
-    };
-    fromHash();
-    window.addEventListener("hashchange", fromHash);
-    return () => window.removeEventListener("hashchange", fromHash);
-    // Only on mount; later opens are driven by clicks.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const openDish = useCallback(
-    (item: MenuItem) => {
-      setOpenItem(item);
-      history.replaceState(null, "", `#dish-${item.id}`);
-      track(r.slug, i18n.locale, { kind: "dish_open", itemId: item.id });
-    },
-    [r.slug, i18n.locale],
-  );
-  const closeDish = useCallback(() => {
-    setOpenItem(null);
-    history.replaceState(null, "", location.pathname + location.search);
-  }, []);
-
-  const toggleFilter = (f: Filter) =>
-    setFilters((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]));
-
-  const closeSearch = () => {
-    setSearching(false);
-    setQuery("");
-  };
-
-  const searchButton = (
-    <button
-      onClick={() => setSearching(true)}
-      aria-label={t.menu.searchLabel}
-      className="pressable pointer-events-auto relative -me-2 grid w-10 shrink-0 place-items-center bg-bg text-ink"
-    >
-      <Search className="size-5" strokeWidth={2} />
-      {filters.length > 0 && <span className="absolute end-2 top-2.5 size-2 rounded-full bg-accent ring-2 ring-bg" />}
-    </button>
-  );
-
-  const searchBar = (
-    <div className="flex flex-1 items-center gap-2">
-      <label className="flex h-9 flex-1 items-center gap-2 rounded-lg bg-surface-2 px-3 focus-within:ring-2 focus-within:ring-accent">
-        <Search className="size-4 shrink-0 text-ink-3" strokeWidth={2.2} />
-        <input
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Escape" && closeSearch()}
-          placeholder={t.menu.searchPlaceholder(name)}
-          enterKeyHint="search"
-          className="h-full min-w-0 flex-1 bg-transparent text-md text-ink outline-none placeholder:text-ink-3 [&::-webkit-search-cancel-button]:hidden"
-          type="search"
-          aria-label={t.menu.searchLabel}
-        />
-        {query && (
-          <button
-            onClick={() => setQuery("")}
-            aria-label={t.common.clearSearch}
-            className="grid size-5 place-items-center rounded-full bg-ink-3 text-surface"
-          >
-            <X className="size-3" strokeWidth={3} />
-          </button>
-        )}
-      </label>
-      <button onClick={closeSearch} className="pressable h-9 px-1 text-base font-medium text-ink">
-        {t.common.cancel}
-      </button>
-    </div>
-  );
-
-  return (
-    <div data-accent style={style} className="min-h-dvh bg-bg pb-10">
-      <TopBar restaurant={r} name={name} compact={compact} />
-
-      <RestaurantHeader restaurant={r} claimed={claimed} titleRef={titleRef} />
-
-      {/* ——— Sticky menu navigation ——— */}
-      <div ref={menuStart} className="h-4" />
-      <div
-        className="pointer-events-none sticky top-14 z-30"
-      >
-        <div className="mx-auto max-w-2xl px-4 sm:px-5">
-          {twoRows ? (
-            <>
-              <div className="pointer-events-auto -mx-4 flex h-11 items-stretch border-b border-line bg-bg px-4 sm:-mx-5 sm:px-5">
-                {searching ? (
-                  searchBar
-                ) : (
-                  <>
-                    <GroupTabs
-                      groups={groups}
-                      active={activeGroup}
-                      onSelect={(g) => jumpTo(g.first)}
-                      label={t.menu.sections}
-                    />
-                    {searchButton}
-                  </>
-                )}
-              </div>
-              <div className="flex h-12 items-stretch">
-                <SectionTabs sections={pillSections} active={active} onSelect={jumpTo} label={t.menu.sections} edgeToEdge />
-              </div>
-            </>
-          ) : (
-            <div className="flex h-13 items-stretch">
-              <SectionTabs sections={pillSections} active={active} onSelect={jumpTo} label={t.menu.sections} />
-              {searchButton}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <main className="mx-auto max-w-2xl px-4 sm:px-5">
-        <div className="space-y-3 pt-4">
-          <FilterChips available={available} active={filters} onToggle={toggleFilter} />
-        </div>
-
-        {narrowed && (
-          <p className="animate-fade pt-3 text-sm text-ink-3">
-            <span className="tabular font-medium text-ink-2">{t.menu.results(resultCount)}</span>
-            {parsed.maxPrice !== undefined && ` · ${t.price.under(i18n.price(parsed.maxPrice, r.currency))}`}
-            {filters.length > 0 && (
-              <button onClick={() => setFilters([])} className="ms-3 font-medium text-accent">
-                {t.menu.clearFilters}
-              </button>
-            )}
-          </p>
-        )}
-
-        {sections.length === 0 ? (
-          <EmptyState
-            query={deferredQuery}
-            onReset={() => {
-              setQuery("");
-              setFilters([]);
-            }}
-          />
-        ) : (
-          sections.map((s) => (
-            <section key={s.key} id={`sec-${s.key}`} aria-labelledby={`h-${s.key}`} className="pt-8">
-              <h2 id={`h-${s.key}`} className="text-xl font-semibold tracking-tight text-ink">
-                {s.label}
-              </h2>
-              {s.description && !narrowed && (
-                <p className="mt-0.5 text-sm text-ink-3">{pick(s.description, s.descriptionAr)}</p>
-              )}
-              <ul className="mt-1 divide-y divide-line">
-                <AnimatePresence initial={false}>
-                  {s.items.map((item) => (
-                    <motion.li
-                      key={item.id}
-                      layout="position"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                    >
-                      <ItemRow item={item} tokens={parsed.tokens} onOpen={openDish} currency={r.currency} />
-                    </motion.li>
-                  ))}
-                </AnimatePresence>
-              </ul>
-            </section>
-          ))
-        )}
-
-        <InfoSection restaurant={r} />
-        <Footer restaurant={r} claimed={claimed} />
-      </main>
-
-      <ItemSheet item={openItem} onClose={closeDish} claimed={claimed} accentStyle={style} currency={r.currency} />
-    </div>
-  );
-}
-
-function TopBar({ restaurant: r, name, compact }: { restaurant: Restaurant; name: string; compact: boolean }) {
-  const { t, href } = useI18n();
-  const toast = useToast();
   const share = async () => {
     const url = location.origin + location.pathname;
     try {
@@ -390,231 +216,171 @@ function TopBar({ restaurant: r, name, compact }: { restaurant: Restaurant; name
       }
     } catch {}
   };
-  // Over the cover photo (phones only; from sm up the cover sits below the bar)
-  // the controls sit on dark discs; on the page they're plain.
-  const solid = compact || !r.cover;
-  const glass = "max-sm:bg-black/40 max-sm:text-white max-sm:hover:bg-black/55";
-  const control = cn("text-ink hover:bg-surface-2", !solid && glass);
-  return (
-    <div
-      className={cn(
-        "fixed inset-x-0 top-0 z-40 transition-colors duration-200",
-        solid ? "bg-bg" : "bg-bg max-sm:bg-transparent",
-        compact && "border-b border-line",
-      )}
-    >
-      <div className="mx-auto flex h-14 max-w-2xl items-center gap-1 px-2 sm:px-3">
-        <Link
-          href={href("/")}
-          transitionTypes={["nav-back"]}
-          aria-label={t.menu.allRestaurants}
-          className={cn("pressable grid size-10 place-items-center rounded-full", control)}
-        >
-          <ArrowLeft className="size-5 rtl:-scale-x-100" strokeWidth={2} />
-        </Link>
-        <div className="min-w-0 flex-1 overflow-hidden px-1">
-          <p
-            aria-hidden={!compact}
-            className={cn(
-              "truncate text-center text-base font-semibold transition-[opacity,transform] duration-200",
-              compact ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
-            )}
-          >
-            {name}
-          </p>
-        </div>
-        <LanguageToggle className={cn("rounded-full", !solid && `${glass} max-sm:hover:text-white`)} />
-        <button
-          onClick={share}
-          aria-label={t.menu.share}
-          className={cn("pressable grid size-10 place-items-center rounded-full", control)}
-        >
-          <Share className="size-[18px]" strokeWidth={2} />
-        </button>
-      </div>
-    </div>
-  );
-}
 
-function GroupTabs({
-  groups,
-  active,
-  onSelect,
-  label,
-}: {
-  groups: { key: string; label: string; first: string }[];
-  active?: string;
-  onSelect: (group: { key: string; label: string; first: string }) => void;
-  label: string;
-}) {
-  const strip = useRef<HTMLDivElement>(null);
-  const chips = useRef(new Map<string, HTMLButtonElement>());
+  const toggleFilter = (f: Filter) => setFilters((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f]));
+  const reset = () => {
+    setQuery("");
+    setFilters([]);
+  };
+  const resultCount = sections.reduce((n, s) => n + s.items.length, 0);
 
-  // Keep the active group in view (rect-based, so it works in RTL too).
-  useEffect(() => {
-    const el = active && chips.current.get(active);
-    const container = strip.current;
-    if (!el || !container) return;
-    const a = el.getBoundingClientRect();
-    const c = container.getBoundingClientRect();
-    container.scrollBy({ left: a.left + a.width / 2 - (c.left + c.width / 2), behavior: "smooth" });
-  }, [active]);
+  const rowProps = { tokens: parsed.tokens, currency: r.currency, ordering, onOpen: openDish, onAdd: quickAdd, onRemove: quickRemove };
 
   return (
-    <div
-      ref={strip}
-      role="tablist"
-      aria-label={label}
-      className="no-scrollbar -ms-3.5 flex h-11 min-w-0 flex-1 items-stretch overflow-x-auto"
-    >
-      {groups.map((g) => {
-        const on = active === g.key;
-        return (
-          <button
-            key={g.key}
-            ref={(el) => {
-              if (el) chips.current.set(g.key, el);
-              else chips.current.delete(g.key);
-            }}
-            role="tab"
-            aria-selected={on}
-            onClick={() => onSelect(g)}
-            className={cn(
-              "pressable relative shrink-0 whitespace-nowrap px-3.5 text-sm font-semibold transition-colors duration-200",
-              on ? "text-ink" : "text-ink-3 hover:text-ink-2",
-            )}
+    <>
+    <div data-accent style={style} className="bg-cream">
+      <MenuTopBar restaurant={r} visible={heroPassed} query={query} onQueryChange={setQuery} />
+
+      <main className={ordering ? "pb-[calc(8rem+env(safe-area-inset-bottom))]" : "pb-10"}>
+        <RestaurantHero
+          restaurant={r}
+          claimed={claimed}
+          whatsappHref={whatsappHref}
+          onShare={share}
+          onOpenContact={() => setSheet("contact")}
+          titleRef={titleRef}
+        />
+        <div ref={sentinel} className="h-px" aria-hidden />
+
+        <MenuNav tabs={tabs} activeId={active} onSelect={jumpTo} onOpenIndex={() => setSheet("index")} />
+
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-4 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:px-8 lg:pt-6">
+          <aside
+            className="no-scrollbar hidden lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100vh-104px)] lg:self-start lg:overflow-y-auto"
+            aria-label={t.restaurant.page}
           >
-            {g.label}
-            {on && (
-              <motion.span
-                layoutId="group-tab"
-                className="absolute inset-x-3.5 -bottom-px h-0.5 rounded-full bg-accent"
-                transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+            <MenuSideNav restaurant={r} tabs={tabs} activeId={active} onSelect={jumpTo} onOpenContact={() => setSheet("contact")} />
+          </aside>
+
+          <div className="min-w-0">
+            <div ref={menuStart} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+              <label className="relative block w-full sm:max-w-xs">
+                <span className="sr-only">{t.menu.searchLabel}</span>
+                <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+                  placeholder={t.restaurant.searchDishes}
+                  enterKeyHint="search"
+                  className="h-11 w-full rounded-full bg-soft ps-10 pe-10 text-sm text-ink placeholder:text-muted transition-[background-color,box-shadow] duration-150 focus:bg-white focus:shadow-pill focus:outline-none focus:ring-1 focus:ring-line [&::-webkit-search-cancel-button]:hidden"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    aria-label={t.common.clearSearch}
+                    className="absolute end-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted hover:bg-line hover:text-ink"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                  </button>
+                )}
+              </label>
+              <FilterChips available={available} active={filters} onToggle={toggleFilter} className="sm:flex-1" />
+            </div>
+
+            <MenuSourceNote restaurant={r} claimed={claimed} onViewOriginal={() => setSheet("original")} />
+
+            {narrowed && (
+              <p className="animate-fade pt-4 text-sm text-ink-3">
+                <span className="tabular font-medium text-ink-2">{t.menu.results(resultCount)}</span>
+                {parsed.maxPrice !== undefined && ` · ${t.price.under(i18n.price(parsed.maxPrice, r.currency))}`}
+                {filters.length > 0 && (
+                  <button type="button" onClick={() => setFilters([])} className="ms-3 min-h-11 font-medium text-accent">
+                    {t.menu.clearFilters}
+                  </button>
+                )}
+              </p>
+            )}
+
+            {popular.length > 0 && (
+              <MenuPopular id="sec-popular" items={popular} qtyOf={bag.qtyOf} {...rowProps} />
+            )}
+
+            {sections.map((s) => (
+              <MenuSection
+                key={s.key}
+                id={`sec-${s.key}`}
+                title={s.label}
+                description={s.description && !narrowed ? pick(s.description, s.descriptionAr) : undefined}
+                items={s.items}
+                qtyOf={bag.qtyOf}
+                {...rowProps}
               />
+            ))}
+
+            {sections.length === 0 && (
+              <div className="animate-fade mt-8 rounded-2xl bg-soft px-6 py-12 text-center">
+                <p className="text-lg font-semibold text-ink">{deferredQuery ? t.menu.emptyQuery(deferredQuery) : t.menu.emptyFilters}</p>
+                <p className="mt-2 text-sm text-muted">{t.menu.emptyHint}</p>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="mt-5 h-10 rounded-full bg-ink px-5 text-sm font-semibold text-white transition-[transform,background-color] duration-150 ease-out hover:scale-[1.02] hover:bg-ink/90"
+                >
+                  {t.menu.showAll}
+                </button>
+              </div>
             )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+          </div>
+        </div>
 
-function SectionTabs({
-  sections,
-  active,
-  onSelect,
-  label,
-  edgeToEdge,
-}: {
-  sections: ViewSection[];
-  active?: string;
-  onSelect: (key: string) => void;
-  label: string;
-  /** Let the strip run to both screen edges so pills aren't clipped at the page gutter. */
-  edgeToEdge?: boolean;
-}) {
-  const strip = useRef<HTMLDivElement>(null);
-  const tabs = useRef(new Map<string, HTMLButtonElement>());
+        {more.length > 0 && (
+          <div className="mx-auto mt-16 max-w-6xl px-4 sm:px-6 lg:px-8">
+            <Rail title={t.restaurant.moreTitle(name)} subtitle={t.restaurant.moreSub} size="compact">
+              {more.map((m) => (
+                <RestaurantCard key={m.slug} restaurant={m} compact />
+              ))}
+            </Rail>
+          </div>
+        )}
 
-  // Center the active tab. Measured from rects, so it works the same in RTL
-  // (where scrollLeft runs negative).
-  useEffect(() => {
-    const el = active && tabs.current.get(active);
-    const container = strip.current;
-    if (!el || !container) return;
-    const a = el.getBoundingClientRect();
-    const c = container.getBoundingClientRect();
-    container.scrollBy({ left: a.left + a.width / 2 - (c.left + c.width / 2), behavior: "smooth" });
-  }, [active]);
+        <OwnerPrompt restaurant={r} claimed={claimed} />
+      </main>
 
-  return (
-    <div
-      ref={strip}
-      role="tablist"
-      aria-label={label}
-      className={cn(
-        "no-scrollbar relative -ms-4 flex flex-1 items-center gap-1.5 overflow-x-auto ps-4 sm:-ms-5 sm:ps-5",
-        edgeToEdge
-          ? "-me-4 pe-4 sm:-me-5 sm:pe-5"
-          : "-me-4 pe-4 [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:-me-5 sm:pe-5 rtl:[mask-image:linear-gradient(to_left,black_calc(100%-24px),transparent)]",
+      {ordering && number && (
+        <>
+          <BagBar count={bag.count} total={bag.total} currency={r.currency} onOpen={() => setSheet("bag")} />
+          <BagSheet
+            open={sheet === "bag"}
+            onClose={closeSheet}
+            restaurantName={name}
+            currency={r.currency}
+            style={style}
+            lines={bag.lines}
+            count={bag.count}
+            total={bag.total}
+            whatsappHref={whatsappUrl(number, orderMessage(r, bag.lines, i18n))}
+            phone={r.phone}
+            onQty={bag.setLineQty}
+            onSend={trackWhatsapp}
+          />
+        </>
       )}
-    >
-      {sections.map((s) => {
-        const on = active === s.key;
-        return (
-          <button
-            key={s.key}
-            ref={(el) => {
-              if (el) tabs.current.set(s.key, el);
-              else tabs.current.delete(s.key);
-            }}
-            role="tab"
-            aria-selected={on}
-            onClick={() => onSelect(s.key)}
-            className={cn(
-              "pointer-events-auto relative h-8 shrink-0 self-center rounded-full border bg-bg px-3.5 text-sm font-medium shadow-sm transition-colors duration-200",
-              on ? "border-line-strong text-ink" : "border-line text-ink-3 hover:text-ink-2",
-            )}
-          >
-            <span className="whitespace-nowrap">{s.label}</span>
-          </button>
-        );
-      })}
+      <DishSheet
+        item={openItem}
+        currency={r.currency}
+        claimed={claimed}
+        style={style}
+        ordering={ordering}
+        onAdd={addConfigured}
+        onClose={closeDish}
+      />
+      <ContactSheet restaurant={r} open={sheet === "contact"} onClose={closeSheet} style={style} />
+      <MenuIndexSheet
+        open={sheet === "index"}
+        onClose={closeSheet}
+        entries={[
+          ...(popular.length ? [{ id: "sec-popular", label: t.menu.popular }] : []),
+          ...sections.map((s) => ({ id: `sec-${s.key}`, label: s.label, count: s.items.length, group: s.groupLabel })),
+        ]}
+        activeId={active}
+        onSelect={jumpTo}
+        style={style}
+      />
+      {r.menuFiles && <OriginalMenuSheet files={r.menuFiles} open={sheet === "original"} onClose={closeSheet} />}
     </div>
-  );
-}
-
-function EmptyState({ query, onReset }: { query: string; onReset: () => void }) {
-  const { t } = useI18n();
-  return (
-    <div className="animate-fade py-16 text-center">
-      <p className="text-md font-medium text-ink">{query ? t.menu.emptyQuery(query) : t.menu.emptyFilters}</p>
-      <p className="mt-1 text-sm text-ink-3">{t.menu.emptyHint}</p>
-      <button
-        onClick={onReset}
-        className="pressable mt-5 h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-ink hover:bg-surface-2"
-      >
-        {t.menu.showAll}
-      </button>
-    </div>
-  );
-}
-
-function Footer({ restaurant: r, claimed }: { restaurant: Restaurant; claimed: boolean }) {
-  const { t, href } = useI18n();
-  return (
-    <footer className="mt-10 border-t border-line pt-6 text-center text-xs text-ink-3">
-      <p>{t.menu.footerNote}</p>
-      {!claimed && (
-        <p className="mt-1">
-          {t.menu.footerClaim}{" "}
-          <Link href={href(`/claim/${r.slug}`)} transitionTypes={["nav-forward"]} className="font-medium text-accent hover:underline">
-            {t.menu.footerClaimLink}
-          </Link>{" "}
-          {t.menu.footerOr}{" "}
-          <Link href={href(`/remove?r=${r.slug}`)} className="underline-offset-2 hover:underline">
-            {t.menu.footerRemove}
-          </Link>
-          .
-        </p>
-      )}
-      <Link
-        href={href("/")}
-        className="pressable mt-6 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-ink-2 hover:bg-surface-2"
-      >
-        <LogoMark className="size-4" /> {t.menu.madeWith}{" "}
-        <span lang="en" className="font-semibold text-ink">
-          nomm
-        </span>
-      </Link>
-      <nav className="mt-2 flex justify-center gap-4">
-        <Link href={href("/terms")} className="hover:text-ink">
-          {t.common.terms}
-        </Link>
-        <Link href={href("/privacy")} className="hover:text-ink">
-          {t.common.privacy}
-        </Link>
-      </nav>
-    </footer>
+    </>
   );
 }

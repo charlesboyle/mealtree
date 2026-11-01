@@ -65,16 +65,19 @@ export function Button({
   variant = "primary",
   className,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "accent" | "secondary" | "ghost" }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "accent" | "secondary" | "ghost" | "whatsapp";
+}) {
   return (
     <button
       {...props}
       className={cn(
-        "pressable inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-base font-semibold disabled:pointer-events-none disabled:opacity-40",
+        "pressable inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-base font-semibold disabled:pointer-events-none disabled:opacity-40",
         variant === "primary" && "bg-ink text-bg hover:opacity-90",
         variant === "accent" && "bg-accent text-on-accent hover:opacity-90",
         variant === "secondary" && "bg-surface-2 text-ink hover:bg-surface-3",
         variant === "ghost" && "text-ink-2 hover:bg-surface-2 hover:text-ink",
+        variant === "whatsapp" && "bg-whatsapp text-white hover:opacity-90",
         className,
       )}
     />

@@ -12,7 +12,7 @@ import {
   Flame,
   Globe,
   Leaf,
-  MessageCircle,
+  MessageCircleMore,
   Nut,
   ShoppingBag,
   Sprout,
@@ -52,7 +52,7 @@ export const linkIcon: Record<LinkKind, LucideIcon | typeof InstagramIcon> = {
   order: ShoppingBag,
   instagram: InstagramIcon,
   website: Globe,
-  whatsapp: MessageCircle,
+  whatsapp: MessageCircleMore,
   phone: Phone,
   maps: MapPin,
 };
