@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n/client";
 import { ALL_AREAS } from "@/lib/discover";
 import { MOODS } from "@/lib/moods";
 import { matchIndexed } from "@/lib/search-index";
+import { releaseSearchProxy } from "@/lib/search-events";
 import { useRotatingPlaceholder } from "@/lib/use-rotating-placeholder";
 import { useSearchIndex } from "@/lib/use-search-index";
 
@@ -40,7 +41,10 @@ export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => v
     if (!open) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const timer = window.setTimeout(() => inputRef.current?.focus(), 80);
+    const timer = window.setTimeout(() => {
+      inputRef.current?.focus();
+      releaseSearchProxy();
+    }, 80);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => {

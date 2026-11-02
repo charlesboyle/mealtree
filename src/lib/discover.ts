@@ -24,11 +24,23 @@ export function opensLate(hours: Hours) {
   );
 }
 
+/** Name with case, accents, punctuation, bracketed notes and spacing ignored, so "Mango Sticky Rice (Large)" matches "mango sticky rice". */
+function dishKey(name: string) {
+  return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\([^)]*\)/g, " ")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
 export type DishPick = { restaurant: Restaurant; item: MenuItem; section: MenuSection };
 
 /**
  * Dishes matching `test`, one restaurant at a time in turn so a single big menu
  * can't fill the row. Sold-out and unpriced dishes are skipped, and dishes with a photo come first.
+ * The same dish served by several restaurants (or branches) appears once: the first in line keeps the spot.
  */
 export function pickDishes(restaurants: Restaurant[], test: (item: MenuItem) => boolean, limit = 12): DishPick[] {
   const lists = restaurants.map((restaurant) =>
@@ -41,9 +53,17 @@ export function pickDishes(restaurants: Restaurant[], test: (item: MenuItem) => 
     ).sort((a, b) => Number(Boolean(b.item.image)) - Number(Boolean(a.item.image))),
   );
   const out: DishPick[] = [];
+  const seen = new Set<string>();
   const longest = Math.max(0, ...lists.map((l) => l.length));
   for (let i = 0; i < longest && out.length < limit; i++) {
-    for (const list of lists) if (list[i] && out.length < limit) out.push(list[i]);
+    for (const list of lists) {
+      const pick = list[i];
+      if (!pick || out.length >= limit) continue;
+      const key = dishKey(pick.item.name);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(pick);
+    }
   }
   return out;
 }
