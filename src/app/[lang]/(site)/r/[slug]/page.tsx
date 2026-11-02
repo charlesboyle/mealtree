@@ -51,7 +51,7 @@ function jsonLd(r: Restaurant, i18n: Awaited<ReturnType<typeof getI18n>>) {
     servesCuisine: r.cuisine.length ? r.cuisine.map(i18n.cuisine) : undefined,
     priceRange: r.priceLevel > 0 ? "$".repeat(r.priceLevel) : undefined,
     currenciesAccepted: r.currency,
-    telephone: r.phone,
+    telephone: r.phone || undefined,
     address: { "@type": "PostalAddress", streetAddress: pick(r.address, r.addressAr), addressCountry: "AE" },
     image: r.cover ? photoUrl(r.cover, 1200) : undefined,
     openingHours: hours.length ? hours : undefined,

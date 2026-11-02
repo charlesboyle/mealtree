@@ -13,6 +13,7 @@ import { RestaurantCard } from "@/components/restaurant-card";
 import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
 import { optionGroups, orderMessage, type Selections, useBag, whatsappNumber, whatsappUrl } from "@/lib/bag";
+import { OPEN_DISH_EVENT } from "@/lib/search-events";
 import { itemMinPrice } from "@/lib/format";
 import { parseQuery, scoreItem, sectionText } from "@/lib/search";
 import { useOverrides } from "@/lib/store";
@@ -137,9 +138,20 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
       setOpenId(found && itemsById.has(found) ? found : null);
       if (found && itemsById.has(found)) track(r.slug, i18n.locale, { kind: "dish_open", itemId: found });
     };
+    // A search result for a dish on this same page: the Link changes the hash without a hashchange.
+    const onAnnounce = (e: Event) => {
+      const { slug, itemId } = (e as CustomEvent<{ slug: string; itemId: string }>).detail;
+      if (slug !== r.slug || !itemsById.has(itemId)) return;
+      setOpenId(itemId);
+      track(r.slug, i18n.locale, { kind: "dish_open", itemId });
+    };
     fromHash();
     window.addEventListener("hashchange", fromHash);
-    return () => window.removeEventListener("hashchange", fromHash);
+    window.addEventListener(OPEN_DISH_EVENT, onAnnounce);
+    return () => {
+      window.removeEventListener("hashchange", fromHash);
+      window.removeEventListener(OPEN_DISH_EVENT, onAnnounce);
+    };
     // Only on mount; later opens are driven by taps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -264,7 +276,7 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
                   onKeyDown={(e) => e.key === "Escape" && setQuery("")}
                   placeholder={t.restaurant.searchDishes}
                   enterKeyHint="search"
-                  className="h-11 w-full rounded-full bg-soft ps-10 pe-10 text-sm text-ink placeholder:text-muted transition-[background-color,box-shadow] duration-150 focus:bg-white focus:shadow-pill focus:outline-none focus:ring-1 focus:ring-line [&::-webkit-search-cancel-button]:hidden"
+                  className="h-11 w-full rounded-full bg-soft ps-10 pe-10 text-base text-ink placeholder:text-muted transition-[background-color,box-shadow] duration-150 focus:bg-white focus:shadow-pill focus:outline-none focus:ring-1 focus:ring-line [&::-webkit-search-cancel-button]:hidden"
                 />
                 {query && (
                   <button

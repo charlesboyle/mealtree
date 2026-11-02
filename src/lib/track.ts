@@ -56,12 +56,12 @@ function origin() {
 
 export function track(slug: string, locale: Locale, event: Event) {
   if (typeof window === "undefined") return;
+  if (shouldSkip(slug)) return;
   if (event.kind === "dish_open") {
     posthog.capture("menu_item_opened", { restaurant_slug: slug, menu_item_id: event.itemId, locale });
   } else if (event.kind === "link_click") {
     posthog.capture("restaurant_link_clicked", { restaurant_slug: slug, link_kind: event.link, locale });
   }
-  if (shouldSkip(slug)) return;
   // One view per restaurant per browser session, so reloads and back-navigation don't count twice.
   if (event.kind === "view") {
     const session = storage("session");

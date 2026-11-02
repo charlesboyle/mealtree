@@ -4,6 +4,7 @@ import { lang } from "next/root-params";
 import { EmptyState } from "@/components/empty-state";
 import { SiteShell } from "@/components/site-shell";
 import { hasLocale, makeI18n } from "@/i18n";
+import { listRestaurants } from "@/lib/data";
 
 const content = {
   en: {
@@ -23,7 +24,7 @@ export default async function NotFound() {
   const { locale: l, href } = makeI18n(hasLocale(locale) ? locale : "en");
   const c = content[l];
   return (
-    <SiteShell>
+    <SiteShell knownSlugs={(await listRestaurants()).map((r) => r.slug)}>
       <main className="mx-auto max-w-xl px-4 py-16">
         <EmptyState icon={MapPinOffIcon} title={c.title} body={c.body}>
           <Link

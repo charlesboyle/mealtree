@@ -8,9 +8,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AreaSelect } from "@/components/area-select";
 import { useI18n } from "@/i18n/client";
 import { ALL_AREAS } from "@/lib/discover";
+import { photoUrl } from "@/lib/format";
 import { MOODS } from "@/lib/moods";
 import { matchIndexed } from "@/lib/search-index";
-import { releaseSearchProxy } from "@/lib/search-events";
+import { announceDish, releaseSearchProxy } from "@/lib/search-events";
 import { useRotatingPlaceholder } from "@/lib/use-rotating-placeholder";
 import { useSearchIndex } from "@/lib/use-search-index";
 
@@ -134,11 +135,14 @@ export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => v
                     <li key={r.slug}>
                       <Link
                         href={href(dish ? `/r/${r.slug}#dish-${dish.id}` : `/r/${r.slug}`)}
-                        onClick={onClose}
+                        onClick={() => {
+                          onClose();
+                          if (dish) announceDish(r.slug, dish.id);
+                        }}
                         className="flex items-center gap-3 py-3 active:opacity-70"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {r.cover ? <img src={r.cover} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" /> : <span className="h-12 w-12 shrink-0 rounded-xl bg-soft" />}
+                        {r.cover ? <img src={photoUrl(r.cover, 96)} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" /> : <span className="h-12 w-12 shrink-0 rounded-xl bg-soft" />}
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[15px] font-semibold text-plum">{pick(r.name, r.nameAr)}</span>
                           <span className="block truncate text-[13px] text-muted">

@@ -99,23 +99,28 @@ export function RestaurantHero({
   const actions: Action[] = [
     ...wa,
     ...first,
-    extraPhones
-      ? {
-          key: "call",
-          link: "call" as const,
-          label: t.menu.call,
-          icon: Phone,
-          tone: "plain" as const,
-          onClick: onOpenContact,
-        }
-      : {
-          key: "call",
-          link: "call" as const,
-          href: `tel:${r.phone}`,
-          label: t.menu.call,
-          icon: Phone,
-          tone: "plain" as const,
-        },
+    // Several numbers open the contact sheet; a lone number dials; no number, no button.
+    ...(extraPhones || r.phone
+      ? [
+          extraPhones
+            ? {
+                key: "call",
+                link: "call" as const,
+                label: t.menu.call,
+                icon: Phone,
+                tone: "plain" as const,
+                onClick: onOpenContact,
+              }
+            : {
+                key: "call",
+                link: "call" as const,
+                href: `tel:${r.phone}`,
+                label: t.menu.call,
+                icon: Phone,
+                tone: "plain" as const,
+              },
+        ]
+      : []),
     {
       key: "maps",
       link: "maps" as const,

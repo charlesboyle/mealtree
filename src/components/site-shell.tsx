@@ -10,8 +10,8 @@ import { OPEN_SEARCH_EVENT } from "@/lib/search-events";
 import { usePageScroll } from "@/lib/use-page-scroll";
 import { useRoute } from "@/lib/use-route";
 
-/** Header, content fade, footer, tab bar and phone search: the frame every public page sits in. */
-export function SiteShell({ children }: { children: React.ReactNode }) {
+/** Header, content fade, footer, tab bar and phone search: the frame every public page sits in. `knownSlugs` are the published restaurants, so the Saved badge skips removed ones. */
+export function SiteShell({ children, knownSlugs }: { children: React.ReactNode; knownSlugs: string[] }) {
   const route = useRoute();
   const onRestaurant = route.startsWith("/r/");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -27,10 +27,10 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh w-full flex-col overflow-x-clip bg-cream text-ink">
-      <SiteHeader languageToggle={<LanguageToggle />} />
+      <SiteHeader languageToggle={<LanguageToggle />} knownSlugs={knownSlugs} />
       <div className="flex-1">{children}</div>
       <SiteFooter bare={onRestaurant} />
-      <TabBar hidden={onRestaurant} />
+      <TabBar hidden={onRestaurant} knownSlugs={knownSlugs} />
       <SearchSheet open={searchOpen} onClose={closeSearch} />
     </div>
   );

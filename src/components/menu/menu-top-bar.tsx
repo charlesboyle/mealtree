@@ -60,7 +60,7 @@ export function MenuTopBar({
               placeholder={t.menu.searchPlaceholder(name)}
               aria-label={t.menu.searchLabel}
               enterKeyHint="search"
-              className="h-9 min-w-0 flex-1 rounded-full bg-soft px-4 text-sm text-ink placeholder:text-muted focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+              className="h-9 min-w-0 flex-1 rounded-full bg-soft px-4 text-base text-ink placeholder:text-muted focus:outline-none [&::-webkit-search-cancel-button]:hidden"
             />
             <button
               type="button"

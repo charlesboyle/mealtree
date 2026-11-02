@@ -220,14 +220,20 @@ export function useBag(slug: string, items: Map<string, MenuItem>) {
 
 /**
  * The number orders go to, digits only: the restaurant's WhatsApp link, else
- * its phone. Null when neither gives a usable number, which hides the bag.
+ * the first UAE mobile (971 5X XXX XXXX) among its phone and extra phone links.
+ * Landlines and 800/600 lines have no WhatsApp, so they never count. Null when
+ * there is none, which hides the WhatsApp button and the bag.
  */
 export function whatsappNumber(r: Pick<Restaurant, "links" | "phone">): string | null {
   const link = r.links.find((l) => l.kind === "whatsapp");
   const fromLink = link?.url.match(/(?:wa\.me\/|[?&]phone=)\+?(\d{8,15})/)?.[1];
   if (fromLink) return fromLink;
-  const phone = normalizePhone(r.phone).replace(/\D/g, "");
-  return phone.length >= 8 && phone.length <= 15 ? phone : null;
+  const phones = [r.phone, ...r.links.filter((l) => l.kind === "phone").map((l) => l.url.replace(/^tel:/, ""))];
+  for (const p of phones) {
+    const digits = normalizePhone(p).replace(/\D/g, "");
+    if (/^9715\d{8}$/.test(digits)) return digits;
+  }
+  return null;
 }
 
 export function whatsappUrl(number: string, text?: string) {

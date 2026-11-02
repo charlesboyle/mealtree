@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers";
 import { dirOf, hasLocale, locales } from "@/i18n/config";
 import { I18nProvider } from "@/i18n/client";
 import { dictionaries } from "@/i18n/dictionaries";
+import { siteUrl } from "@/lib/seo";
 import { fontVariables } from "../fonts";
 import "../globals.css";
 
@@ -17,7 +18,7 @@ export async function generateMetadata(props: LayoutProps<"/[lang]">): Promise<M
   if (!hasLocale(lang)) return {};
   const t = dictionaries[lang].meta;
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+    metadataBase: new URL(siteUrl()),
     title: { default: t.title, template: t.template },
     description: t.description,
     twitter: { card: "summary_large_image" },

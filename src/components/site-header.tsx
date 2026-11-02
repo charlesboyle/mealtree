@@ -11,12 +11,12 @@ import { openSearch } from "@/lib/search-events";
 import { useRotatingPlaceholder } from "@/lib/use-rotating-placeholder";
 import { useHeroPast } from "@/lib/hero-state";
 import { useRoute } from "@/lib/use-route";
-import { useSaved } from "@/lib/saved";
+import { countSaved, useSaved } from "@/lib/saved";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 
 /** Sticky top bar. The search field appears once the hero's own field scrolls away; the language toggle sits beside the owner link. */
-export function SiteHeader({ languageToggle }: { languageToggle?: React.ReactNode }) {
+export function SiteHeader({ languageToggle, knownSlugs }: { languageToggle?: React.ReactNode; knownSlugs: string[] }) {
   const { t, href } = useI18n();
   const route = useRoute();
   const { slugs } = useSaved();
@@ -24,7 +24,7 @@ export function SiteHeader({ languageToggle }: { languageToggle?: React.ReactNod
   const onList = route === "/restaurants";
   const onRestaurant = route.startsWith("/r/");
   const scrolled = useHeroPast();
-  const savedCount = slugs.length;
+  const savedCount = countSaved(slugs, knownSlugs);
   const showSearch = !onDiscover || scrolled;
   const tinted = onDiscover && !scrolled;
 

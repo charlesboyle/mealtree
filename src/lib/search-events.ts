@@ -1,4 +1,13 @@
 export const OPEN_SEARCH_EVENT = "nomm:open-search";
+export const OPEN_DISH_EVENT = "nomm:open-dish";
+
+/**
+ * Tells the restaurant page in view to open a dish. A <Link> to `#dish-…` on the page already showing
+ * that restaurant changes the URL without firing `hashchange`, so the page would never notice.
+ */
+export function announceDish(slug: string, itemId: string) {
+  window.dispatchEvent(new CustomEvent(OPEN_DISH_EVENT, { detail: { slug, itemId } }));
+}
 
 let proxy: HTMLInputElement | null = null;
 

@@ -60,13 +60,15 @@ export function ContactSheet({
 
       <ul className="px-2">
         <Row href={directionsUrl(r)} onClick={click("maps")} external icon={<MapPin className="h-5 w-5" />} title={pick(r.address, r.addressAr)} detail={t.info.directions} />
-        <Row
-          href={`tel:${r.phone}`}
-          onClick={click("call")}
-          icon={<Phone className="h-5 w-5" />}
-          title={<span className="ltr-isolate">{formatPhone(r.phone)}</span>}
-          detail={t.info.call}
-        />
+        {r.phone && (
+          <Row
+            href={`tel:${r.phone}`}
+            onClick={click("call")}
+            icon={<Phone className="h-5 w-5" />}
+            title={<span className="ltr-isolate">{formatPhone(r.phone)}</span>}
+            detail={t.info.call}
+          />
+        )}
         {r.links
           .filter((l) => l.kind !== "maps")
           .map((l) => {

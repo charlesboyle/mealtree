@@ -38,6 +38,12 @@ function subscribe(cb: () => void) {
   };
 }
 
+/** How many saved slugs still point at a published restaurant (removed venues stay in storage but are not shown). */
+export function countSaved(slugs: string[], known: string[]) {
+  const live = new Set(known);
+  return slugs.filter((s) => live.has(s)).length;
+}
+
 /** Restaurants the diner hearted, kept in this browser only. */
 export function useSaved() {
   const slugs = useSyncExternalStore(subscribe, read, () => EMPTY);

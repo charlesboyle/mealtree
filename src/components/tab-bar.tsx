@@ -5,15 +5,15 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/client";
-import { useSaved } from "@/lib/saved";
+import { countSaved, useSaved } from "@/lib/saved";
 import { useRoute } from "@/lib/use-route";
 
 /** Stable bottom navigation for phones; it shrinks to icons while scrolling down. */
-export function TabBar({ hidden = false }: { hidden?: boolean }) {
+export function TabBar({ hidden = false, knownSlugs }: { hidden?: boolean; knownSlugs: string[] }) {
   const { t, href } = useI18n();
   const route = useRoute();
   const { slugs } = useSaved();
-  const savedCount = slugs.length;
+  const savedCount = countSaved(slugs, knownSlugs);
   const [compact, setCompact] = useState(false);
   const tabs = [
     { to: "/", label: t.tabs.discover, icon: Compass },

@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { locales } from "@/i18n/config";
 import { listRestaurants } from "@/lib/data";
-import { pageAlternates } from "@/lib/seo";
+import { pageAlternates, siteUrl } from "@/lib/seo";
 
-const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const site = siteUrl();
 
 export const revalidate = 3600;
 
