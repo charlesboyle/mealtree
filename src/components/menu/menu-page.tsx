@@ -13,14 +13,17 @@ import { RestaurantCard } from "@/components/restaurant-card";
 import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
 import { optionGroups, orderMessage, type Selections, useBag, whatsappNumber, whatsappUrl } from "@/lib/bag";
+import { cn, itemMinPrice } from "@/lib/format";
 import { OPEN_DISH_EVENT } from "@/lib/search-events";
-import { itemMinPrice } from "@/lib/format";
+import { autoLayout, type MenuLayout, photoCount, sectionLayout } from "@/lib/menu-layout";
 import { parseQuery, scoreItem, sectionText } from "@/lib/search";
 import { useOverrides } from "@/lib/store";
 import { track } from "@/lib/track";
+import { useMenuLayout } from "@/lib/use-menu-layout";
 import type { MenuItem, MenuSection as MenuSectionData, Restaurant } from "@/lib/types";
 import { type Filter, FilterChips } from "./filter-chips";
 import { MenuIndexSheet } from "./menu-index-sheet";
+import { MenuLayoutToggle } from "./menu-layout-toggle";
 import { OwnerPrompt } from "./owner-prompt";
 import { MenuNav, type MenuTab } from "./menu-nav";
 import { MenuPopular } from "./menu-popular";
@@ -51,6 +54,9 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
   const parsed = useMemo(() => parseQuery(deferredQuery), [deferredQuery]);
   const hasQuery = parsed.tokens.length > 0 || parsed.maxPrice !== undefined;
   const narrowed = hasQuery || filters.length > 0;
+  // Photo cards drop the description, so a text search always shows rows where its matches are highlighted.
+  const searching = parsed.tokens.length > 0;
+  const [layoutOverride, chooseLayout] = useMenuLayout();
 
   // Every dish with the owner's live edits (sold out, price) applied.
   const itemsById = useMemo(() => {
@@ -106,6 +112,25 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
     }
     return set;
   }, [itemsById]);
+
+  // Layouts come from each section's full dish list, never the filtered one, so a section doesn't flip while the diner filters.
+  const layouts = useMemo(() => {
+    const map = new Map<string, MenuLayout>();
+    for (const m of r.menus) for (const s of m.sections) map.set(`${m.id}:${s.id}`, sectionLayout(s.items, layoutOverride, searching));
+    return map;
+  }, [r.menus, layoutOverride, searching]);
+  const { anyAutoGrid, anyPhoto } = useMemo(() => {
+    const all = r.menus.flatMap((m) => m.sections);
+    return { anyAutoGrid: all.some((s) => autoLayout(s.items) === "grid"), anyPhoto: all.some((s) => photoCount(s.items) > 0) };
+  }, [r.menus]);
+  // The toggle only matters when it can change something, so a menu without photos never shows it.
+  const showLayoutToggle = anyAutoGrid || (layoutOverride !== null && anyPhoto);
+  const firstGrid = sections.find((s) => layouts.get(s.key) === "grid")?.key;
+  const shownLayout: MenuLayout = layoutOverride ?? (firstGrid ? "grid" : "list");
+  const pickLayout = (layout: MenuLayout) => {
+    chooseLayout(layout);
+    track(r.slug, i18n.locale, { kind: "menu_layout", layout });
+  };
 
   const popular = useMemo(
     () => (narrowed ? [] : [...itemsById.values()].filter((i) => i.popular && !i.soldOut)),
@@ -265,8 +290,12 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
           </aside>
 
           <div className="min-w-0">
-            <div ref={menuStart} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
-              <label className="relative block w-full sm:max-w-xs">
+            <div
+              ref={menuStart}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 sm:flex sm:gap-3"
+            >
+              {/* Phones: search and the layout toggle share a line, chips scroll on the next. */}
+              <label className={cn("relative block w-full sm:max-w-xs", !showLayoutToggle && "col-span-2")}>
                 <span className="sr-only">{t.menu.searchLabel}</span>
                 <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
                 <input
@@ -289,7 +318,8 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
                   </button>
                 )}
               </label>
-              <FilterChips available={available} active={filters} onToggle={toggleFilter} className="sm:flex-1" />
+              <FilterChips available={available} active={filters} onToggle={toggleFilter} className="order-3 col-span-2 sm:order-2 sm:min-w-0 sm:flex-1" />
+              {showLayoutToggle && <MenuLayoutToggle layout={shownLayout} onChoose={pickLayout} className="sm:order-3 sm:ms-auto" />}
             </div>
 
             <MenuSourceNote restaurant={r} claimed={claimed} onViewOriginal={() => setSheet("original")} />
@@ -316,6 +346,8 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
                 id={`sec-${s.key}`}
                 title={s.label}
                 description={s.description && !narrowed ? pick(s.description, s.descriptionAr) : undefined}
+                note={s.key === firstGrid ? t.menu.photosIllustrative : undefined}
+                layout={layouts.get(s.key) ?? "list"}
                 items={s.items}
                 qtyOf={bag.qtyOf}
                 {...rowProps}

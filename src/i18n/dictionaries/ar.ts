@@ -201,12 +201,6 @@ export const ar: Dictionary = {
       title: "كل المطاعم",
       sub: (n: number, open?: number) => `${n} في الإمارات${open === undefined ? "" : ` · ${open} مفتوح الآن`}`,
     },
-    fair: {
-      rows: [{ label: "أسعار القائمة", ours: "مثل المطعم" }, { label: "رسوم الخدمة", ours: "1 درهم للطلب" }, { label: "العمولة", ours: "0%" }, { label: "رسوم التوصيل", ours: "يحددها المطعم" }],
-            title: "السعر الذي في القائمة هو السعر الذي تدفعه.",
-      body: "رسوم التطبيقات المرتفعة قد تعني أسعار قوائم أعلى. لا يفرض nomm أي عمولة على المطاعم، فتدفع أسعار المطعم نفسها.",
-      link: "كيف يعمل nomm للمطاعم",
-    },
     list: {
       title: "كل المطاعم",
       count: places,
@@ -300,6 +294,9 @@ export const ar: Dictionary = {
     nextPage: "الصفحة التالية",
     popular: "الأكثر طلبًا",
     soldOutToday: "نفد اليوم",
+    photosIllustrative: "الصور توضيحية",
+    listView: "عرض قائمة",
+    gridView: "عرض شبكة",
     options: (n) => count(n, { one: "خيار واحد", two: "خياران", few: "خيارات", many: "خيارًا", other: "خيار" }),
     pricesIn: () => "الأسعار بالدرهم الإماراتي",
   },

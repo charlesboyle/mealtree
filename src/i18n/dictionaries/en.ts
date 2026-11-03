@@ -161,12 +161,6 @@ export const en = {
       title: "All restaurants",
       sub: (n: number, open?: number) => `${n} across the UAE${open === undefined ? "" : ` · ${open} open now`}`,
     },
-    fair: {
-      rows: [{ label: "Menu prices", ours: "Same as in store" }, { label: "Service fee", ours: "AED 1 / order" }, { label: "Commission", ours: "0%" }, { label: "Delivery fee", ours: "Restaurant-set" }],
-            title: "The price on the menu is the price you pay.",
-      body: "High app fees can mean higher menu prices. nomm charges restaurants no commission, so you pay in-store prices.",
-      link: "How nomm works for restaurants",
-    },
     list: {
       title: "All restaurants",
       count: (n: number) => `${n} ${plural(n, "place", "places")}`,
@@ -260,6 +254,9 @@ export const en = {
     nextPage: "Next page",
     popular: "Popular",
     soldOutToday: "Sold out today",
+    photosIllustrative: "Photos are illustrative.",
+    listView: "List view",
+    gridView: "Grid view",
     options: (n: number) => `${n} options`,
     pricesIn: (currency: string) => `Prices in ${currency}`,
   },

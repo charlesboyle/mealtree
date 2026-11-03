@@ -28,8 +28,11 @@ function dishThumb(url: string) {
   return url.replace(/(\/storage\/v1\/object\/public\/menus\/dishes\/[^/]+)\/([^/]+)$/, "$1/thumb/$2");
 }
 
+/** The widest request that still gets the Storage thumbnail (400×298); photo cards ask for exactly this so they never pull the original. */
+export const THUMB_WIDTH = 200;
+
 export function photoUrl(id: string, width: number) {
-  if (/^https?:\/\//.test(id)) return width <= 200 ? dishThumb(id) : id;
+  if (/^https?:\/\//.test(id)) return width <= THUMB_WIDTH ? dishThumb(id) : id;
   return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${width}&q=70`;
 }
 

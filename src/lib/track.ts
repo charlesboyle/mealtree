@@ -11,6 +11,7 @@
  */
 import posthog from "posthog-js";
 import type { Locale } from "@/i18n/config";
+import type { MenuLayout } from "@/lib/menu-layout";
 import type { LinkKind } from "@/lib/types";
 
 /** Which button was tapped: the restaurant's own links plus call and directions. */
@@ -18,7 +19,8 @@ export type TrackLink = LinkKind | "call" | "maps";
 type Event =
   | { kind: "view" }
   | { kind: "dish_open"; itemId: string }
-  | { kind: "link_click"; link: TrackLink };
+  | { kind: "link_click"; link: TrackLink }
+  | { kind: "menu_layout"; layout: MenuLayout };
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -57,6 +59,11 @@ function origin() {
 export function track(slug: string, locale: Locale, event: Event) {
   if (typeof window === "undefined") return;
   if (shouldSkip(slug)) return;
+  // PostHog only: a list/grid pick is not part of the owner's dashboard, so it never reaches track_event.
+  if (event.kind === "menu_layout") {
+    posthog.capture("menu_layout_changed", { restaurant_slug: slug, layout: event.layout, locale });
+    return;
+  }
   if (event.kind === "dish_open") {
     posthog.capture("menu_item_opened", { restaurant_slug: slug, menu_item_id: event.itemId, locale });
   } else if (event.kind === "link_click") {

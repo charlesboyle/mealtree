@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { AllRestaurantsEntry } from "@/components/all-restaurants-entry";
 import { DiscoverHero } from "@/components/discover-hero";
 import { DishCard } from "@/components/dish-card";
-import { FairPromise } from "@/components/fair-promise";
 import { NearbyTile } from "@/components/nearby-tile";
 import { Rail } from "@/components/rail";
 import { RestaurantCard } from "@/components/restaurant-card";
@@ -85,7 +84,6 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
             ))}
           </Rail>
         )}
-        <FairPromise />
       </div>
     </main>
   );
