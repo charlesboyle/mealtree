@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CheckIcon, MessageCircleIcon } from "lucide-react";
 import { ButtonLink } from "@/components/marketing/button-link";
 import { ComparisonTable } from "@/components/marketing/comparison-table";
+import { OwnerInterestCta } from "@/components/marketing/owner-interest-cta";
 import type { Locale } from "@/i18n";
 import { getI18n } from "@/i18n/server";
 import { pageAlternates } from "@/lib/seo";
@@ -10,11 +11,11 @@ const content = {
   en: {
     metaTitle: "nomm for restaurants",
     metaDescription:
-      "Diners find your menu on nomm and message you on WhatsApp. No commission. Claim your page free during the beta.",
+      "Diners find your menu on nomm and message you on WhatsApp. No commission. Get in touch to manage your page, free during the beta.",
     badge: "Beta · free during the beta",
     title: "Get found by people nearby. Keep every order.",
     lead: "Diners find your menu and message you on WhatsApp. You pay no commission. Diners pay AED 1 per order.",
-    claim: "Claim your page",
+    claim: "Manage my menu",
     remove: "Ask us to remove it",
     howTitle: "How it works",
     steps: [
@@ -28,7 +29,7 @@ const content = {
       },
       {
         title: "You stay in control",
-        body: "Claim your page for free to keep it accurate, or ask us to take it down. Either way, it is your call.",
+        body: "Get in touch to keep your page accurate, or ask us to take it down. Either way, it is your call.",
       },
     ],
     compareTitle: "How we compare",
@@ -58,17 +59,17 @@ const content = {
       "Your menu, read from your printed menu or website",
       "WhatsApp, call and directions buttons on your page",
       "Orders arrive as WhatsApp messages, already written out",
-      "Fix prices, hours and photos once you claim the page",
+      "We help you keep prices, hours and photos accurate",
     ],
   },
   ar: {
     metaTitle: "nomm للمطاعم",
     metaDescription:
-      "يجد الزوار قائمتك على nomm ويراسلونك عبر واتساب. بلا عمولة. طالب بصفحتك مجانًا خلال الفترة التجريبية.",
+      "يجد الزوار قائمتك على nomm ويراسلونك عبر واتساب. بلا عمولة. تواصل معنا لإدارة صفحتك مجانًا خلال الفترة التجريبية.",
     badge: "تجريبي · مجاني خلال الفترة التجريبية",
     title: "يجدك من حولك. وتحتفظ بكل طلب.",
     lead: "يجد الزوار قائمتك ويراسلونك عبر واتساب. لا تدفع أي عمولة. يدفع الزائر 1 درهم عن كل طلب.",
-    claim: "طالب بصفحتك",
+    claim: "أدِر قائمتي",
     remove: "اطلب إزالتها",
     howTitle: "كيف يعمل",
     steps: [
@@ -82,7 +83,7 @@ const content = {
       },
       {
         title: "القرار بيدك",
-        body: "طالب بصفحتك مجانًا لتبقى دقيقة، أو اطلب منّا إزالتها. في الحالتين القرار لك.",
+        body: "تواصل معنا لتبقى صفحتك دقيقة، أو اطلب منّا إزالتها. في الحالتين القرار لك.",
       },
     ],
     compareTitle: "كيف نقارن بغيرنا",
@@ -116,7 +117,7 @@ const content = {
       "قائمتك مقروءة من قائمتك المطبوعة أو موقعك",
       "أزرار واتساب والاتصال والاتجاهات في صفحتك",
       "تصلك الطلبات رسائل واتساب مكتوبة جاهزة",
-      "عدّل الأسعار وساعات العمل والصور بعد أن تطالب بالصفحة",
+      "نساعدك على إبقاء الأسعار وساعات العمل والصور دقيقة",
     ],
   },
 } satisfies Record<Locale, unknown>;
@@ -144,8 +145,8 @@ export default async function ForRestaurantsPage() {
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted">
             {c.lead}
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <ButtonLink href={href("/claim")}>{c.claim}</ButtonLink>
+          <div id="interest" className="mt-8 flex scroll-mt-24 flex-wrap gap-3">
+            <OwnerInterestCta autoOpen>{c.claim}</OwnerInterestCta>
             <ButtonLink href={href("/remove")} variant="secondary">
               {c.remove}
             </ButtonLink>
@@ -206,10 +207,10 @@ export default async function ForRestaurantsPage() {
               <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-muted">
                 {c.pricingSummary}
               </p>
-              <ButtonLink href={href("/claim")} className="mt-6">
+              <OwnerInterestCta className="mt-6">
                 <MessageCircleIcon className="h-4 w-4" aria-hidden />
                 {c.claim}
-              </ButtonLink>
+              </OwnerInterestCta>
             </div>
             <ul className="space-y-3">
               {c.features.map((f) => (

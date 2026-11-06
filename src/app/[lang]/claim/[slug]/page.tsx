@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ClaimFlow } from "@/components/claim/claim-flow";
 import { getI18n } from "@/i18n/server";
 import { findRestaurant, getStats, listRestaurants } from "@/lib/data";
+import { CLAIM_FLOW_ENABLED } from "@/lib/flags";
 
 // Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
 export const revalidate = 300;
@@ -19,6 +20,8 @@ export async function generateMetadata(props: PageProps<"/[lang]/claim/[slug]">)
 export default async function ClaimPage(props: PageProps<"/[lang]/claim/[slug]">) {
   const r = await findRestaurant((await props.params).slug);
   if (!r) notFound();
+  // Claiming is paused (see lib/flags.ts): old links land on the restaurant page with the owner form open.
+  if (!CLAIM_FLOW_ENABLED) redirect((await getI18n()).href(`/r/${r.slug}?claim=1`));
   return (
     <ClaimFlow restaurant={r} stats={await getStats(r.slug)} />
   );

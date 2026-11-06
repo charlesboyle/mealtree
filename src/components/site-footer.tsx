@@ -13,16 +13,16 @@ export function SiteFooter({ bare = false }: { bare?: boolean }) {
   const f = t.site.footerLinks;
   return (
     <footer className={`bg-soft ${bare ? "pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-28" : "pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-0"}`}>
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-8 text-center sm:px-6 lg:px-8">
         <Wordmark tone="ink" />
-        <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted" aria-label={t.common.footer}>
+        <nav className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted" aria-label={t.common.footer}>
           <Link href={href("/for-restaurants")} className={link}>{f.forRestaurants}</Link>
           <Link href={href("/terms")} className={link}>{t.common.terms}</Link>
           <Link href={href("/privacy")} className={link}>{t.common.privacy}</Link>
         </nav>
-        <p className="w-full text-sm text-muted">
+        <p className="text-xs text-muted/80">
           {t.site.feedbackPrompt}{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="ltr-isolate font-medium text-plum underline-offset-4 hover:underline">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="ltr-isolate underline decoration-dashed decoration-1 underline-offset-4 transition-colors duration-150 hover:text-plum">
             {CONTACT_EMAIL}
           </a>
         </p>

@@ -25,6 +25,7 @@ export function BagSheet({
   phone,
   onQty,
   onSend,
+  onCall,
 }: {
   open: boolean;
   onClose: () => void;
@@ -38,6 +39,7 @@ export function BagSheet({
   phone: string;
   onQty: (key: string, qty: number) => void;
   onSend: () => void;
+  onCall: () => void;
 }) {
   const { t, pick } = useI18n();
   const [note, setNote] = useState(false);
@@ -138,6 +140,7 @@ export function BagSheet({
           </motion.a>
           <motion.a
             href={`tel:${phone}`}
+            onClick={onCall}
             whileTap={{ scale: 0.94 }}
             aria-label={t.bag.callRestaurant(restaurantName)}
             title={t.bag.callRestaurant(restaurantName)}

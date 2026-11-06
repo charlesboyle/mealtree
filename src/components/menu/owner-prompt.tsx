@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useI18n } from "@/i18n/client";
 import type { Restaurant } from "@/lib/types";
 
-/** End-of-menu note for owners: claim the listing or ask for removal. */
-export function OwnerPrompt({ restaurant: r, claimed }: { restaurant: Restaurant; claimed: boolean }) {
+/** End-of-menu note for owners: get in touch about the listing (opens the interest form) or ask for removal. */
+export function OwnerPrompt({ restaurant: r, claimed, onClaim }: { restaurant: Restaurant; claimed: boolean; onClaim: () => void }) {
   const { t, pick, date, href } = useI18n();
   const name = pick(r.name, r.nameAr);
 
@@ -26,12 +26,13 @@ export function OwnerPrompt({ restaurant: r, claimed }: { restaurant: Restaurant
           <span className="font-semibold text-plum">{t.menu.ownerAsk(name)}</span> {t.menu.ownerBody}
         </p>
         <div className="flex shrink-0 gap-2">
-          <Link
-            href={href(`/claim/${r.slug}`)}
+          <button
+            type="button"
+            onClick={onClaim}
             className="inline-flex h-9 items-center rounded-full bg-plum px-4 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-plum/90 active:scale-95"
           >
             {t.menu.ownerClaim}
-          </Link>
+          </button>
           <Link
             href={href(`/remove?r=${r.slug}`)}
             className="inline-flex h-9 items-center rounded-full bg-plum/[0.05] px-4 text-[13px] font-semibold text-plum transition-colors duration-150 hover:bg-plum/[0.09] active:scale-95"

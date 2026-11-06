@@ -55,14 +55,14 @@ function pitch(r: Row, origin: string) {
     `مرحبًا فريق ${arName}!`,
     `نشرنا قائمة طعامكم على الإنترنت ليطّلع الضيوف على الأسعار قبل زيارتهم: ${origin}/ar/r/${r.slug}`,
     views ? `حصلت القائمة على ${views} مشاهدة خلال آخر 30 يومًا.` : "",
-    `المطالبة بالصفحة مجانية، ويمكنكم تعديل الأسعار وتحديد الأطباق التي نفدت والحصول على رموز QR للطاولات: ${origin}/ar/claim/${r.slug}`,
+    `إدارة الصفحة مجانية. اتركوا بياناتكم وسنساعدكم على تعديل الأسعار وإبقاء القائمة محدّثة: ${origin}/ar/r/${r.slug}?claim=1`,
     `إن كنتم تفضّلون عدم الإدراج، ردّوا على هذه الرسالة وسنزيل الصفحة: ${origin}/ar/remove?r=${r.slug}`,
   ];
   const en = [
     `Hi ${r.name} team!`,
     `We put your menu online so guests can check prices before they visit: ${origin}/en/r/${r.slug}`,
     views ? `It got ${views} views in the last 30 days.` : "",
-    `It's free to claim. You can fix prices, mark sold-out dishes, and get QR codes for your tables: ${origin}/en/claim/${r.slug}`,
+    `It's free to manage. Leave your details and we'll help you fix prices and keep the menu up to date: ${origin}/en/r/${r.slug}?claim=1`,
     `If you'd rather not be listed, reply and we'll take it down: ${origin}/en/remove?r=${r.slug}`,
   ];
   return [...ar, "———", ...en].filter(Boolean).join("\n\n");

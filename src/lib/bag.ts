@@ -240,24 +240,21 @@ export function whatsappUrl(number: string, text?: string) {
   return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 }
 
-const choiceName = (c: Choice) => (c.labelAr?.trim() && c.labelAr.trim() !== c.label ? `${c.label} / ${c.labelAr}` : c.label);
-
 /**
- * The drafted order, readable by the restaurant whatever language the customer
- * uses: printed dish names (Arabic on a second line when the menu has one),
- * quantities, choices, each line's price and a total from the menu. No fees.
+ * The drafted order, short and in the language the diner was browsing in (dish
+ * names too, falling back to the printed English): a bulleted list in WhatsApp's
+ * own markup (`- ` bullets, `*bold*` total), each line with quantity, choices and
+ * price, then a total from the menu. No fees, no blank lines.
  */
 export function orderMessage(r: Restaurant, lines: ResolvedLine[], i18n: I18n) {
   const m = i18n.t.bag.message;
-  const out: string[] = [m.greeting(i18n.pick(r.name, r.nameAr)), ""];
+  const out: string[] = [m.greeting(i18n.pick(r.name, r.nameAr))];
   for (const l of lines) {
-    out.push(`${l.qty} × ${l.item.name} — ${i18n.price(l.unit * l.qty, r.currency)}`);
-    const ar = l.item.nameAr?.trim();
-    if (ar && ar !== l.item.name) out.push(`   ${ar}`);
-    if (l.choices.length) out.push(`   ${m.options}: ${l.choices.map(choiceName).join(", ")}`);
+    const choices = l.choices.length ? ` (${l.choices.map((c) => i18n.pick(c.label, c.labelAr)).join(", ")})` : "";
+    out.push(`- ${l.qty} × ${i18n.pick(l.item.name, l.item.nameAr)}${choices} — ${i18n.price(l.unit * l.qty, r.currency)}`);
   }
   const total = lines.reduce((sum, l) => sum + l.unit * l.qty, 0);
-  out.push("", `${m.total}: ${i18n.price(total, r.currency)}`, "", m.pickupOrDelivery, m.name, "", m.foundYou);
+  out.push(`*${m.total}: ${i18n.price(total, r.currency)}*`, m.foundYou);
   return out.join("\n");
 }
 

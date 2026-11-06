@@ -38,6 +38,7 @@ export default async function PrivacyPage() {
           <p>
             عند المطالبة بصفحة نحفظ اسمك ودورك وطريقة التحقق التي اخترتها. يحتفظ متصفحك بمفتاح خاص يتيح له تعديل قائمتك،
             ولا نخزّن منه إلا بصمة أحادية الاتجاه. نستخدم بيانات التواصل فقط للتحقق منك والرد بشأن صفحتك.
+            تُحفظ بيانات التواصل التي ترسلها عبر نموذج «أدِر هذه القائمة» لدى مزوّد التحليلات PostHog (الاتحاد الأوروبي)، ولا نستخدمها إلا للتواصل معك بشأن قائمتك.
           </p>
           <h2>طلبات الإزالة</h2>
           <p>نحتفظ بالاسم ووسيلة التواصل اللذين تقدّمهما لتأكيد الإزالة، ثم نحتفظ بسجل حتى لا تُدرج الصفحة مجددًا.</p>
@@ -79,7 +80,8 @@ export default async function PrivacyPage() {
         <p>
           When you claim a page we store your name, role, and how you asked to be verified. Your browser keeps a private
           key that lets it edit your menu; we store only a one-way hash of it. We use your contact details only to verify
-          you and to reply about your listing.
+          you and to reply about your listing. Contact details you submit through the &ldquo;Manage this menu&rdquo; form
+          are stored with our analytics provider, PostHog (EU), and used only to contact you about your menu.
         </p>
         <h2>Takedown requests</h2>
         <p>

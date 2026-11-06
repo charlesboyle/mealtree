@@ -38,10 +38,14 @@ function storage(kind: "local" | "session") {
  * (unless a test opts in), and the owner looking at their own page.
  */
 function shouldSkip(slug: string) {
-  if (!url || !key) return true;
+  return !url || !key || skipVisitor(slug);
+}
+
+/** The visitor-based part of `shouldSkip`, for events that don't go through Supabase (surveys). `slug` may be empty. */
+function skipVisitor(slug: string) {
   const local = storage("local");
   if (navigator.webdriver && !local?.getItem("mealtree:track-in-tests")) return true;
-  return !!local?.getItem(`mealtree:owner-token:${slug}`);
+  return !!slug && !!local?.getItem(`mealtree:owner-token:${slug}`);
 }
 
 /** utm_source, else the referring site's hostname (never our own). */
@@ -54,6 +58,23 @@ function origin() {
     if (host && host !== location.hostname) referrer = host.slice(0, 80);
   } catch {}
   return { source, referrer };
+}
+
+/**
+ * Sends one PostHog survey event (see surveys.ts) and says whether it went out, so the form can fall back to
+ * email when PostHog isn't loaded (ad blockers are common). Skipped visitors (the owner, automated browsers)
+ * count as delivered so they see the normal thank-you. In dev PostHog is never initialised: the payload is logged
+ * and delivery is faked; set localStorage `nomm:survey-offline` to rehearse the email fallback.
+ */
+export function sendSurvey(event: "survey shown" | "survey sent" | "survey dismissed", properties: Record<string, unknown>, slug = "") {
+  if (typeof window === "undefined") return false;
+  const dev = process.env.NODE_ENV !== "production";
+  if (dev) console.info("[survey]", event, properties);
+  if (dev) return !storage("local")?.getItem("nomm:survey-offline");
+  if (skipVisitor(slug)) return true;
+  if (!posthog.__loaded) return false;
+  posthog.capture(event, properties);
+  return true;
 }
 
 export function track(slug: string, locale: Locale, event: Event) {

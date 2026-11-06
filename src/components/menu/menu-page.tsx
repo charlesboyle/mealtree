@@ -7,6 +7,7 @@ import { BagSheet } from "@/components/bag-sheet";
 import { ContactSheet } from "@/components/contact-sheet";
 import { DishSheet } from "@/components/dish-sheet";
 import { OriginalMenuSheet } from "@/components/original-menu";
+import { OwnerInterestForm } from "@/components/owner-interest-form";
 import { useToast } from "@/components/providers";
 import { Rail } from "@/components/rail";
 import { RestaurantCard } from "@/components/restaurant-card";
@@ -17,7 +18,9 @@ import { cn, itemMinPrice } from "@/lib/format";
 import { OPEN_DISH_EVENT } from "@/lib/search-events";
 import { autoLayout, type MenuLayout, photoCount, sectionLayout } from "@/lib/menu-layout";
 import { parseQuery, scoreItem, sectionText } from "@/lib/search";
+import { writePending } from "@/lib/order-feedback";
 import { useOverrides } from "@/lib/store";
+import type { OrderChannel, OwnerInterestSource } from "@/lib/surveys";
 import { track } from "@/lib/track";
 import { useMenuLayout } from "@/lib/use-menu-layout";
 import type { MenuItem, MenuSection as MenuSectionData, Restaurant } from "@/lib/types";
@@ -31,6 +34,7 @@ import { MenuSection } from "./menu-section";
 import { MenuSideNav } from "./menu-side-nav";
 import { MenuSourceNote } from "./menu-source-note";
 import { MenuTopBar } from "./menu-top-bar";
+import { OrderFeedbackCard } from "./order-feedback-card";
 import { RestaurantHero } from "./restaurant-hero";
 import { useMenuScroll } from "./use-menu-scroll";
 
@@ -50,6 +54,9 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
   const [openId, setOpenId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<"bag" | "contact" | "index" | "original" | null>(null);
   const closeSheet = useCallback(() => setSheet(null), []);
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const [ownerSource, setOwnerSource] = useState<OwnerInterestSource>("restaurant_page");
+  const closeOwner = useCallback(() => setOwnerOpen(false), []);
   const deferredQuery = useDeferredValue(query);
   const parsed = useMemo(() => parseQuery(deferredQuery), [deferredQuery]);
   const hasQuery = parsed.tokens.length > 0 || parsed.maxPrice !== undefined;
@@ -152,6 +159,10 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
   const bag = useBag(r.slug, itemsById);
   const whatsappHref = number ? whatsappUrl(number, bag.count ? orderMessage(r, bag.lines, i18n) : undefined) : null;
   const trackWhatsapp = () => track(r.slug, i18n.locale, { kind: "link_click", link: "whatsapp" });
+  // Remember that the diner left for WhatsApp or a call, so we can ask afterwards whether they ordered.
+  const markOrder = (channel: OrderChannel) => {
+    if (bag.count > 0) writePending({ slug: r.slug, channel, at: Date.now(), itemCount: bag.count });
+  };
 
   // ——— Dish sheet and deep links ———
   const openItem = openId ? (itemsById.get(openId) ?? null) : null;
@@ -178,6 +189,23 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
       window.removeEventListener(OPEN_DISH_EVENT, onAnnounce);
     };
     // Only on mount; later opens are driven by taps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ?claim=1 (old claim links, outreach messages) opens the owner form once, then leaves the URL clean.
+  useEffect(() => {
+    const openFromQuery = () => {
+      const params = new URLSearchParams(location.search);
+      if (params.get("claim") !== "1") return;
+      params.delete("claim");
+      const rest = params.toString();
+      history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
+      if (claimed) return;
+      setOwnerSource("claim_redirect");
+      setOwnerOpen(true);
+    };
+    openFromQuery();
+    // Only on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -380,7 +408,14 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
           </div>
         )}
 
-        <OwnerPrompt restaurant={r} claimed={claimed} />
+        <OwnerPrompt
+          restaurant={r}
+          claimed={claimed}
+          onClaim={() => {
+            setOwnerSource("restaurant_page");
+            setOwnerOpen(true);
+          }}
+        />
       </main>
 
       {ordering && number && (
@@ -398,8 +433,13 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
             whatsappHref={whatsappUrl(number, orderMessage(r, bag.lines, i18n))}
             phone={r.phone}
             onQty={bag.setLineQty}
-            onSend={trackWhatsapp}
+            onSend={() => {
+              trackWhatsapp();
+              markOrder("whatsapp");
+            }}
+            onCall={() => markOrder("call")}
           />
+          <OrderFeedbackCard slug={r.slug} blocked={sheet !== null || openItem !== null || ownerOpen} barVisible={bag.count > 0} />
         </>
       )}
       <DishSheet
@@ -412,6 +452,7 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
         onClose={closeDish}
       />
       <ContactSheet restaurant={r} open={sheet === "contact"} onClose={closeSheet} style={style} />
+      <OwnerInterestForm open={ownerOpen} onClose={closeOwner} source={ownerSource} restaurant={{ slug: r.slug, name }} style={style} />
       <MenuIndexSheet
         open={sheet === "index"}
         onClose={closeSheet}
