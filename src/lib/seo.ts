@@ -17,3 +17,11 @@ export function pageAlternates(locale: Locale, path: string) {
 
 /** Pages that are personal or only a step in a flow: kept out of search results. */
 export const NO_INDEX = { index: false, follow: true } as const;
+
+/** Open Graph + Twitter tags for a page, so link previews carry the page's own title and description under the NOMM site name. */
+export function social(locale: Locale, title: string, description: string, images?: { url: string; width?: number }[]) {
+  return {
+    openGraph: { title, description, siteName: "NOMM", type: "website" as const, locale: locale === "ar" ? "ar_AE" : "en_AE", images },
+    twitter: { card: "summary_large_image" as const, title, description },
+  };
+}

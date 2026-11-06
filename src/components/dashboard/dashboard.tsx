@@ -80,7 +80,7 @@ export function Dashboard({ restaurant: r, initialStats }: { restaurant: Restaur
     <div data-accent style={style} className="min-h-dvh bg-bg">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4 sm:px-5">
-          <Link href={href("/")} aria-label="nomm" className="pressable">
+          <Link href={href("/")} aria-label="NOMM" className="pressable">
             <LogoMark />
           </Link>
           <span className="text-ink-3">/</span>

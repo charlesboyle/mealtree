@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/format";
 
-/** The nomm wordmark as an inline SVG; it takes the text colour of its tone, so one file serves every surface. */
+/** The NOMM wordmark as an inline SVG; it takes the text colour of its tone, so one file serves every surface. */
 export function Wordmark({ className, tone = "brand" }: { className?: string; tone?: "brand" | "ink" | "light" }) {
   return (
     <svg
       role="img"
-      aria-label="nomm"
+      aria-label="NOMM"
       viewBox="0 0 33 9"
       fill="currentColor"
       className={cn(
@@ -38,7 +38,7 @@ export function Logo({ className }: { className?: string }) {
   );
 }
 
-/** The nomm app icon, for favicon-sized spots (404, login, dashboard). Same artwork as the favicon. */
+/** The NOMM app icon, for favicon-sized spots (404, login, dashboard). Same artwork as the favicon. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg aria-hidden viewBox="0 0 360 360" className={cn("size-6 rounded-md", className)}>

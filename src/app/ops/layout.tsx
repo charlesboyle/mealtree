@@ -5,7 +5,7 @@ import { fontVariables } from "../fonts";
 import "../globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "nomm ops", template: "%s · nomm ops" },
+  title: { default: "NOMM ops", template: "%s · NOMM ops" },
   robots: { index: false, follow: false },
 };
 

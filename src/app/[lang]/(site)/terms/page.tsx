@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalShell, Prose } from "@/components/legal/legal-shell";
 import { getI18n } from "@/i18n/server";
-import { pageAlternates } from "@/lib/seo";
+import { pageAlternates, social } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
-  return { title: t.meta.terms, alternates: pageAlternates(locale, "/terms") };
+  return { title: t.meta.terms, ...social(locale, `${t.meta.terms} · NOMM`, t.meta.description), alternates: pageAlternates(locale, "/terms") };
 }
 
 export default async function TermsPage() {
@@ -15,9 +15,9 @@ export default async function TermsPage() {
     return (
       <LegalShell title="شروط الاستخدام" lead="شروط بلغة واضحة للزوار والمطاعم. آخر تحديث: أكتوبر 2026.">
         <Prose>
-          <h2>ما هو nomm</h2>
+          <h2>ما هو NOMM</h2>
           <p>
-            ينشر nomm قوائم طعام المطاعم ليطّلع الزوار على الأطباق والأسعار قبل زيارتهم. نجمع القوائم من زيارات
+            ينشر NOMM قوائم طعام المطاعم ليطّلع الزوار على الأطباق والأسعار قبل زيارتهم. نجمع القوائم من زيارات
             شخصية، وصور القوائم المنشورة، ومواقع المطاعم، ومن أصحاب المطاعم أنفسهم.
           </p>
           <h2>قد تكون القوائم قديمة</h2>
@@ -27,18 +27,17 @@ export default async function TermsPage() {
           </p>
           <h2>لسنا تابعين للمطاعم المدرجة</h2>
           <p>
-            نستخدم أسماء المطاعم لتعريفها فقط. إدراج مطعم لا يعني أنه يؤيد nomm إلى أن يطالب بصفحته.
+            نستخدم أسماء المطاعم لتعريفها فقط. إدراج مطعم لا يعني أنه يؤيد NOMM إلى أن يطالب بصفحته.
           </p>
           <h2>الطلب عبر واتساب</h2>
           <ul>
-            <li>الطلب اتفاق بينك وبين المطعم عبر واتساب. nomm ليس طرفًا في عملية البيع ولا يتسلّم أي مدفوعات.</li>
+            <li>الطلب اتفاق بينك وبين المطعم عبر واتساب. NOMM ليس طرفًا في عملية البيع ولا يتسلّم أي مدفوعات.</li>
             <li>تأتي الأسعار من قائمة المطعم، وقد تختلف عمّا يطلبه المطعم فعليًا أو تكون قديمة. يؤكد المطعم السعر النهائي.</li>
             <li>توفّر الأطباق والتحضير والتوصيل أو الاستلام مسؤولية المطعم وحده.</li>
           </ul>
           <h2>للمطاعم</h2>
           <ul>
             <li>المطالبة بصفحتك مجانية. نتحقق من كل طلب بالاتصال بالرقم المسجّل في صفحتك العامة.</li>
-            <li>قد تتغير الرسوم والأسعار الخاصة بالمطاعم، وسنخبرك قبل أن يؤثر ذلك في صفحتك.</li>
             <li>بعد المطالبة بصفحتك، تكون مسؤولًا عمّا تنشره فيها.</li>
             <li>
               لا تريد أن تكون مدرجًا؟ <Link href={href("/remove")}>اطلب منّا إزالة صفحتك</Link> وسنفعل.
@@ -53,9 +52,9 @@ export default async function TermsPage() {
   return (
     <LegalShell title="Terms of use" lead="Plain-language terms for diners and restaurants. Last updated October 2026.">
       <Prose>
-        <h2>What nomm is</h2>
+        <h2>What NOMM is</h2>
         <p>
-          nomm publishes restaurant menus so diners can check dishes and prices before they visit. Menus come from
+          NOMM publishes restaurant menus so diners can check dishes and prices before they visit. Menus come from
           in-person visits, public menu photos, restaurant websites, and restaurant owners.
         </p>
         <h2>Menus can be out of date</h2>
@@ -67,12 +66,12 @@ export default async function TermsPage() {
         <h2>We&apos;re not affiliated with listed restaurants</h2>
         <p>
           Restaurant names are used only to identify the restaurant. A listing doesn&apos;t mean the restaurant endorses
-          nomm until it claims its page.
+          NOMM until it claims its page.
         </p>
         <h2>Ordering over WhatsApp</h2>
         <ul>
           <li>
-            An order is an arrangement between you and the restaurant over WhatsApp. nomm is not a party to the sale and
+            An order is an arrangement between you and the restaurant over WhatsApp. NOMM is not a party to the sale and
             does not take payment.
           </li>
           <li>
@@ -84,7 +83,6 @@ export default async function TermsPage() {
         <h2>For restaurants</h2>
         <ul>
           <li>Claiming your page is free. We verify every claim by calling the number on your public listing.</li>
-          <li>Fees and pricing for restaurants may change; we&apos;ll tell you before a change affects your page.</li>
           <li>You&apos;re responsible for what you publish once your page is claimed.</li>
           <li>
             Don&apos;t want to be listed? <Link href={href("/remove")}>Ask us to take your page down</Link> and we will.

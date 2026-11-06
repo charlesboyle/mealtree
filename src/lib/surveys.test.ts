@@ -102,7 +102,7 @@ describe("ownerInterestAnswers", () => {
     const [, query] = href.split("?");
     const params = new URLSearchParams(query);
     expect(href.startsWith("mailto:hello@example.com?")).toBe(true);
-    expect(params.get("subject")).toBe("nomm: manage my menu (Tea Spot)");
+    expect(params.get("subject")).toBe("NOMM: manage my menu (Tea Spot)");
     expect(params.get("body")).toBe("Your name: Sara\nYour role: Manager\nPhone or WhatsApp number: +971500000000\nRestaurant name: Tea Spot");
   });
 });

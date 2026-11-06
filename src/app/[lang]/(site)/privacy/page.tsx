@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { LegalShell, Prose } from "@/components/legal/legal-shell";
 import { getI18n } from "@/i18n/server";
-import { pageAlternates } from "@/lib/seo";
+import { pageAlternates, social } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
-  return { title: t.meta.privacy, alternates: pageAlternates(locale, "/privacy") };
+  return { title: t.meta.privacy, ...social(locale, `${t.meta.privacy} · NOMM`, t.meta.description), alternates: pageAlternates(locale, "/privacy") };
 }
 
 export default async function PrivacyPage() {
@@ -38,7 +38,7 @@ export default async function PrivacyPage() {
           <p>
             عند المطالبة بصفحة نحفظ اسمك ودورك وطريقة التحقق التي اخترتها. يحتفظ متصفحك بمفتاح خاص يتيح له تعديل قائمتك،
             ولا نخزّن منه إلا بصمة أحادية الاتجاه. نستخدم بيانات التواصل فقط للتحقق منك والرد بشأن صفحتك.
-            تُحفظ بيانات التواصل التي ترسلها عبر نموذج «أدِر هذه القائمة» لدى مزوّد التحليلات PostHog (الاتحاد الأوروبي)، ولا نستخدمها إلا للتواصل معك بشأن قائمتك.
+            تُحفظ بيانات التواصل التي ترسلها عبر نموذج «أدِر هذه القائمة» لدى مزوّد التحليلات PostHog (الاتحاد الأوروبي)، ولا نستخدمها إلا للتحقق من نشاطك التجاري.
           </p>
           <h2>طلبات الإزالة</h2>
           <p>نحتفظ بالاسم ووسيلة التواصل اللذين تقدّمهما لتأكيد الإزالة، ثم نحتفظ بسجل حتى لا تُدرج الصفحة مجددًا.</p>
@@ -81,7 +81,7 @@ export default async function PrivacyPage() {
           When you claim a page we store your name, role, and how you asked to be verified. Your browser keeps a private
           key that lets it edit your menu; we store only a one-way hash of it. We use your contact details only to verify
           you and to reply about your listing. Contact details you submit through the &ldquo;Manage this menu&rdquo; form
-          are stored with our analytics provider, PostHog (EU), and used only to contact you about your menu.
+          are stored with our analytics provider, PostHog (EU), and used only to verify your business.
         </p>
         <h2>Takedown requests</h2>
         <p>

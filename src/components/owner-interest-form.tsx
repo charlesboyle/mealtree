@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { CheckMark } from "@/components/check-mark";
 import { Sheet } from "@/components/sheet";
@@ -152,22 +152,35 @@ function Body({
     return (
       <div>
         {header}
-        <div className="flex flex-col items-center px-6 pb-4 pt-6 text-center" role="status">
-          {ok && <CheckMark />}
+        <div className="flex flex-col items-center px-6 pb-4 pt-6 text-center" role={ok ? "status" : "alert"}>
+          {ok ? (
+            <CheckMark />
+          ) : (
+            <span className="grid size-14 place-items-center rounded-full bg-danger/10 text-danger">
+              <AlertTriangle className="size-7" aria-hidden />
+            </span>
+          )}
           <h3 className="mt-4 text-lg font-semibold text-ink">{ok ? f.doneTitle : f.offlineTitle}</h3>
           <p className="mt-1.5 max-w-xs text-[15px] leading-relaxed text-muted">{ok ? f.done : f.offlineBody}</p>
           <div className="mt-6 flex w-full flex-col gap-2">
             {!ok && (
+              <Button variant="primary" onClick={() => setResult(null)} className="w-full">
+                {f.offlineRetry}
+              </Button>
+            )}
+            {!ok && (
               <a
                 href={result.mailto}
-                className="pressable inline-flex h-12 items-center justify-center rounded-full bg-ink px-6 text-base font-semibold text-bg hover:opacity-90"
+                className="pressable inline-flex h-12 items-center justify-center rounded-full bg-soft px-6 text-base font-semibold text-ink hover:bg-line"
               >
                 {f.offlineCta}
               </a>
             )}
-            <Button variant={ok ? "primary" : "secondary"} onClick={onClose} className="w-full">
-              {f.doneButton}
-            </Button>
+            {ok && (
+              <Button variant="primary" onClick={onClose} className="w-full">
+                {f.doneButton}
+              </Button>
+            )}
           </div>
         </div>
       </div>

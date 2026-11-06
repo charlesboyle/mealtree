@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MenuPage } from "@/components/menu/menu-page";
 import { getI18n } from "@/i18n/server";
-import { pageAlternates } from "@/lib/seo";
+import { pageAlternates, social } from "@/lib/seo";
 import { findRestaurant, listRestaurants } from "@/lib/data";
 import { photoUrl } from "@/lib/format";
 import type { Restaurant } from "@/lib/types";
@@ -26,13 +26,7 @@ export async function generateMetadata(props: PageProps<"/[lang]/r/[slug]">): Pr
     title,
     description,
     alternates: pageAlternates(i18n.locale, `/r/${r.slug}`),
-    openGraph: {
-      title,
-      description,
-      type: "website",
-      locale: i18n.locale === "ar" ? "ar_AE" : "en_AE",
-      images: r.cover ? [{ url: photoUrl(r.cover, 1200), width: 1200 }] : undefined,
-    },
+    ...social(i18n.locale, `${title} · NOMM`, description, r.cover ? [{ url: photoUrl(r.cover, 1200), width: 1200 }] : undefined),
   };
 }
 

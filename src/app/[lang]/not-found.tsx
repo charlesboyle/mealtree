@@ -9,12 +9,12 @@ import { listRestaurants } from "@/lib/data";
 const content = {
   en: {
     title: "We can’t find that page",
-    body: "The restaurant may have left nomm, or the link is broken.",
+    body: "The restaurant may have left NOMM, or the link is broken.",
     cta: "Go to Discover",
   },
   ar: {
     title: "لا نجد هذه الصفحة",
-    body: "ربما غادر المطعم nomm، أو أن الرابط معطّل.",
+    body: "ربما غادر المطعم NOMM، أو أن الرابط معطّل.",
     cta: "العودة إلى الاستكشاف",
   },
 };

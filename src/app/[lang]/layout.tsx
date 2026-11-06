@@ -5,7 +5,7 @@ import { Providers } from "@/components/providers";
 import { dirOf, hasLocale, locales } from "@/i18n/config";
 import { I18nProvider } from "@/i18n/client";
 import { dictionaries } from "@/i18n/dictionaries";
-import { siteUrl } from "@/lib/seo";
+import { siteUrl, social } from "@/lib/seo";
 import { fontVariables } from "../fonts";
 import "../globals.css";
 
@@ -21,7 +21,7 @@ export async function generateMetadata(props: LayoutProps<"/[lang]">): Promise<M
     metadataBase: new URL(siteUrl()),
     title: { default: t.title, template: t.template },
     description: t.description,
-    twitter: { card: "summary_large_image" },
+    ...social(lang, t.title, t.description),
   };
 }
 

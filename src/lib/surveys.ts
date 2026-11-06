@@ -138,7 +138,7 @@ export function ownerInterestMailto(to: string, f: OwnerInterestForm) {
       return response ? [`${a.question}: ${Array.isArray(response) ? response.join(", ") : response}`] : [];
     })
     .join("\n");
-  const subject = `nomm: manage my menu${f.restaurant.trim() ? ` (${f.restaurant.trim()})` : ""}`;
+  const subject = `NOMM: manage my menu${f.restaurant.trim() ? ` (${f.restaurant.trim()})` : ""}`;
   return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 

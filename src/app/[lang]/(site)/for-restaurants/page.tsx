@@ -5,27 +5,27 @@ import { ComparisonTable } from "@/components/marketing/comparison-table";
 import { OwnerInterestCta } from "@/components/marketing/owner-interest-cta";
 import type { Locale } from "@/i18n";
 import { getI18n } from "@/i18n/server";
-import { pageAlternates } from "@/lib/seo";
+import { pageAlternates, social } from "@/lib/seo";
 
 const content = {
   en: {
-    metaTitle: "nomm for restaurants",
+    metaTitle: "NOMM for restaurants",
     metaDescription:
-      "Diners find your menu on nomm and message you on WhatsApp. No commission. Get in touch to manage your page, free during the beta.",
-    badge: "Beta · free during the beta",
-    title: "Get found by people nearby. Keep every order.",
-    lead: "Diners find your menu and message you on WhatsApp. You pay no commission. Diners pay AED 1 per order.",
-    claim: "Manage my menu",
+      "Diners find your menu on NOMM and message you on WhatsApp. No commission. Claim your page, free for the first year.",
+    badge: "Free for your first year",
+    title: "Your menu and prices, searchable. Orders straight to your WhatsApp.",
+    lead: "Diners find your menu and message you on WhatsApp. You pay no commission.",
+    claim: "Claim this page",
     remove: "Ask us to remove it",
     howTitle: "How it works",
     steps: [
       {
-        title: "We read your public menu",
-        body: "We take dishes, prices and contact details from your printed menu, website or PDF, and show the date we last checked it.",
+        title: "We turn your menu into a fast, browsable page",
+        body: "Your printed menu or PDF becomes a fast digital page, with clean, professional photos of your dishes that stay true to what is on your menu. We show the date it was last updated.",
       },
       {
         title: "Diners message you on WhatsApp",
-        body: "They build a list on nomm and open a WhatsApp chat with you, with the message already written out. To you it is just a customer messaging you.",
+        body: "They build a list on NOMM and open a WhatsApp chat with you, with the message already written out. To you it is just a customer messaging you.",
       },
       {
         title: "You stay in control",
@@ -33,8 +33,8 @@ const content = {
       },
     ],
     compareTitle: "How we compare",
-    compareCaption: "nomm compared with delivery apps",
-    oursHeading: "nomm",
+    compareCaption: "NOMM compared with delivery apps",
+    oursHeading: "NOMM",
     theirsHeading: "Delivery apps",
     rows: [
       {
@@ -42,7 +42,6 @@ const content = {
         ours: "Same as on your menu",
         theirs: "Delivery-app prices can differ from in-store prices",
       },
-      { label: "Service fee", ours: "AED 1 / order", theirs: "Varies by app" },
       { label: "Commission", ours: "0%", theirs: "Varies by app" },
       {
         label: "Delivery fee",
@@ -54,7 +53,7 @@ const content = {
     pricingTitle: "Pricing",
     price: "Free",
     pricingSummary:
-      "Free during the beta. Diners pay a AED 1 service fee per order, and we take no commission (0%).",
+      "Free for your first year, with no commission (0%).",
     features: [
       "Your menu, read from your printed menu or website",
       "WhatsApp, call and directions buttons on your page",
@@ -63,23 +62,23 @@ const content = {
     ],
   },
   ar: {
-    metaTitle: "nomm للمطاعم",
+    metaTitle: "NOMM للمطاعم",
     metaDescription:
-      "يجد الزوار قائمتك على nomm ويراسلونك عبر واتساب. بلا عمولة. تواصل معنا لإدارة صفحتك مجانًا خلال الفترة التجريبية.",
-    badge: "تجريبي · مجاني خلال الفترة التجريبية",
-    title: "يجدك من حولك. وتحتفظ بكل طلب.",
-    lead: "يجد الزوار قائمتك ويراسلونك عبر واتساب. لا تدفع أي عمولة. يدفع الزائر 1 درهم عن كل طلب.",
-    claim: "أدِر قائمتي",
+      "يجد الزوار قائمتك على NOMM ويراسلونك عبر واتساب. بلا عمولة. استلم صفحتك مجانًا للسنة الأولى.",
+    badge: "مجاني للسنة الأولى",
+    title: "قائمتك وأسعارك قابلة للبحث. والطلبات تصلك مباشرة على واتساب.",
+    lead: "يجد الزوار قائمتك ويراسلونك عبر واتساب. لا تدفع أي عمولة.",
+    claim: "المطالبة بهذه الصفحة",
     remove: "اطلب إزالتها",
     howTitle: "كيف يعمل",
     steps: [
       {
-        title: "نقرأ قائمتك العامة",
-        body: "نأخذ الأطباق والأسعار وبيانات التواصل من قائمتك المطبوعة أو موقعك أو ملف PDF، ونعرض تاريخ آخر تحقق منها.",
+        title: "نحوّل قائمتك إلى صفحة رقمية سريعة",
+        body: "تتحول قائمتك المطبوعة أو ملف PDF إلى صفحة رقمية سريعة وسهلة التصفح، مع صور احترافية للأطباق تبقى وفية لما في قائمتك. ونعرض تاريخ آخر تحديث.",
       },
       {
         title: "يراسلك الزوار عبر واتساب",
-        body: "يجهّزون قائمة طلباتهم على nomm ثم يفتحون محادثة واتساب معك والرسالة مكتوبة مسبقًا. بالنسبة لك هو عميل يراسلك كأي عميل.",
+        body: "يجهّزون قائمة طلباتهم على NOMM ثم يفتحون محادثة واتساب معك والرسالة مكتوبة مسبقًا. بالنسبة لك هو عميل يراسلك كأي عميل.",
       },
       {
         title: "القرار بيدك",
@@ -87,19 +86,14 @@ const content = {
       },
     ],
     compareTitle: "كيف نقارن بغيرنا",
-    compareCaption: "مقارنة nomm بتطبيقات التوصيل",
-    oursHeading: "nomm",
+    compareCaption: "مقارنة NOMM بتطبيقات التوصيل",
+    oursHeading: "NOMM",
     theirsHeading: "تطبيقات التوصيل",
     rows: [
       {
         label: "أسعار القائمة",
         ours: "كما في قائمتك",
         theirs: "قد تختلف أسعار تطبيقات التوصيل عن أسعار المطعم",
-      },
-      {
-        label: "رسوم الخدمة",
-        ours: "1 درهم / طلب",
-        theirs: "تختلف حسب التطبيق",
       },
       { label: "العمولة", ours: "0٪", theirs: "تختلف حسب التطبيق" },
       {
@@ -112,7 +106,7 @@ const content = {
     pricingTitle: "الأسعار",
     price: "مجاني",
     pricingSummary:
-      "مجاني خلال الفترة التجريبية. يدفع الزائر رسوم خدمة قدرها 1 درهم للطلب، ولا نأخذ أي عمولة (0٪).",
+      "مجاني للسنة الأولى، وبلا أي عمولة (0٪).",
     features: [
       "قائمتك مقروءة من قائمتك المطبوعة أو موقعك",
       "أزرار واتساب والاتصال والاتجاهات في صفحتك",
@@ -125,7 +119,7 @@ const content = {
 export async function generateMetadata(): Promise<Metadata> {
   const { locale } = await getI18n();
   const c = content[locale];
-  return { title: c.metaTitle, description: c.metaDescription, alternates: pageAlternates(locale, "/for-restaurants") };
+  return { title: { absolute: c.metaTitle }, description: c.metaDescription, ...social(locale, c.metaTitle, c.metaDescription), alternates: pageAlternates(locale, "/for-restaurants") };
 }
 
 export default async function ForRestaurantsPage() {

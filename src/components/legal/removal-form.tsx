@@ -66,7 +66,7 @@ export function RemovalForm({ restaurants, initialSlug }: { restaurants: Option[
                 </option>
                 {restaurants.map((r) => (
                   <option key={r.slug} value={r.slug}>
-                    {pick(r.name, r.nameAr)} — {pick(r.address, r.addressAr)}
+                    {pick(r.name, r.nameAr)} · {pick(r.address, r.addressAr)}
                   </option>
                 ))}
               </select>

@@ -20,12 +20,12 @@ const places = (n: number) =>
 
 export const ar: Dictionary = {
   meta: {
-    title: "nomm — قوائم طعام الإمارات بالأسعار",
-    template: "%s · nomm",
+    title: "NOMM · قوائم طعام الإمارات بالأسعار",
+    template: "%s · NOMM",
     description: "قوائم طعام قابلة للبحث بأسعار وصور حقيقية لمطاعم في أنحاء الإمارات، بالعربية والإنجليزية.",
     menuTitle: (name) => `قائمة ${name} والأسعار`,
     menuDescription: (tagline, name, area) =>
-      `${tagline ? `${tagline} ` : ""}تصفّح قائمة ${name} كاملة بالأسعار بالدرهم${area ? ` — ${area}` : ""}.`,
+      `${tagline ? `${tagline} ` : ""}تصفّح قائمة ${name} كاملة بالأسعار بالدرهم${area ? `, ${area}` : ""}.`,
     claimTitle: (name) => `المطالبة بصفحة ${name}`,
     dashboardTitle: (name) => `لوحة تحكم ${name}`,
     forRestaurants: "للمطاعم",
@@ -35,7 +35,7 @@ export const ar: Dictionary = {
     removeDescription: "يمكن لأصحاب المطاعم أن يطلبوا منّا إزالة صفحاتهم.",
   },
   common: {
-    brand: "nomm",
+    brand: "NOMM",
     forRestaurants: "للمطاعم",
     terms: "الشروط",
     privacy: "الخصوصية",
@@ -172,7 +172,7 @@ export const ar: Dictionary = {
     feedback: "ملاحظات؟",
   },
   site: {
-    home: "الصفحة الرئيسية لـ nomm",
+    home: "الصفحة الرئيسية لـ NOMM",
     search: "بحث",
     searchPrompt: "ابحث عن طبق أو مطعم",
     cues: ["شاورما", "برياني", "كرك", "مندي", "برغر", "عصير طازج", "كنافة", "سمك مشوي"],
@@ -358,7 +358,7 @@ export const ar: Dictionary = {
     note: "هل تودّ إخبارنا بشيء؟",
     notePlaceholder: "اختياري",
     submit: "إرسال",
-    privacy: "نستخدم بياناتك فقط للتواصل معك بشأن قائمتك.",
+    privacy: "نستخدم بياناتك فقط للتحقق من نشاطك التجاري.",
     errors: {
       required: "هذا الحقل مطلوب",
       chooseRole: "اختر دورك",
@@ -368,9 +368,10 @@ export const ar: Dictionary = {
     doneTitle: "شكرًا!",
     done: "شكرًا لك. سنراسلك على واتساب خلال يوم.",
     doneButton: "تم",
-    offlineTitle: "تعذّر الإرسال تلقائيًا",
-    offlineBody: "راسلنا بالبريد الإلكتروني بدلًا من ذلك. بياناتك مكتوبة مسبقًا.",
-    offlineCta: "راسلنا",
+    offlineTitle: "لم يتم إرسال بياناتك",
+    offlineBody: "يبدو أن شيئًا يمنع النموذج، مثل مانع الإعلانات. حاول مجددًا أو راسلنا بالبريد بدلًا من ذلك.",
+    offlineRetry: "حاول مجددًا",
+    offlineCta: "راسلنا بالبريد بدلًا من ذلك",
   },
   dish: {
     add: "أضف إلى الطلب",
@@ -389,7 +390,7 @@ export const ar: Dictionary = {
   restaurant: {
     hoursAndInfo: "المواعيد والمعلومات",
     moreTitle: (name) => `إذا أعجبك ${name}`,
-    moreSub: "مطاعم أخرى على nomm",
+    moreSub: "مطاعم أخرى على NOMM",
     menu: "القائمة",
     allSections: "كل أقسام القائمة",
     allContact: "كل وسائل التواصل",
@@ -403,7 +404,7 @@ export const ar: Dictionary = {
     notOwner: "لست صاحب المطعم؟",
     backToMenu: "العودة إلى القائمة",
     viewsTitle: (n) => `حصلت قائمتك على ${n} مشاهدة هذا الشهر.`,
-    liveTitle: "قائمتك متاحة الآن على nomm.",
+    liveTitle: "قائمتك متاحة الآن على NOMM.",
     pitchSub: (source) =>
       `أنشأنا هذه الصفحة من ${source} ليتمكن الضيوف من الاطلاع على أطباقك وأسعارك. طالِب بها لتبقى دقيقة، والأمر مجاني.`,
     views30: "المشاهدات، آخر 30 يومًا",
@@ -532,7 +533,7 @@ export const ar: Dictionary = {
     markedSoldOut: (name) => `${name} نفد`,
   },
   errors: {
-    network: "تعذّر الاتصال بـ nomm. تحقق من اتصالك وحاول مرة أخرى.",
+    network: "تعذّر الاتصال بـ NOMM. تحقق من اتصالك وحاول مرة أخرى.",
     alreadyClaimed: "تمت المطالبة بهذا المطعم مسبقًا.",
     claimPending: "هناك طلب مطالبة بهذا المطعم قيد التحقق الآن.",
     notAuthorized: "صاحب المطعم الموثّق وحده يمكنه تعديل هذه القائمة.",

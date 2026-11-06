@@ -243,7 +243,7 @@ export function whatsappUrl(number: string, text?: string) {
 /**
  * The drafted order, short and in the language the diner was browsing in (dish
  * names too, falling back to the printed English): a bulleted list in WhatsApp's
- * own markup (`- ` bullets, `*bold*` total), each line with quantity, choices and
+ * own markup (`- ` bullets, `*bold*` on the quantity and the total amount only), each line with quantity, choices and
  * price, then a total from the menu. No fees, no blank lines.
  */
 export function orderMessage(r: Restaurant, lines: ResolvedLine[], i18n: I18n) {
@@ -251,10 +251,10 @@ export function orderMessage(r: Restaurant, lines: ResolvedLine[], i18n: I18n) {
   const out: string[] = [m.greeting(i18n.pick(r.name, r.nameAr))];
   for (const l of lines) {
     const choices = l.choices.length ? ` (${l.choices.map((c) => i18n.pick(c.label, c.labelAr)).join(", ")})` : "";
-    out.push(`- ${l.qty} × ${i18n.pick(l.item.name, l.item.nameAr)}${choices} — ${i18n.price(l.unit * l.qty, r.currency)}`);
+    out.push(`- *${l.qty} ×* ${i18n.pick(l.item.name, l.item.nameAr)}${choices} - ${i18n.price(l.unit * l.qty, r.currency)}`);
   }
   const total = lines.reduce((sum, l) => sum + l.unit * l.qty, 0);
-  out.push(`*${m.total}: ${i18n.price(total, r.currency)}*`, m.foundYou);
+  out.push(`${m.total}: *${i18n.price(total, r.currency)}*`, m.foundYou);
   return out.join("\n");
 }
 

@@ -71,8 +71,8 @@ describe("orderMessage", () => {
     const msg = orderMessage(r, [line()], makeI18n("en"));
     expect(msg.split("\n")).toEqual([
       "Hi Tea Spot, I'd like to order:",
-      expect.stringMatching(/^- 2 × Oreo Milkshake — AED/),
-      expect.stringMatching(/^\*Menu total: AED .*\*$/),
+      expect.stringMatching(/^- \*2 ×\* Oreo Milkshake - AED/),
+      expect.stringMatching(/^Menu total: \*AED [\d.,]+\*$/),
       "via nomm.ae",
     ]);
     expect(msg).not.toContain("\n\n");
@@ -90,7 +90,7 @@ describe("orderMessage", () => {
 
   it("puts choices in brackets on the dish line", () => {
     const l = line({ choices: [{ id: "x", label: "Large", labelAr: "كبير", price: 0 }, { id: "y", label: "Extra shot", price: 0 }] });
-    expect(orderMessage(r, [l], makeI18n("en")).split("\n")[1]).toMatch(/^- 2 × Oreo Milkshake \(Large, Extra shot\) — AED/);
+    expect(orderMessage(r, [l], makeI18n("en")).split("\n")[1]).toMatch(/^- \*2 ×\* Oreo Milkshake \(Large, Extra shot\) - AED/);
     expect(orderMessage(r, [l], makeI18n("ar")).split("\n")[1]).toContain("(كبير, Extra shot)");
   });
 });

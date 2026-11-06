@@ -280,7 +280,7 @@ function Pipeline({ rows, hydrated }: { rows: Row[]; hydrated: boolean }) {
                 <button
                   onClick={async () => {
                     await navigator.clipboard?.writeText(pitch(r, location.origin)).catch(() => {});
-                    toast("Pitch copied — paste into DM or email");
+                    toast("Pitch copied. Paste into DM or email");
                   }}
                   className="pressable flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-xs font-semibold text-bg"
                 >
