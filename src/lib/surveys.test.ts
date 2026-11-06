@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   ORDER_FEEDBACK,
+  isGoogleMapsLink,
   OWNER_INTEREST,
   newSubmissionId,
   orderFeedbackAnswers,
   ownerInterestAnswers,
   ownerInterestErrors,
   ownerInterestMailto,
+  RESTAURANT_SUGGESTION,
+  restaurantSuggestionAnswers,
+  restaurantSuggestionErrors,
+  restaurantSuggestionMailto,
   surveyDismissedProps,
   surveySentProps,
   surveyShownProps,
@@ -135,5 +140,63 @@ describe("ownerInterestErrors", () => {
     expect(ownerInterestErrors({ ...ok, phone: "call me" }).phone).toBe("phone");
     expect(ownerInterestErrors({ ...ok, email: "nope" }).email).toBe("email");
     expect(ownerInterestErrors({ ...ok, email: "a@b.co" }).email).toBeUndefined();
+  });
+});
+
+describe("restaurant suggestion", () => {
+  const form = { name: " Sushi Haus ", phone: " +971 2 555 0100 ", maps: " https://maps.app.goo.gl/abc123 " };
+
+  it("sends the trimmed name, phone and Google Maps link", () => {
+    const p = surveySentProps({
+      surveyId: RESTAURANT_SUGGESTION.id,
+      submissionId: "sub-1",
+      answers: restaurantSuggestionAnswers(form),
+      extra: { source: "search" },
+    });
+    expect(p.$survey_questions.map((q) => q.response)).toEqual(["Sushi Haus", "+971 2 555 0100", "https://maps.app.goo.gl/abc123"]);
+    expect(p.source).toBe("search");
+  });
+
+  it("requires the name and a phone number", () => {
+    expect(restaurantSuggestionErrors({ name: "  ", phone: "", maps: "" })).toEqual({ name: "required", phone: "phoneRequired" });
+    expect(restaurantSuggestionErrors(form)).toEqual({});
+  });
+
+  it("flags a phone number that is not one", () => {
+    expect(restaurantSuggestionErrors({ name: "A", phone: "abc", maps: "" }).phone).toBe("phoneInvalid");
+    expect(restaurantSuggestionErrors({ name: "A", phone: "12345", maps: "" }).phone).toBe("phoneInvalid");
+  });
+
+  it("makes the Google Maps link optional, but it must be one when given", () => {
+    expect(restaurantSuggestionErrors({ name: "A", phone: "025550100", maps: "" })).toEqual({});
+    expect(restaurantSuggestionErrors({ name: "A", phone: "025550100", maps: "https://instagram.com/sushihaus" }).maps).toBe("mapsInvalid");
+    expect(restaurantSuggestionErrors({ name: "A", phone: "025550100", maps: "sushi haus yas island" }).maps).toBe("mapsInvalid");
+  });
+
+  it.each([
+    "https://maps.app.goo.gl/abc123",
+    "https://goo.gl/maps/abc123",
+    "https://www.google.com/maps/place/Sushi+Haus/@24.4,54.3,17z",
+    "https://www.google.ae/maps?cid=123456",
+    "https://maps.google.com/?q=sushi",
+    "google.com/maps/place/Sushi+Haus",
+    "https://g.page/sushihaus",
+  ])("accepts %s", (link) => {
+    expect(isGoogleMapsLink(link)).toBe(true);
+  });
+
+  it.each(["https://google.com/search?q=sushi", "https://goo.gl/abc", "https://evilgoogle.com/maps", "", "not a link"])(
+    "rejects %s",
+    (link) => {
+      expect(isGoogleMapsLink(link)).toBe(false);
+    },
+  );
+
+  it("builds an email fallback with the answers", () => {
+    const href = restaurantSuggestionMailto("hello@example.com", form);
+    expect(href.startsWith("mailto:hello@example.com?subject=")).toBe(true);
+    expect(decodeURIComponent(href)).toContain("Which restaurant are you looking for?: Sushi Haus");
+    expect(decodeURIComponent(href)).toContain("Google Maps link: https://maps.app.goo.gl/abc123");
+    expect(decodeURIComponent(href)).toContain("Restaurant's WhatsApp number: +971 2 555 0100");
   });
 });

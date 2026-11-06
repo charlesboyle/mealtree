@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AreaSelect } from "@/components/area-select";
+import { SuggestRestaurant } from "@/components/suggest-restaurant";
 import { useI18n } from "@/i18n/client";
 import { ALL_AREAS } from "@/lib/discover";
 import { photoUrl } from "@/lib/format";
@@ -162,7 +163,10 @@ export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => v
                   ))}
                 </ul>
               ) : (
-                <p className="pb-6 text-center text-sm text-muted">{t.site.sheet.noMatches(query)}</p>
+                <div className="pb-6 text-center text-sm text-muted">
+                  <p>{t.site.sheet.noMatches(query)}</p>
+                  <SuggestRestaurant source="search" initialName={query.trim()} className="mt-3 inline-flex min-h-11 items-center" />
+                </div>
               )}
             </div>
 

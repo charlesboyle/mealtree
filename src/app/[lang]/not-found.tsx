@@ -3,6 +3,7 @@ import Link from "next/link";
 import { lang } from "next/root-params";
 import { EmptyState } from "@/components/empty-state";
 import { SiteShell } from "@/components/site-shell";
+import { SuggestRestaurant } from "@/components/suggest-restaurant";
 import { hasLocale, makeI18n } from "@/i18n";
 import { listRestaurants } from "@/lib/data";
 
@@ -33,6 +34,9 @@ export default async function NotFound() {
           >
             {c.cta}
           </Link>
+          <p className="mt-3 text-sm text-muted">
+            <SuggestRestaurant source="not_found" className="inline-flex min-h-11 items-center" />
+          </p>
         </EmptyState>
       </main>
     </SiteShell>

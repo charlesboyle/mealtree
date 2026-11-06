@@ -7,6 +7,7 @@ import { AreaSelect } from "@/components/area-select";
 import { DiscoverFilterBar } from "@/components/discover-filter-bar";
 import { EmptyState } from "@/components/empty-state";
 import { RestaurantCard } from "@/components/restaurant-card";
+import { SuggestRestaurant } from "@/components/suggest-restaurant";
 import { useI18n } from "@/i18n/client";
 import { listAreas } from "@/lib/discover";
 import { useDiscoverFilters } from "@/lib/use-discover-filters";
@@ -115,6 +116,9 @@ export function RestaurantsPage({ restaurants }: { restaurants: Restaurant[] }) 
               >
                 {l.clearFilters}
               </button>
+              <p className="mt-3 text-sm text-muted">
+                <SuggestRestaurant source="listing" initialName={f.query} className="inline-flex min-h-11 items-center" />
+              </p>
             </EmptyState>
           </div>
         )}

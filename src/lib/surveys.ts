@@ -30,9 +30,17 @@ export const OWNER_INTEREST = {
   note: { id: "d1190485-5bcb-4fb7-a04d-f9488347f6c3", question: "Anything you'd like to tell us?" },
 } as const;
 
+export const RESTAURANT_SUGGESTION = {
+  id: "01a1afa2-6c98-0000-6f9a-b070756e7edc",
+  name: { id: "9df3a787-a741-4fbe-b900-66b2c7a80ffe", question: "Which restaurant are you looking for?" },
+  phone: { id: "f1d2484e-3e53-47d3-921e-4d6fac8cb0f7", question: "Restaurant's WhatsApp number" },
+  maps: { id: "b4dd40f1-b3bc-4f84-abaa-1a14fa4e3445", question: "Google Maps link" },
+} as const;
+
 export type OrderChoice = (typeof ORDER_FEEDBACK.placed.choices)[number];
 export type OwnerRole = (typeof OWNER_INTEREST.role.choices)[number];
 export type OrderChannel = "whatsapp" | "call";
+export type SuggestionSource = "search" | "listing" | "not_found";
 export type OwnerInterestSource = "restaurant_page" | "for_restaurants" | "claim_redirect";
 
 /** A question as asked, with the response: text for open questions, a one-item list for single choice. */
@@ -142,6 +150,11 @@ export function ownerInterestMailto(to: string, f: OwnerInterestForm) {
   return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
+/** Digits with the usual separators, at least 7 of them. */
+export function isValidPhone(phone: string) {
+  return /^[+\d\s()\-.]+$/.test(phone.trim()) && phone.replace(/\D/g, "").length >= 7;
+}
+
 export type OwnerFormField = "name" | "role" | "phone" | "email" | "restaurant";
 export type OwnerFormError = "required" | "chooseRole" | "phone" | "email";
 
@@ -152,9 +165,60 @@ export function ownerInterestErrors(f: Omit<OwnerInterestForm, "role" | "note"> 
   if (!f.role) errors.role = "chooseRole";
   const phone = f.phone.trim();
   if (!phone) errors.phone = "required";
-  else if (!/^[+\d\s()\-.]+$/.test(phone) || phone.replace(/\D/g, "").length < 7) errors.phone = "phone";
+  else if (!isValidPhone(phone)) errors.phone = "phone";
   const email = f.email.trim();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "email";
   if (!f.restaurant.trim()) errors.restaurant = "required";
+  return errors;
+}
+
+export type RestaurantSuggestionForm = { name: string; phone: string; maps: string };
+export type SuggestionError = "required" | "phoneRequired" | "phoneInvalid" | "mapsInvalid";
+
+/** True for the link formats Google Maps hands out: google.com/maps (any country domain), maps.google.com, maps.app.goo.gl, goo.gl/maps, g.page. */
+export function isGoogleMapsLink(input: string) {
+  const text = input.trim();
+  if (!text || /\s/.test(text)) return false;
+  let url: URL;
+  try {
+    url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+  } catch {
+    return false;
+  }
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  if (host === "maps.app.goo.gl" || host === "g.page") return true;
+  if (host === "goo.gl") return url.pathname.startsWith("/maps");
+  if (/^maps\.google\.[a-z.]+$/.test(host)) return true;
+  return /^google\.[a-z.]+$/.test(host) && url.pathname.startsWith("/maps");
+}
+
+export function restaurantSuggestionAnswers(f: RestaurantSuggestionForm): SurveyAnswer[] {
+  const q = RESTAURANT_SUGGESTION;
+  return [
+    { id: q.name.id, question: q.name.question, response: f.name },
+    { id: q.phone.id, question: q.phone.question, response: f.phone },
+    { id: q.maps.id, question: q.maps.question, response: f.maps },
+  ];
+}
+
+/** Fallback when PostHog can't be reached: the same answers as a prefilled email. */
+export function restaurantSuggestionMailto(to: string, f: RestaurantSuggestionForm) {
+  const body = restaurantSuggestionAnswers(f)
+    .flatMap((a) => {
+      const response = clean(a.response);
+      return response ? [`${a.question}: ${Array.isArray(response) ? response.join(", ") : response}`] : [];
+    })
+    .join("\n");
+  const subject = `NOMM: add ${f.name.trim() || "a restaurant"}`;
+  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/** The restaurant's name and phone number are required; the Google Maps link is optional but must be one if given. */
+export function restaurantSuggestionErrors(f: RestaurantSuggestionForm) {
+  const errors: Partial<Record<"name" | "phone" | "maps", SuggestionError>> = {};
+  if (!f.name.trim()) errors.name = "required";
+  if (!f.phone.trim()) errors.phone = "phoneRequired";
+  else if (!isValidPhone(f.phone)) errors.phone = "phoneInvalid";
+  if (f.maps.trim() && !isGoogleMapsLink(f.maps)) errors.maps = "mapsInvalid";
   return errors;
 }

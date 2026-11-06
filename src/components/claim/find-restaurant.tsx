@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SearchBox } from "@/components/discover/search-box";
 import { RestaurantThumb } from "@/components/photo";
+import { CONTACT_EMAIL } from "@/components/site-footer";
 import { useI18n } from "@/i18n/client";
 import { accentStyle } from "@/lib/accent";
 import { parseQuery, scoreRestaurant } from "@/lib/search";
@@ -69,7 +70,7 @@ export function FindRestaurant({ restaurants }: { restaurants: Restaurant[] }) {
           <p className="mt-6 rounded-xl bg-surface-2 p-5 text-center text-sm text-ink-2">
             {t.find.notListed}{" "}
             <a
-              href="mailto:hello@example.com?subject=Add%20my%20restaurant"
+              href={`mailto:${CONTACT_EMAIL}?subject=Add%20my%20restaurant`}
               className="font-medium text-brand"
             >
               {t.find.sendMenu}
