@@ -2,9 +2,12 @@
 
 import { List } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/format";
+
+/** How wide the tab list's edge fade gets. */
+const FADE_PX = 28;
 
 export type MenuTab = { id: string; label: string; count?: number };
 
@@ -20,9 +23,29 @@ export function MenuNav({
   onSelect: (id: string) => void;
   onOpenIndex: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   const scroller = useRef<HTMLDivElement>(null);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
+
+  // Each edge fades in as you scroll away from it (0 at rest, full FADE_PX once FADE_PX has scrolled) and out as you
+  // reach the other end, so the first and last tab are never washed out and the fade eases in instead of snapping.
+  // Written straight to the style: it changes on every scroll frame and needs no re-render.
+  const measure = useCallback(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const pos = Math.abs(el.scrollLeft); // negative in RTL
+    const start = Math.min(FADE_PX, pos);
+    const end = Math.min(FADE_PX, Math.max(0, el.scrollWidth - el.clientWidth - pos));
+    const mask = `linear-gradient(to ${dir === "rtl" ? "left" : "right"}, transparent, #000 ${start}px, #000 calc(100% - ${end}px), transparent)`;
+    el.style.maskImage = mask;
+    el.style.webkitMaskImage = mask;
+  }, [dir]);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure, tabs]);
 
   // Center the active tab. Measured from rects so it works the same in RTL.
   useEffect(() => {
@@ -46,8 +69,13 @@ export function MenuNav({
         >
           <List className="h-4 w-4" aria-hidden />
         </button>
-        <nav aria-label={t.menu.sections} className="flex min-w-0 flex-1 items-center gap-3">
-          <div ref={scroller} className="no-scrollbar relative flex gap-7 overflow-x-auto">
+        {/* The tab list runs on to the edge of the screen (cancelling the bar's side padding) and fades out at both ends. */}
+        <nav aria-label={t.menu.sections} className="-me-4 flex min-w-0 flex-1 items-center gap-3 sm:-me-6 lg:-me-8">
+          <div
+            ref={scroller}
+            onScroll={measure}
+            className="no-scrollbar relative flex gap-7 overflow-x-auto pe-4 sm:pe-6 lg:pe-8"
+          >
             {tabs.map((tab) => {
               const on = tab.id === activeId;
               return (
