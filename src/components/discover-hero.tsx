@@ -14,7 +14,7 @@ import { useOpenState } from "@/lib/use-open-state";
 import { useRotatingPlaceholder } from "@/lib/use-rotating-placeholder";
 import type { Restaurant } from "@/lib/types";
 
-export function DiscoverHero({ mood, onMoodChange, feature }: { mood: string; onMoodChange: (id: string) => void; feature?: Restaurant }) {
+export function DiscoverHero({ mood, onMoodChange, feature, moodCounts }: { mood: string; onMoodChange: (id: string) => void; feature?: Restaurant; moodCounts?: Record<string, number> }) {
   const { t, href } = useI18n();
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -102,7 +102,7 @@ export function DiscoverHero({ mood, onMoodChange, feature }: { mood: string; on
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <MoodRail value={mood} onChange={onMoodChange} />
+        <MoodRail value={mood} onChange={onMoodChange} counts={moodCounts} />
       </div>
     </section>
   );

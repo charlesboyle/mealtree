@@ -14,6 +14,9 @@ import { opensLate } from "@/lib/discover";
 import { itemMinPrice } from "@/lib/format";
 import type { Restaurant } from "@/lib/types";
 
+/** A mood tab is shown only when at least this many restaurants fit it. */
+export const MIN_MOOD_RESTAURANTS = 3;
+
 export const MOODS: { id: string; icon: LucideIcon }[] = [
   { id: "all", icon: UtensilsCrossed },
   { id: "quick", icon: Sandwich },

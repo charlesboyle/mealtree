@@ -34,11 +34,17 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
     };
   }, [restaurants, moods, mood]);
 
+  const moodCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const ids of moods.values()) for (const id of ids) counts[id] = (counts[id] ?? 0) + 1;
+    return counts;
+  }, [moods]);
+
   const feature = useMemo(() => byRating(restaurants).find((x) => x.cover), [restaurants]);
 
   return (
     <main className="w-full bg-surface pb-16">
-      <DiscoverHero mood={mood} onMoodChange={setMood} feature={feature} />
+      <DiscoverHero mood={mood} onMoodChange={setMood} feature={feature} moodCounts={moodCounts} />
 
       <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
         {rails.top.length > 0 && (
