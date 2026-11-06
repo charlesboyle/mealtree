@@ -180,6 +180,7 @@ export const ar: Dictionary = {
     saved: "المحفوظات",
     forOwners: "لأصحاب المطاعم",
     footerLinks: { discover: "استكشف", restaurants: "المطاعم", saved: "المحفوظات", forRestaurants: "للمطاعم" },
+    feedbackPrompt: "ملاحظات أو أسئلة؟",
     hero: { line1: "اعثر على", line2: "لقمتك المفضلة القادمة.", pick: "اختيار الليلة" },
     moodsLabel: "اختر مزاجك",
     moods: {

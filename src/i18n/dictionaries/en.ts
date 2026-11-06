@@ -140,6 +140,7 @@ export const en = {
     saved: "Saved",
     forOwners: "For restaurant owners",
     footerLinks: { discover: "Discover", restaurants: "Restaurants", saved: "Saved", forRestaurants: "For restaurants" },
+    feedbackPrompt: "Feedback or questions?",
     hero: { line1: "Find your next", line2: "favourite bite.", pick: "Tonight’s pick" },
     moodsLabel: "Pick a mood",
     moods: {
