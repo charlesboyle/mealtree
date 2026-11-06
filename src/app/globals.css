@@ -13,6 +13,7 @@
   /* Tomato. */
   --brand: #ec5a3f;
   --brand-soft: #fde8e2;
+  --brand-ink: #b5381f;
   --on-brand: #ffffff;
   --positive: #3e7a2c;
   --whatsapp: #128c7e;
@@ -143,6 +144,7 @@
   --color-line-strong: var(--line-strong);
   --color-brand: var(--brand);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
   --color-on-brand: var(--on-brand);
   --color-positive: var(--positive);
   --color-warning: var(--warning);

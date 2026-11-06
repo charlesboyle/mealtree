@@ -72,7 +72,7 @@ export const MenuItemRow = memo(function MenuItemRow({
             <PriceTag item={item} currency={currency} className="font-semibold tabular-nums text-ink" />
           )}
           {item.popular && !item.soldOut && (
-            <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-dark">{t.menu.popular}</span>
+            <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-brand-ink">{t.menu.popular}</span>
           )}
           {variantCount > 1 && <span className="text-xs text-muted">{t.menu.options(variantCount)}</span>}
         </div>

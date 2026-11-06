@@ -229,7 +229,7 @@ export function DishSheet({
                     <PriceTag item={shown} currency={currency} />
                   )}
                 </span>
-                {shown.popular && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-dark">{t.menu.popular}</span>}
+                {shown.popular && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-brand-ink">{t.menu.popular}</span>}
                 <DietTags tags={shown.tags} long className="text-sm" />
               </div>
 

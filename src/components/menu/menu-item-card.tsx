@@ -70,7 +70,7 @@ export const MenuItemCard = memo(function MenuItemCard({
           {price}
           <DietTags tags={item.tags} />
           {item.popular && !item.soldOut && (
-            <span className="rounded-full bg-accent-soft px-1.5 py-px text-[10.5px] font-semibold text-accent-dark">{t.menu.popular}</span>
+            <span className="rounded-full bg-brand-soft px-1.5 py-px text-[10.5px] font-semibold text-brand-ink">{t.menu.popular}</span>
           )}
         </div>
       </button>
