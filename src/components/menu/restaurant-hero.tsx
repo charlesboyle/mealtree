@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   BadgeCheck,
   ChevronRight,
+  ExternalLink,
   MapPin,
   MessageCircleMore,
   Phone,
@@ -14,6 +15,7 @@ import { motion, useMotionValue, useTransform } from "motion/react";
 import Link from "next/link";
 import { Fragment, useEffect } from "react";
 import { CuisineGlyph, linkIcon } from "@/components/icons";
+import { deliveryAppIcon } from "@/lib/delivery-apps";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Photo } from "@/components/photo";
 import { SaveButton } from "@/components/save-button";
@@ -36,6 +38,10 @@ type Action = {
   title?: string;
   icon: React.ElementType;
   external?: boolean;
+  /** Marks an action that leaves the site (opens another page or app in a new tab). */
+  leaves?: boolean;
+  /** Logos of the delivery apps behind this action; shown in place of the icon. */
+  logos?: string[];
   tone: "accent" | "whatsapp" | "plain";
   onClick?: () => void;
 };
@@ -47,6 +53,7 @@ export function RestaurantHero({
   whatsappHref,
   onShare,
   onOpenContact,
+  onOpenOrder,
   titleRef,
 }: {
   restaurant: Restaurant;
@@ -55,6 +62,8 @@ export function RestaurantHero({
   whatsappHref: string | null;
   onShare: () => void;
   onOpenContact: () => void;
+  /** Opens the sheet listing every delivery app, used when there is more than one order link. */
+  onOpenOrder: () => void;
   titleRef: React.Ref<HTMLHeadingElement>;
 }) {
   const { t, pick, cuisines, priceLevel, href, locale } = useI18n();
@@ -65,8 +74,11 @@ export function RestaurantHero({
     priceLevel(r.priceLevel),
   ].filter(Boolean);
 
+  // One order link opens directly; several (Talabat, Keeta, Deliveroo...) open a sheet that lists them.
+  const orderLinks = r.links.filter((l) => l.kind === "order");
+  const manyOrders = orderLinks.length > 1;
   const primary = r.links.find(
-    (l) => l.kind === "reserve" || l.kind === "order",
+    (l) => l.kind === "reserve" || (l.kind === "order" && !manyOrders),
   );
   const extraPhones = r.links.some((l) => l.kind === "phone");
   const wa: Action[] = whatsappHref
@@ -82,7 +94,23 @@ export function RestaurantHero({
         },
       ]
     : [];
-  const first: Action[] = primary
+  const first: Action[] = manyOrders && !primary
+    ? [
+        {
+          key: "primary",
+          link: "order" as const,
+          label: t.links.order,
+          icon: linkIcon.order,
+          tone: "accent" as const,
+          leaves: true,
+          logos: orderLinks.map((l) => deliveryAppIcon(l.url)).filter((x): x is string => !!x),
+          onClick: () => {
+            track(r.slug, locale, { kind: "link_click", link: "order" });
+            onOpenOrder();
+          },
+        },
+      ]
+    : primary
     ? [
         {
           key: "primary",
@@ -92,13 +120,14 @@ export function RestaurantHero({
           title: pick(primary.label, primary.labelAr),
           icon: linkIcon[primary.kind],
           external: true,
+          leaves: primary.kind === "order",
           tone: "accent" as const,
         },
       ]
     : [];
   const actions: Action[] = [
-    ...wa,
-    ...first,
+    // Venues ordered through delivery apps lead with Order and drop WhatsApp from this card.
+    ...(manyOrders ? first : [...wa, ...first]),
     // Several numbers open the contact sheet; a lone number dials; no number, no button.
     ...(extraPhones || r.phone
       ? [
@@ -140,12 +169,28 @@ export function RestaurantHero({
   };
   const body = (a: Action) => (
     <>
-      <a.icon
-        className="h-[18px] w-[18px] shrink-0"
-        strokeWidth={2.25}
-        aria-hidden
-      />
+      {a.logos?.length ? (
+        <span className="flex shrink-0 -space-x-1.5 rtl:space-x-reverse" aria-hidden>
+          {a.logos.map((src) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={src} src={src} alt="" className="size-5 rounded-md ring-2 ring-tomato" />
+          ))}
+        </span>
+      ) : (
+        <a.icon
+          className="h-[18px] w-[18px] shrink-0"
+          strokeWidth={2.25}
+          aria-hidden
+        />
+      )}
       <span className="truncate">{a.label}</span>
+      {a.leaves && !a.logos?.length && (
+        <ExternalLink
+          className="-ms-0.5 h-4 w-4 shrink-0 opacity-80 rtl:-scale-x-100"
+          strokeWidth={2.25}
+          aria-hidden
+        />
+      )}
     </>
   );
   const actionClass = (a: Action) =>

@@ -6,6 +6,7 @@ import { BagBar } from "@/components/bag-bar";
 import { BagSheet } from "@/components/bag-sheet";
 import { ContactSheet } from "@/components/contact-sheet";
 import { DishSheet } from "@/components/dish-sheet";
+import { OrderSheet } from "@/components/order-sheet";
 import { OriginalMenuSheet } from "@/components/original-menu";
 import { OwnerInterestForm } from "@/components/owner-interest-form";
 import { useToast } from "@/components/providers";
@@ -52,7 +53,7 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filter[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<"bag" | "contact" | "index" | "original" | null>(null);
+  const [sheet, setSheet] = useState<"bag" | "contact" | "index" | "original" | "order" | null>(null);
   const closeSheet = useCallback(() => setSheet(null), []);
   const [ownerOpen, setOwnerOpen] = useState(false);
   const [ownerSource, setOwnerSource] = useState<OwnerInterestSource>("restaurant_page");
@@ -303,6 +304,7 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
           whatsappHref={whatsappHref}
           onShare={share}
           onOpenContact={() => setSheet("contact")}
+          onOpenOrder={() => setSheet("order")}
           titleRef={titleRef}
         />
         <div ref={sentinel} className="h-px" aria-hidden />
@@ -452,6 +454,7 @@ export function MenuPage({ restaurant: r, more }: { restaurant: Restaurant; more
         onClose={closeDish}
       />
       <ContactSheet restaurant={r} open={sheet === "contact"} onClose={closeSheet} style={style} />
+      <OrderSheet restaurant={r} open={sheet === "order"} onClose={closeSheet} style={style} />
       <OwnerInterestForm open={ownerOpen} onClose={closeOwner} source={ownerSource} restaurant={{ slug: r.slug, name }} style={style} />
       <MenuIndexSheet
         open={sheet === "index"}

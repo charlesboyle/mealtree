@@ -231,6 +231,7 @@ export const en = {
     emptyFilters: "No dishes match these filters",
     emptyHint: "Try a different word, or clear the filters.",
     showAll: "Show full menu",
+    orderOn: "Order on",
     call: "Call",
     directions: "Directions",
     map: "Map",
