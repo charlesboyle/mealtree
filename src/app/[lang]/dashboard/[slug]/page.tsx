@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { getI18n } from "@/i18n/server";
-import { findRestaurant, getStats, listRestaurants } from "@/lib/data";
+import { findRestaurant, getStats } from "@/lib/data";
 
-// Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
-export const revalidate = 300;
+// Refresh restaurant data from Supabase every hour (matches REVALIDATE_SECONDS).
+export const revalidate = 3600;
 
-export async function generateStaticParams() {
-  return (await listRestaurants()).map((r) => ({ slug: r.slug }));
+// Not prerendered at build (rarely visited, and each costs ISR writes): rendered on first visit, then cached.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: PageProps<"/[lang]/dashboard/[slug]">): Promise<Metadata> {

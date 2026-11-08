@@ -1,12 +1,19 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { restaurants as placeholder } from "@/data/restaurants";
+import { restaurantMoods } from "./moods";
 import { getServerClient } from "./supabase/client";
 import { normalizeStats, rowToRestaurant } from "./supabase/database";
-import type { Restaurant, RestaurantStats } from "./types";
+import type { MenuItem, Restaurant, RestaurantStats } from "./types";
 
-/** Seconds a cached copy of restaurant data is served before refetching. */
-export const REVALIDATE_SECONDS = 300;
+/**
+ * Seconds a cached copy of restaurant data is served before refetching. Admin
+ * edits in /ops refresh pages at once (`updateTag("mealtree")`), so this only
+ * bounds how long a script import or a direct DB change takes to show.
+ * Page files repeat it as a literal `export const revalidate`.
+ */
+export const REVALIDATE_SECONDS = 3600;
 
 /**
  * All restaurants, ordered by name. Reads Supabase when configured (and fails
@@ -20,6 +27,37 @@ export const listRestaurants = cache(async (): Promise<Restaurant[]> => {
   if (error) throw new Error(`Failed to load restaurants: ${error.message}`);
   return data.map(rowToRestaurant);
 });
+
+/** Dishes the list pages feature: popular ("Known for", Popular row), spicy and vegetarian rows. */
+const featured = (i: MenuItem) =>
+  Boolean(i.popular || i.tags?.some((t) => t === "spicy" || t === "vegetarian" || t === "vegan"));
+
+/**
+ * A restaurant for cards and lists: everything but the full menu. Its menus keep
+ * only featured dishes (in menu order) and every section name, and `moods` is
+ * worked out here from the whole menu, so lists render the same as before.
+ */
+export function toCard(r: Restaurant): Restaurant {
+  return {
+    ...r,
+    moods: restaurantMoods(r),
+    menuFiles: undefined,
+    menus: r.menus.map((m) => ({ ...m, sections: m.sections.map((s) => ({ ...s, items: s.items.filter(featured) })) })),
+  };
+}
+
+/**
+ * All restaurants as cards, ordered by name. The full table is over 2 MB, which
+ * Next's data cache refuses, so every render refetched it; the cards are about
+ * a tenth of that and are cached as one entry. Use this for anything that
+ * lists restaurants; use `findRestaurant` for a full menu.
+ */
+export const listRestaurantCards = cache(
+  unstable_cache(async () => (await listRestaurants()).map(toCard), ["restaurant-cards-v1"], {
+    revalidate: REVALIDATE_SECONDS,
+    tags: ["mealtree"],
+  }),
+);
 
 export const findRestaurant = cache(async (slug: string): Promise<Restaurant | undefined> => {
   const db = getServerClient(REVALIDATE_SECONDS);

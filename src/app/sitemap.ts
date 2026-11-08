@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { locales } from "@/i18n/config";
-import { listRestaurants } from "@/lib/data";
+import { listRestaurantCards } from "@/lib/data";
 import { pageAlternates, siteUrl } from "@/lib/seo";
 
 const site = siteUrl();
@@ -9,7 +9,7 @@ export const revalidate = 3600;
 
 /** Every public page in both languages, each pointing at its translation. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const restaurants = await listRestaurants();
+  const restaurants = await listRestaurantCards();
   const pages: { path: string; lastModified?: Date }[] = [
     { path: "" },
     { path: "/restaurants" },

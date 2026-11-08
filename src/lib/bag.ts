@@ -258,6 +258,16 @@ export function orderMessage(r: Restaurant, lines: ResolvedLine[], i18n: I18n) {
   return out.join("\n");
 }
 
+/** Which of these restaurants have a bag stored in this browser. */
+export function useStoredBagSlugs(slugs: string[]) {
+  const raw = useSyncExternalStore(
+    subscribe,
+    () => slugs.filter((s) => parse(read(s)).length > 0).join(","),
+    () => "",
+  );
+  return useMemo(() => (raw ? raw.split(",") : []), [raw]);
+}
+
 /** Every restaurant that has dishes waiting in a bag in this browser, with the dishes, count and total. */
 export function useOpenBags(restaurants: Restaurant[]) {
   const raw = useSyncExternalStore(

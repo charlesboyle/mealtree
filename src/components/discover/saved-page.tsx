@@ -7,7 +7,8 @@ import { EmptyState } from "@/components/empty-state";
 import { RestaurantImage } from "@/components/restaurant-image";
 import { RestaurantRow } from "@/components/restaurant-row";
 import { useI18n } from "@/i18n/client";
-import { useOpenBags } from "@/lib/bag";
+import { useOpenBags, useStoredBagSlugs } from "@/lib/bag";
+import { useFullMenus } from "@/lib/use-full-menus";
 import { useSaved } from "@/lib/saved";
 import type { Restaurant } from "@/lib/types";
 
@@ -17,7 +18,9 @@ export function SavedPage({ restaurants }: { restaurants: Restaurant[] }) {
   const s = t.site.savedPage;
   const { slugs } = useSaved();
   const saved = restaurants.filter((r) => slugs.includes(r.slug));
-  const bags = useOpenBags(restaurants);
+  // Bag totals need the whole menu; only restaurants with a bag fetch theirs.
+  const bagSlugs = useStoredBagSlugs(restaurants.map((r) => r.slug));
+  const bags = useOpenBags(useFullMenus(restaurants, bagSlugs));
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-8 sm:px-6 sm:pt-10 lg:px-8">

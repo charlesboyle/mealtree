@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ClaimFlow } from "@/components/claim/claim-flow";
 import { getI18n } from "@/i18n/server";
-import { findRestaurant, getStats, listRestaurants } from "@/lib/data";
+import { findRestaurant, getStats } from "@/lib/data";
 import { CLAIM_FLOW_ENABLED } from "@/lib/flags";
 
-// Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
-export const revalidate = 300;
+// Refresh restaurant data from Supabase every hour (matches REVALIDATE_SECONDS).
+export const revalidate = 3600;
 
-export async function generateStaticParams() {
-  return (await listRestaurants()).map((r) => ({ slug: r.slug }));
+// Not prerendered at build (rarely visited, and each costs ISR writes): rendered on first visit, then cached.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: PageProps<"/[lang]/claim/[slug]">): Promise<Metadata> {

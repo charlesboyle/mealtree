@@ -39,6 +39,7 @@ const text = (r: Restaurant) =>
  * Nothing is curated by hand, so a mood only appears when the data says so.
  */
 export function restaurantMoods(r: Restaurant): string[] {
+  if (r.moods) return r.moods;
   const items = r.menus.flatMap((m) => m.sections.flatMap((s) => s.items));
   const words = text(r);
   const prices = items.map(itemMinPrice).filter((p): p is number => p !== null);

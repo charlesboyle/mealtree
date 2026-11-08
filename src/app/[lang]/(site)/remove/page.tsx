@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { RemovalForm } from "@/components/legal/removal-form";
 import { getI18n } from "@/i18n/server";
-import { listRestaurants } from "@/lib/data";
+import { listRestaurantCards } from "@/lib/data";
 import { NO_INDEX } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -9,11 +9,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.meta.remove, description: t.meta.removeDescription, robots: NO_INDEX };
 }
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export default async function RemovePage(props: PageProps<"/[lang]/remove">) {
   const { r } = await props.searchParams;
-  const restaurants = (await listRestaurants()).map(({ slug, name, nameAr, address, addressAr }) => ({
+  const restaurants = (await listRestaurantCards()).map(({ slug, name, nameAr, address, addressAr }) => ({
     slug,
     name,
     nameAr,

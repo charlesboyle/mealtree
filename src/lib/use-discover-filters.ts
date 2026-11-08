@@ -6,6 +6,7 @@ import { ALL_AREAS } from "@/lib/discover";
 import { restaurantMoods } from "@/lib/moods";
 import { byRating } from "@/lib/rating";
 import { buildSearchIndex, matchIndexed } from "@/lib/search-index";
+import { useSearchIndex } from "@/lib/use-search-index";
 import type { Restaurant } from "@/lib/types";
 
 export type SortKey = "recommended" | "rating";
@@ -29,7 +30,15 @@ export function useDiscoverFilters(restaurants: Restaurant[], isOpen?: (r: Resta
     router.replace(`${pathname}${next.size ? `?${next}` : ""}`, { scroll: false });
   };
 
-  const index = useMemo(() => buildSearchIndex(restaurants), [restaurants]);
+  // List pages get trimmed menus (see `toCard`), so dish search loads the full
+  // dish index the first time someone searches; until it arrives, featured dishes still match.
+  const remote = useSearchIndex(Boolean(query));
+  const index = useMemo(() => {
+    const local = buildSearchIndex(restaurants);
+    if (!remote.length) return local;
+    const full = new Map(remote.map((r) => [r.slug, r]));
+    return local.map((r) => full.get(r.slug) ?? r);
+  }, [restaurants, remote]);
   const moods = useMemo(() => new Map(restaurants.map((r) => [r.slug, restaurantMoods(r)])), [restaurants]);
 
   const results = useMemo(() => {

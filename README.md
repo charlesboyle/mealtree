@@ -33,7 +33,7 @@ Public pages live under `/en/…` and `/ar/…`. A bare URL (`/r/slug` on a QR c
 
 ## How it's put together
 
-- **Next.js 16 (App Router) + React 19 + Tailwind CSS 4 + Motion.** Every route is prerendered and refreshed from the database every 5 minutes, so menu pages stay fast and indexable.
+- **Next.js 16 (App Router) + React 19 + Tailwind CSS 4 + Motion.** Public pages are prerendered and refreshed from the database at most hourly (admin edits in /ops refresh them at once), so menu pages stay fast and indexable. List pages ship trimmed menus (`listRestaurantCards`); full menus load only on a restaurant page.
 - **Data**: server pages load restaurants through `src/lib/data.ts`, from Supabase when configured, otherwise from `src/data/restaurants.ts`. Types are in `src/lib/types.ts`.
 - **Colors**: the nomm brand color is `--brand` in `globals.css`. Restaurant pages use one neutral accent for now (`NEUTRAL_ACCENT` in `src/lib/accent.ts`); per-restaurant colors are switched off, and the stored `accent` values are unused.
 - **Owner edits** (claim, sold-out, price, Google link request) go through `src/lib/store.ts`. With Supabase configured they're saved to the database and every visitor sees them right away, because the menu page loads edits in the browser rather than waiting for the 5-minute refresh. Without Supabase they're kept in `localStorage`.

@@ -93,6 +93,8 @@ export type Restaurant = {
   /** Whether the Google Business Profile has a menu link today. */
   googleMenuLink: boolean;
   menus: Menu[];
+  /** Precomputed moods, set on list cards (`toCard`) whose menus are trimmed. */
+  moods?: string[];
   /** Original menu pages (Storage bucket `menus`), shown under "View original". */
   menuFiles?: MenuFiles;
 };

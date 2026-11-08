@@ -3,15 +3,17 @@ import { notFound } from "next/navigation";
 import { MenuPage } from "@/components/menu/menu-page";
 import { getI18n } from "@/i18n/server";
 import { pageAlternates, social } from "@/lib/seo";
-import { findRestaurant, listRestaurants } from "@/lib/data";
+import { findRestaurant, listRestaurantCards } from "@/lib/data";
 import { photoUrl } from "@/lib/format";
 import type { Restaurant } from "@/lib/types";
 
-// Refresh restaurant data from Supabase every 5 minutes (matches REVALIDATE_SECONDS).
-export const revalidate = 300;
+// Refresh restaurant data from Supabase every hour (matches REVALIDATE_SECONDS).
+export const revalidate = 3600;
 
-export async function generateStaticParams() {
-  return (await listRestaurants()).map((r) => ({ slug: r.slug }));
+// Not prerendered at build: each deploy would rewrite every menu page (ISR writes on the Hobby plan).
+// A page renders on its first visit, then is cached and refreshed hourly like the rest.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata(props: PageProps<"/[lang]/r/[slug]">): Promise<Metadata> {
@@ -73,7 +75,7 @@ export default async function RestaurantPage(props: PageProps<"/[lang]/r/[slug]"
   const [r, i18n] = await Promise.all([findRestaurant(slug), getI18n()]);
   if (!r) notFound();
   // Other places to suggest, without their menus (they would all ship to the browser).
-  const more = (await listRestaurants())
+  const more = (await listRestaurantCards())
     .filter((o) => o.slug !== r.slug)
     .map((o) => ({
       o,
