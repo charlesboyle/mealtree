@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
 import { SearchSheet } from "@/components/search-sheet";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
+import { noteRouteChange } from "@/lib/nav-history";
 import { OPEN_SEARCH_EVENT } from "@/lib/search-events";
 import { usePageScroll } from "@/lib/use-page-scroll";
 import { useRoute } from "@/lib/use-route";
@@ -14,10 +15,19 @@ import { useRoute } from "@/lib/use-route";
 export function SiteShell({ children, knownSlugs }: { children: React.ReactNode; knownSlugs: string[] }) {
   const route = useRoute();
   const onRestaurant = route.startsWith("/r/");
+  // The map fills the screen below the header: no footer, no tab bar.
+  const onMap = route === "/map";
+  const lastRoute = useRef(route);
   const [searchOpen, setSearchOpen] = useState(false);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
   usePageScroll(route);
+
+  useEffect(() => {
+    if (lastRoute.current === route) return;
+    lastRoute.current = route;
+    noteRouteChange();
+  }, [route]);
 
   useEffect(() => {
     const open = () => setSearchOpen(true);
@@ -29,8 +39,8 @@ export function SiteShell({ children, knownSlugs }: { children: React.ReactNode;
     <div className="flex min-h-dvh w-full flex-col overflow-x-clip bg-cream text-ink">
       <SiteHeader languageToggle={<LanguageToggle />} knownSlugs={knownSlugs} />
       <div className="flex-1">{children}</div>
-      <SiteFooter bare={onRestaurant} />
-      <TabBar hidden={onRestaurant} knownSlugs={knownSlugs} />
+      {!onMap && <SiteFooter bare={onRestaurant} />}
+      <TabBar hidden={onRestaurant || onMap} knownSlugs={knownSlugs} />
       <SearchSheet open={searchOpen} onClose={closeSearch} />
     </div>
   );

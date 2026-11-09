@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { AllRestaurantsEntry } from "@/components/all-restaurants-entry";
 import { DiscoverHero } from "@/components/discover-hero";
+import { MapPreviewCard } from "@/components/discover/map-preview-card";
 import { DishCard } from "@/components/dish-card";
 import { NearbyTile } from "@/components/nearby-tile";
 import { Rail } from "@/components/rail";
@@ -55,6 +56,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
           </Rail>
         )}
         <AllRestaurantsEntry restaurants={restaurants} />
+        <MapPreviewCard restaurants={restaurants} />
         {rails.popular.length > 0 && (
           <Rail title={r.popular} subtitle={r.popularSub} size="dish">
             {rails.popular.map(({ restaurant, item }) => (

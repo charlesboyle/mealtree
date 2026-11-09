@@ -21,6 +21,7 @@ import { Photo } from "@/components/photo";
 import { SaveButton } from "@/components/save-button";
 import { useI18n } from "@/i18n/client";
 import { cn, directionsUrl } from "@/lib/format";
+import { isPinned } from "@/lib/map";
 import { useOpenState } from "@/lib/use-open-state";
 import { track, type TrackLink } from "@/lib/track";
 import type { Restaurant } from "@/lib/types";
@@ -68,9 +69,20 @@ export function RestaurantHero({
 }) {
   const { t, pick, cuisines, priceLevel, href, locale } = useI18n();
   const name = pick(r.name, r.nameAr);
-  const meta = [
+  const area = pick(r.neighborhood, r.neighborhoodAr);
+  const meta: React.ReactNode[] = [
     cuisines(r.cuisine),
-    pick(r.neighborhood, r.neighborhoodAr),
+    area && isPinned(r) ? (
+      <Link
+        href={href(`/map?r=${r.slug}`)}
+        title={t.map.seeOnMap}
+        className="underline decoration-dotted underline-offset-4 transition-colors duration-150 hover:text-plum"
+      >
+        {area}
+      </Link>
+    ) : (
+      area
+    ),
     priceLevel(r.priceLevel),
   ].filter(Boolean);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, Search, Star, X } from "lucide-react";
+import { ArrowUpRight, Map as MapIcon, Search, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -161,6 +161,16 @@ export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => v
                       </Link>
                     </li>
                   ))}
+                  <li className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => go(withArea(`/map?q=${encodeURIComponent(query.trim())}`))}
+                      className="flex h-10 items-center gap-2 rounded-full bg-plum/[0.05] px-4 text-sm font-semibold text-plum active:bg-plum/[0.1]"
+                    >
+                      <MapIcon className="h-4 w-4" aria-hidden />
+                      {t.map.showOnMap}
+                    </button>
+                  </li>
                 </ul>
               ) : (
                 <div className="pb-6 text-center text-sm text-muted">

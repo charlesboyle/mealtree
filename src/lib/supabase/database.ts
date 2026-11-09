@@ -17,6 +17,9 @@ export type RestaurantRow = {
   neighborhood_ar: string | null;
   address: string;
   address_ar: string | null;
+  /** Map pin (WGS84); null together when the restaurant is not on the map. */
+  lat: number | null;
+  lng: number | null;
   phone: string;
   timezone: string;
   currency: string;
@@ -228,6 +231,11 @@ export function normalizeStats(stats: Partial<RestaurantStats> | null | undefine
 /** Zones ("Khalifa City - SE45", "Al Danah - Zone 1") are too fine for diners; keep the district. */
 const broadArea = (area: string) => area.split(" - ")[0].trim();
 
+/** The map pin when both coordinates are set; the DB keeps them null together. */
+function pin(row: Pick<RestaurantRow, "lat" | "lng">) {
+  return typeof row.lat === "number" && typeof row.lng === "number" ? { lat: row.lat, lng: row.lng } : {};
+}
+
 export function rowToRestaurant(row: RestaurantRow): Restaurant {
   return {
     slug: row.slug,
@@ -241,6 +249,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     neighborhoodAr: row.neighborhood_ar ? broadArea(row.neighborhood_ar) : undefined,
     address: row.address,
     addressAr: row.address_ar ?? undefined,
+    ...pin(row),
     phone: row.phone,
     timezone: row.timezone,
     currency: row.currency ?? "AED",
