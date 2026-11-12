@@ -72,6 +72,23 @@ export type AdminOverview = {
   removals: RemovalRow[];
 };
 
+/** An owner's "get your digital menu" submission (menu_submissions); files sit in the private `owner-menus` bucket. */
+export type MenuSubmissionStatus = "new" | "in_progress" | "done" | "rejected";
+export type MenuSubmissionRow = {
+  id: string;
+  created_at: string;
+  updated_at: string | null;
+  restaurant_name: string;
+  maps_url: string;
+  phone: string;
+  contact_name: string | null;
+  file_paths: string[];
+  source: string;
+  locale: "en" | "ar" | null;
+  status: MenuSubmissionStatus;
+  note: string;
+};
+
 export type ItemOverrideRow = {
   restaurant_id: string;
   item_id: string;
@@ -131,7 +148,25 @@ export type Database = {
         Args: { p_slug: string; p_name: string; p_contact: string; p_reason: string };
         Returns: undefined;
       };
+      submit_menu: {
+        Args: {
+          p_id: string;
+          p_restaurant_name: string;
+          p_maps_url: string;
+          p_phone: string;
+          p_contact_name: string | null;
+          p_file_paths: string[];
+          p_source: string;
+          p_locale: string;
+        };
+        Returns: string;
+      };
       admin_overview: { Args: { p_token: string }; Returns: AdminOverview };
+      admin_menu_submissions: { Args: { p_token: string }; Returns: MenuSubmissionRow[] };
+      admin_set_menu_submission_status: {
+        Args: { p_token: string; p_id: string; p_status: MenuSubmissionStatus; p_note?: string | null };
+        Returns: undefined;
+      };
       admin_get_restaurant: { Args: { p_token: string; p_slug: string }; Returns: RestaurantRow | null };
       admin_upsert_restaurant: { Args: { p_token: string; p_data: RestaurantInput }; Returns: string };
       admin_review_claim: { Args: { p_token: string; p_owner_id: string; p_approve: boolean }; Returns: undefined };
