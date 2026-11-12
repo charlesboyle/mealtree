@@ -420,7 +420,7 @@ function Body({
           />
         </Field>
 
-        <Field id={`${uid}-maps`} label={f.maps} hint={f.mapsHint} error={errorText("maps")}>
+        <Field id={`${uid}-maps`} label={f.maps} error={errorText("maps")}>
           <input
             {...field("maps", true)}
             type="url"
@@ -439,7 +439,7 @@ function Body({
           />
         </Field>
 
-        <Field id={`${uid}-phone`} label={f.phone} hint={f.phoneHint} error={errorText("phone")}>
+        <Field id={`${uid}-phone`} label={f.phone} error={errorText("phone")}>
           <input
             {...field("phone", true)}
             type="tel"
