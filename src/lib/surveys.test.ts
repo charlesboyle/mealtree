@@ -370,3 +370,22 @@ describe("owner WhatsApp", () => {
     expect(whatsappDigits("123")).toBeNull();
   });
 });
+
+describe("menuSubmissionAnswers", () => {
+  it("mirrors the saved row and points to /ops for the files", async () => {
+    const { menuSubmissionAnswers, menuSubmissionArgs, surveySentProps, MENU_SUBMISSION } = await import("./surveys");
+    const args = menuSubmissionArgs({
+      id: "11111111-2222-4333-8444-555555555555",
+      values: { restaurant: " Cafe X ", maps: "maps.app.goo.gl/abc", phone: "050 123 4567", contact: "" },
+      paths: ["submissions/11111111-2222-4333-8444-555555555555/01.jpg", "submissions/11111111-2222-4333-8444-555555555555/02.pdf"],
+      source: "home",
+      locale: "en",
+    });
+    const props = surveySentProps({ surveyId: MENU_SUBMISSION.id, submissionId: args.p_id, answers: menuSubmissionAnswers(args) });
+    expect(props.$survey_id).toBe(MENU_SUBMISSION.id);
+    expect(props[`$survey_response_${MENU_SUBMISSION.restaurant.id}`]).toBe("Cafe X");
+    expect(props[`$survey_response_${MENU_SUBMISSION.maps.id}`]).toBe("https://maps.app.goo.gl/abc");
+    expect(props[`$survey_response_${MENU_SUBMISSION.phone.id}`]).toBe(args.p_phone);
+    expect(props[`$survey_response_${MENU_SUBMISSION.files.id}`]).toBe("2 files - open in /ops > Menu submissions");
+  });
+});

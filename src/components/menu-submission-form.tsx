@@ -11,12 +11,14 @@ import { submitMenu, uploadMenuFile } from "@/lib/menu-upload";
 import {
   MENU_FILE_ACCEPT,
   MENU_FILE_LIMITS,
+  MENU_SUBMISSION,
   menuFilePath,
   menuFileType,
   type MenuFileProblem,
   type MenuFormError,
   type MenuFormField,
   type MenuSubmissionSource,
+  menuSubmissionAnswers,
   menuSubmissionArgs,
   menuSubmissionErrors,
   menuSubmissionEventProps,
@@ -24,8 +26,9 @@ import {
   OWNER_WHATSAPP_DISPLAY,
   ownerWhatsAppUrl,
   pickMenuFiles,
+  surveySentProps,
 } from "@/lib/surveys";
-import { trackMenuSubmission } from "@/lib/track";
+import { sendSurvey, trackMenuSubmission } from "@/lib/track";
 
 const FIELD =
   "mt-1.5 w-full rounded-xl bg-plum/[0.05] px-4 text-md text-plum outline-none transition-colors duration-150 placeholder:text-muted focus:bg-plum/[0.08] aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-danger";
@@ -304,9 +307,8 @@ function Body({
     }
 
     setPhase("saving");
-    const res = await submitMenu(
-      menuSubmissionArgs({ id: session.current!.id, values, paths: list.map((it) => it.path!), source, locale }),
-    );
+    const args = menuSubmissionArgs({ id: session.current!.id, values, paths: list.map((it) => it.path!), source, locale });
+    const res = await submitMenu(args);
     if (controller.signal.aborted) return;
     if (!res.ok) {
       setFailure(res.failure);
@@ -314,6 +316,11 @@ function Body({
       return;
     }
     trackMenuSubmission(menuSubmissionEventProps({ source, locale, fileCount: list.length }));
+    // Also as a PostHog api survey response, so it lands in Slack like the other forms (files stay in Supabase).
+    sendSurvey(
+      "survey sent",
+      surveySentProps({ surveyId: MENU_SUBMISSION.id, submissionId: args.p_id, answers: menuSubmissionAnswers(args), extra: { source, locale } }),
+    );
     setPhase("done");
   };
 

@@ -38,6 +38,15 @@ export const RESTAURANT_SUGGESTION = {
   maps: { id: "b4dd40f1-b3bc-4f84-abaa-1a14fa4e3445", question: "Google Maps link" },
 } as const;
 
+/** "Get your digital menu for free": the owner's submission, mirrored as an api survey so it reaches Slack. Files stay in Supabase. */
+export const MENU_SUBMISSION = {
+  id: "01a1ce94-92eb-0000-88b3-87ccdc340f3b",
+  restaurant: { id: "d69f2d36-8fea-4eb9-a0c5-e05aeaeb6246", question: "Restaurant name" },
+  maps: { id: "6a14423d-cf28-4e1a-bb61-71fecd5589b9", question: "Google Maps link" },
+  phone: { id: "d0285f2a-62e9-4e90-a262-ce6fa0e7dfb3", question: "WhatsApp number" },
+  files: { id: "4ff40c5b-79e8-4dc5-8ac2-723588a69032", question: "Menu files" },
+} as const;
+
 export type OrderChoice = (typeof ORDER_FEEDBACK.placed.choices)[number];
 export type OwnerRole = (typeof OWNER_INTEREST.role.choices)[number];
 export type OrderChannel = "whatsapp" | "call";
@@ -375,4 +384,16 @@ export function submitFailure(error: { code?: string; message?: string; details?
   if (code === "PGRST202" || code === "PGRST106" || code === "42883" || message.includes("could not find the function")) return "unavailable";
   if (code === "22023" || message.includes("invalid_input")) return "invalid";
   return "retry";
+}
+
+/** Survey answers for a sent menu: the same normalised values as the database row, plus where to find the files. */
+export function menuSubmissionAnswers(args: { p_restaurant_name: string; p_maps_url: string; p_phone: string; p_file_paths: string[] }): SurveyAnswer[] {
+  const q = MENU_SUBMISSION;
+  const n = args.p_file_paths.length;
+  return [
+    { id: q.restaurant.id, question: q.restaurant.question, response: args.p_restaurant_name },
+    { id: q.maps.id, question: q.maps.question, response: args.p_maps_url },
+    { id: q.phone.id, question: q.phone.question, response: args.p_phone },
+    { id: q.files.id, question: q.files.question, response: `${n} ${n === 1 ? "file" : "files"} - open in /ops > Menu submissions` },
+  ];
 }
