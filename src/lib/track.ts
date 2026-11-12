@@ -77,6 +77,17 @@ export function sendSurvey(event: "survey shown" | "survey sent" | "survey dismi
   return true;
 }
 
+/**
+ * `menu_submission_sent`: an owner sent their menu through the form. Only where from, the language and how many
+ * files (see menuSubmissionEventProps), never the name or number. Logged in dev; skipped for automated browsers.
+ */
+export function trackMenuSubmission(properties: { source: string; locale: string; file_count: number }) {
+  if (typeof window === "undefined") return;
+  if (process.env.NODE_ENV !== "production") return console.info("[event] menu_submission_sent", properties);
+  if (skipVisitor("")) return;
+  posthog.capture("menu_submission_sent", properties);
+}
+
 export function track(slug: string, locale: Locale, event: Event) {
   if (typeof window === "undefined") return;
   if (shouldSkip(slug)) return;

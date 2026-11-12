@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LanguageToggle } from "@/components/language-toggle";
+import { MenuSubmissionHost } from "@/components/menu-submission-form";
 import { SearchSheet } from "@/components/search-sheet";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -42,6 +43,7 @@ export function SiteShell({ children, knownSlugs }: { children: React.ReactNode;
       {!onMap && <SiteFooter bare={onRestaurant} />}
       <TabBar hidden={onRestaurant || onMap} knownSlugs={knownSlugs} />
       <SearchSheet open={searchOpen} onClose={closeSearch} />
+      <MenuSubmissionHost />
     </div>
   );
 }

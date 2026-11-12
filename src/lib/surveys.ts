@@ -5,6 +5,7 @@
  *
  * Question texts stay in English (they are the survey definitions in PostHog) whatever language the UI is in.
  */
+import { normalizePhone, toLatinDigits } from "./format";
 
 export const ORDER_FEEDBACK = {
   id: "01a1af25-9bf6-0000-2dac-c00d2bf788e4",
@@ -221,4 +222,157 @@ export function restaurantSuggestionErrors(f: RestaurantSuggestionForm) {
   else if (!isValidPhone(f.phone)) errors.phone = "phoneInvalid";
   if (f.maps.trim() && !isGoogleMapsLink(f.maps)) errors.maps = "mapsInvalid";
   return errors;
+}
+
+// ——— "Get your digital menu for free": owner menu submissions ————————————————————————————————————————
+// Not a PostHog survey: files go to the private `owner-menus` Storage bucket and the row is written by the
+// `submit_menu` RPC (supabase/migrations/20261112100000_menu_submissions.sql). These helpers are the pure parts.
+
+/** Where owners can send menu photos on WhatsApp instead. */
+export const OWNER_WHATSAPP = "971554304391";
+export const OWNER_WHATSAPP_DISPLAY = "+971 55 430 4391";
+
+export const MENU_FILE_LIMITS = { maxFiles: 10, maxBytes: 10 * 1024 * 1024 } as const;
+
+/** Accepted menu files, by extension, with the content type the bucket allows for each. */
+const MENU_FILE_TYPES: Record<string, { ext: string; mime: string; kind: "image" | "pdf" }> = {
+  jpg: { ext: "jpg", mime: "image/jpeg", kind: "image" },
+  jpeg: { ext: "jpg", mime: "image/jpeg", kind: "image" },
+  png: { ext: "png", mime: "image/png", kind: "image" },
+  webp: { ext: "webp", mime: "image/webp", kind: "image" },
+  heic: { ext: "heic", mime: "image/heic", kind: "image" },
+  heif: { ext: "heif", mime: "image/heif", kind: "image" },
+  pdf: { ext: "pdf", mime: "application/pdf", kind: "pdf" },
+};
+const BY_MIME = Object.fromEntries(Object.values(MENU_FILE_TYPES).map((t) => [t.mime, t]));
+
+/** `accept` for the file picker: types and extensions, since some browsers report HEIC with no type. */
+export const MENU_FILE_ACCEPT = [...new Set(Object.values(MENU_FILE_TYPES).map((t) => t.mime))].join(",") + ",.heic,.heif";
+
+/**
+ * What a picked file is, from its content type or, when the browser gives none (HEIC on many phones and
+ * desktops) or a generic one, its extension. Null when it isn't a photo or PDF we accept.
+ */
+export function menuFileType(file: { name: string; type: string }) {
+  const mime = file.type.toLowerCase();
+  if (BY_MIME[mime]) return BY_MIME[mime];
+  if (mime && mime !== "application/octet-stream" && !mime.startsWith("image/")) return null;
+  const ext = file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
+  return (ext && MENU_FILE_TYPES[ext]) || null;
+}
+
+export type MenuFileProblem = "type" | "size" | "tooMany";
+
+/**
+ * Splits newly picked files into the ones to keep and the ones to turn away (wrong type, over 10 MB, or past
+ * the 10-file limit given how many are already in the form). Keeps the order they were picked in.
+ */
+export function pickMenuFiles<F extends { name: string; type: string; size: number }>(existing: number, picked: F[]) {
+  const accepted: F[] = [];
+  const rejected: { name: string; problem: MenuFileProblem }[] = [];
+  for (const file of picked) {
+    if (!menuFileType(file)) rejected.push({ name: file.name, problem: "type" });
+    else if (file.size > MENU_FILE_LIMITS.maxBytes) rejected.push({ name: file.name, problem: "size" });
+    else if (existing + accepted.length >= MENU_FILE_LIMITS.maxFiles) rejected.push({ name: file.name, problem: "tooMany" });
+    else accepted.push(file);
+  }
+  return { accepted, rejected };
+}
+
+/** Storage key for the nth file (0-based): submissions/<id>/01.jpg … 10.pdf. ASCII only, whatever the file was called. */
+export function menuFilePath(submissionId: string, index: number, ext: string) {
+  return `submissions/${submissionId}/${String(index + 1).padStart(2, "0")}.${ext}`;
+}
+
+export type MenuSubmissionSource = "for_restaurants" | "home" | "search" | "listing" | "suggest";
+export type MenuFormValues = { restaurant: string; maps: string; phone: string; contact: string };
+export type MenuFormField = "restaurant" | "maps" | "phone" | "files";
+export type MenuFormError = "restaurantRequired" | "mapsRequired" | "mapsInvalid" | "phoneRequired" | "phoneInvalid" | "filesRequired";
+
+/** Restaurant name, a Google Maps link, a phone number and at least one file are required; the contact name is optional. */
+export function menuSubmissionErrors(f: MenuFormValues, fileCount: number) {
+  const errors: Partial<Record<MenuFormField, MenuFormError>> = {};
+  if (!f.restaurant.trim()) errors.restaurant = "restaurantRequired";
+  if (!f.maps.trim()) errors.maps = "mapsRequired";
+  else if (!isGoogleMapsLink(f.maps)) errors.maps = "mapsInvalid";
+  const phone = toLatinDigits(f.phone).trim();
+  if (!phone) errors.phone = "phoneRequired";
+  else if (!isValidPhone(phone)) errors.phone = "phoneInvalid";
+  if (fileCount < 1) errors.files = "filesRequired";
+  return errors;
+}
+
+/** UAE numbers as +971…; anything else trimmed, with Latin digits. */
+export function normalizeOwnerPhone(input: string) {
+  return normalizePhone(toLatinDigits(input));
+}
+
+/** Arguments for the `submit_menu` RPC: trimmed, the link given a scheme, the phone normalised. */
+export function menuSubmissionArgs({
+  id,
+  values,
+  paths,
+  source,
+  locale,
+}: {
+  id: string;
+  values: MenuFormValues;
+  paths: string[];
+  source: MenuSubmissionSource;
+  locale: string;
+}) {
+  const maps = values.maps.trim();
+  return {
+    p_id: id,
+    p_restaurant_name: values.restaurant.trim().slice(0, 160),
+    p_maps_url: /^https?:\/\//i.test(maps) ? maps : `https://${maps}`,
+    p_phone: normalizeOwnerPhone(values.phone),
+    p_contact_name: values.contact.trim().slice(0, 120) || null,
+    p_file_paths: paths,
+    p_source: source,
+    p_locale: locale,
+  };
+}
+
+/** The `menu_submission_sent` PostHog event: where and how many files, never who. */
+export function menuSubmissionEventProps({ source, locale, fileCount }: { source: MenuSubmissionSource; locale: string; fileCount: number }) {
+  return { source, locale, file_count: fileCount };
+}
+
+/** wa.me link to NOMM with a drafted message. */
+export function ownerWhatsAppUrl(text: string) {
+  return `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
+
+/** Digits for a wa.me link to an owner's number (ops). UAE numbers get 971; null when it can't be a number. */
+export function whatsappDigits(phone: string) {
+  const digits = normalizeOwnerPhone(phone).replace(/\D/g, "").replace(/^00/, "");
+  return digits.length >= 8 && digits.length <= 15 ? digits : null;
+}
+
+export type UploadFailure = "unavailable" | "tooLarge" | "type" | "exists" | "network" | "other";
+
+/**
+ * Why a Storage upload failed, from the HTTP status and body. `unavailable` (no bucket yet, or no permission)
+ * sends the owner to WhatsApp; `exists` means an earlier attempt already uploaded it, so it counts as done.
+ */
+export function uploadFailure(status: number, body: string): UploadFailure {
+  if (status === 0) return "network";
+  const text = body.toLowerCase();
+  if (status === 409 || text.includes("already exists") || text.includes("duplicate")) return "exists";
+  if (status === 413 || text.includes("too large") || text.includes("maximum allowed size")) return "tooLarge";
+  if (status === 415 || text.includes("mime type") || text.includes("invalid_mime")) return "type";
+  if (status === 404 || status === 401 || status === 403 || text.includes("bucket not found") || text.includes("row-level security") || text.includes("unauthorized"))
+    return "unavailable";
+  if (status === 400 && text.includes("not found")) return "unavailable";
+  return "other";
+}
+
+/** Why `submit_menu` failed: `unavailable` when the function isn't there yet (migration not applied). */
+export function submitFailure(error: { code?: string; message?: string; details?: string } | null): "unavailable" | "invalid" | "retry" {
+  const code = error?.code ?? "";
+  const message = (error?.message ?? "").toLowerCase();
+  if (code === "PGRST202" || code === "PGRST106" || code === "42883" || message.includes("could not find the function")) return "unavailable";
+  if (code === "22023" || message.includes("invalid_input")) return "invalid";
+  return "retry";
 }
