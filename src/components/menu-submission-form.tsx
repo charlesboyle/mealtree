@@ -243,6 +243,8 @@ function Body({
     const worker = async () => {
       for (let it = queue.shift(); it; it = queue.shift()) {
         const item = it;
+        // Reserved as soon as we try: a lost response may hide a file that did land, and anon can't overwrite it.
+        session.current?.used.add(slotOf(item.path!));
         patch(item.key, { state: "uploading", progress: 0 });
         const res = await uploadMenuFile({
           path: item.path!,
@@ -252,7 +254,6 @@ function Body({
           onProgress: (p) => patch(item.key, { progress: p }),
         });
         if (res.ok) {
-          session.current?.used.add(slotOf(item.path!));
           patch(item.key, { state: "done", progress: 1 });
           outcomes.push("ok");
         } else {
