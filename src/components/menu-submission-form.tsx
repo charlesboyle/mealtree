@@ -230,6 +230,7 @@ function Body({
     if (first) return formRef.current?.querySelector<HTMLElement>(`[data-field="${first}"]`)?.focus();
 
     setFailure(null);
+    setRejected([]);
     setPhase("uploading");
     const list = assignPaths(items);
     setItems(list);
@@ -353,7 +354,7 @@ function Body({
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-semibold text-plum">{f.whatsappTitle}</span>
           <span className="block text-sm text-muted">
-            {f.whatsappBody} <span className="ltr-isolate font-medium text-whatsapp-dark">{OWNER_WHATSAPP_DISPLAY}</span>
+            {f.whatsappBody} <span className="ltr-isolate whitespace-nowrap font-medium text-whatsapp-dark">{OWNER_WHATSAPP_DISPLAY}</span>
           </span>
         </span>
         <ChevronRight className="size-4 shrink-0 text-whatsapp-dark transition-transform duration-150 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden />
