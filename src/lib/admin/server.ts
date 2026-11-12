@@ -30,3 +30,17 @@ export function adminDb() {
     global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
   });
 }
+
+/**
+ * Storage client that sends the admin token as `x-admin-token`, which the private `owner-menus` bucket's
+ * admin-only SELECT policy checks (mealtree.is_admin_request), so the ops page can sign links to owners' files.
+ */
+export function adminStorage(token: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) throw new Error("Supabase isn't configured.");
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { headers: { "x-admin-token": token }, fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
+  }).storage;
+}
