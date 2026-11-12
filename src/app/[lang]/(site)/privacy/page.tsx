@@ -12,7 +12,7 @@ export default async function PrivacyPage() {
   const { locale } = await getI18n();
   if (locale === "ar") {
     return (
-      <LegalShell title="الخصوصية" lead="ما الذي نجمعه ولماذا. آخر تحديث: أكتوبر 2026.">
+      <LegalShell title="الخصوصية" lead="ما الذي نجمعه ولماذا. آخر تحديث: نوفمبر 2026.">
         <Prose>
           <h2>الزوار</h2>
           <p>
@@ -32,13 +32,19 @@ export default async function PrivacyPage() {
           <h2>التحليلات</h2>
           <p>
             نستخدم أدوات تحليلات، منها تسجيلات مجهولة للجلسات عبر PostHog، لنفهم كيف يُستخدم الموقع ونحسّنه. نُخفي ما يُكتب في
-            النماذج، ولا نستخدم هذه البيانات للإعلانات.
+            النماذج، ولا نستخدم هذه البيانات للإعلانات. تمرّ بيانات التحليلات عبر PostHog وشركائه في البنية التحتية، وقد تُوجَّه
+            حركة البيانات عبر Cloudflare.
           </p>
           <h2>أصحاب المطاعم</h2>
           <p>
             عند المطالبة بصفحة نحفظ اسمك ودورك وطريقة التحقق التي اخترتها. يحتفظ متصفحك بمفتاح خاص يتيح له تعديل قائمتك،
             ولا نخزّن منه إلا بصمة أحادية الاتجاه. نستخدم بيانات التواصل فقط للتحقق منك والرد بشأن صفحتك.
             تُحفظ بيانات التواصل التي ترسلها عبر نموذج «أدِر هذه القائمة» لدى مزوّد التحليلات PostHog (الاتحاد الأوروبي)، ولا نستخدمها إلا للتحقق من نشاطك التجاري.
+          </p>
+          <h2>قوائم الطعام التي يرسلها أصحاب المطاعم</h2>
+          <p>
+            عند إرسال قائمتك عبر نموذج «احصل على قائمتك الرقمية مجانًا»، نحفظ ملفات القائمة ورقم هاتفك وبقية بياناتك بشكل خاص
+            لدى Supabase، ولا يطّلع عليها إلا فريقنا. نستخدمها فقط لبناء صفحتك والتواصل معك بشأنها.
           </p>
           <h2>طلبات الإزالة</h2>
           <p>نحتفظ بالاسم ووسيلة التواصل اللذين تقدّمهما لتأكيد الإزالة، ثم نحتفظ بسجل حتى لا تُدرج الصفحة مجددًا.</p>
@@ -52,7 +58,7 @@ export default async function PrivacyPage() {
     );
   }
   return (
-    <LegalShell title="Privacy" lead="What we collect, and why. Last updated October 2026.">
+    <LegalShell title="Privacy" lead="What we collect, and why. Last updated November 2026.">
       <Prose>
         <h2>Diners</h2>
         <p>
@@ -74,7 +80,8 @@ export default async function PrivacyPage() {
         <h2>Analytics</h2>
         <p>
           We use analytics tools, including anonymous session recordings (via PostHog), to understand how the site is used and to
-          improve it. Text typed into forms is masked, and we don&apos;t use this data for advertising.
+          improve it. Text typed into forms is masked, and we don&apos;t use this data for advertising. Analytics go through
+          PostHog and its infrastructure partners, and traffic may be routed via Cloudflare.
         </p>
         <h2>Restaurant owners</h2>
         <p>
@@ -82,6 +89,12 @@ export default async function PrivacyPage() {
           key that lets it edit your menu; we store only a one-way hash of it. We use your contact details only to verify
           you and to reply about your listing. Contact details you submit through the &ldquo;Manage this menu&rdquo; form
           are stored with our analytics provider, PostHog (EU), and used only to verify your business.
+        </p>
+        <h2>Menus sent by restaurant owners</h2>
+        <p>
+          When you send your menu through the &ldquo;Get your digital menu for free&rdquo; form, we store the menu files,
+          your phone number and the other details privately with Supabase, where only our team can see them. We use them
+          only to build your page and to contact you about it.
         </p>
         <h2>Takedown requests</h2>
         <p>
