@@ -6,6 +6,7 @@ import { DiscoverHero } from "@/components/discover-hero";
 import { MapPreviewCard } from "@/components/discover/map-preview-card";
 import { DishCard } from "@/components/dish-card";
 import { NearbyTile } from "@/components/nearby-tile";
+import { OwnerMenuCard } from "@/components/owner-menu-card";
 import { Rail } from "@/components/rail";
 import { RestaurantCard } from "@/components/restaurant-card";
 import { useI18n } from "@/i18n/client";
@@ -92,6 +93,7 @@ export function DiscoverPage({ restaurants }: { restaurants: Restaurant[] }) {
             ))}
           </Rail>
         )}
+        <OwnerMenuCard className="mt-10" />
       </div>
     </main>
   );

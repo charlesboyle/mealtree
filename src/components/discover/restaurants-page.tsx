@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { AreaSelect } from "@/components/area-select";
 import { DiscoverFilterBar } from "@/components/discover-filter-bar";
 import { EmptyState } from "@/components/empty-state";
+import { MenuFormButton } from "@/components/menu-submission-form";
 import { RestaurantCard } from "@/components/restaurant-card";
 import { SuggestRestaurant } from "@/components/suggest-restaurant";
 import { useI18n } from "@/i18n/client";
@@ -142,6 +143,15 @@ export function RestaurantsPage({ restaurants }: { restaurants: Restaurant[] }) 
                 </button>
                 <p className="mt-3 text-sm text-muted">
                   <SuggestRestaurant source="listing" initialName={f.query} className="inline-flex min-h-11 items-center" />
+                </p>
+                <p className="text-sm text-muted">
+                  <MenuFormButton
+                    source="listing"
+                    restaurant={f.query}
+                    className="inline-flex min-h-11 items-center font-medium underline decoration-dashed decoration-1 underline-offset-4 transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                  >
+                    {t.menuForm.isItYours}
+                  </MenuFormButton>
                 </p>
               </EmptyState>
             </div>
