@@ -390,7 +390,7 @@ function Body({
             {f.whatsappBody} <span className="ltr-isolate whitespace-nowrap font-medium text-whatsapp-dark">{OWNER_WHATSAPP_DISPLAY}</span>
           </span>
         </span>
-        <ChevronRight className="size-4 shrink-0 text-whatsapp-dark transition-transform duration-150 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden />
+        <ChevronRight className="size-4 shrink-0 text-whatsapp-dark transition-[translate] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden />
       </a>
 
       <div className="mx-5 mt-4 flex items-center gap-3 text-xs font-medium text-muted" aria-hidden>

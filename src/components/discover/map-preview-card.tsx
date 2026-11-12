@@ -81,7 +81,7 @@ export function MapPreviewCard({ restaurants }: { restaurants: Restaurant[] }) {
           </Link>
           <p className="truncate text-sm text-muted">{t.map.previewSub(pinned.length)}</p>
         </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-soft text-plum transition-[background-color,transform] duration-150 ease-out group-hover:translate-x-0.5 group-hover:bg-plum group-hover:text-white rtl:group-hover:-translate-x-0.5" aria-hidden>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-soft text-plum transition-[background-color,color,translate] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/lift:translate-x-0.5 group-hover/lift:bg-plum group-hover/lift:text-white rtl:group-hover/lift:-translate-x-0.5" aria-hidden>
           <ArrowRight className="h-4 w-4 rtl:rotate-180" />
         </span>
       </div>
