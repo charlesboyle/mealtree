@@ -141,6 +141,7 @@ export const ar: Dictionary = {
     Tea: "شاي",
     Healthy: "صحي",
     Egyptian: "مصري",
+    Asian: "آسيوي",
   },
   discover: {
     title: "اعثر على لقمتك المفضلة القادمة.",
