@@ -36,8 +36,9 @@ export function SavedPage({ restaurants }: { restaurants: Restaurant[] }) {
               <li key={r.slug}>
                 <Link
                   href={href(`/r/${r.slug}`)}
-                  className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-card ring-1 ring-line/70 transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-float"
+                  className="group/lift block rounded-2xl"
                 >
+                  <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-card ring-1 ring-line/70 transition-[translate,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/lift:-translate-y-0.5 group-hover/lift:shadow-float">
                   <span className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-soft">
                     <RestaurantImage restaurant={r} width={160} />
                   </span>
@@ -51,6 +52,7 @@ export function SavedPage({ restaurants }: { restaurants: Restaurant[] }) {
                       {count}
                     </p>
                     <p className="text-sm tabular-nums text-muted">{price(total, r.currency)}</p>
+                  </div>
                   </div>
                 </Link>
               </li>

@@ -75,6 +75,9 @@ export type Restaurant = {
   neighborhoodAr?: string;
   address: string;
   addressAr?: string;
+  /** WGS84 map pin; both are absent when the restaurant is not on the map. */
+  lat?: number;
+  lng?: number;
   /** ISO 4217 code for every price on the menu. */
   currency: string;
   phone: string;

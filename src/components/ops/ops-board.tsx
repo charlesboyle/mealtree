@@ -8,7 +8,11 @@ import {
   CheckCircle2,
   Clock,
   Copy,
+  Download,
   ExternalLink,
+  FileText,
+  MapPin,
+  MessageCircleMore,
   EyeOff,
   Loader2,
   LogOut,
@@ -21,7 +25,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { useMemo, useState, useTransition } from "react";
-import { reviewClaim, resolveRemoval, setPublished, signOut } from "@/app/ops/actions";
+import { reviewClaim, resolveRemoval, setMenuSubmissionStatus, setPublished, signOut } from "@/app/ops/actions";
 import { Logo } from "@/components/logo";
 import { Photo } from "@/components/photo";
 import { useToast } from "@/components/providers";
@@ -29,12 +33,18 @@ import { accentStyle } from "@/lib/accent";
 import { formatNumber, formatPhone } from "@/i18n/format";
 import { cn, sourceLabel } from "@/lib/format";
 import { useHydrated } from "@/lib/store";
-import type { AdminOverview, ClaimRow, RemovalRow } from "@/lib/supabase/database";
+import type { AdminOverview, ClaimRow, MenuSubmissionRow, MenuSubmissionStatus, RemovalRow } from "@/lib/supabase/database";
+import { whatsappDigits } from "@/lib/surveys";
 
 const STALE_DAYS = 30;
 type Row = AdminOverview["restaurants"][number];
 type Tab = "all" | "unclaimed" | "no-google" | "stale" | "hidden";
-type View = "pipeline" | "claims" | "removals";
+type View = "pipeline" | "claims" | "removals" | "menus";
+
+/** Owner menu submissions with signed links to their files (only for open ones), or why they couldn't load. */
+export type MenuSubmissions =
+  | { ok: true; rows: (MenuSubmissionRow & { files: { path: string; view: string | null; download: string | null }[] })[] }
+  | { ok: false; error: string };
 
 function daysSince(iso: string) {
   return Math.floor((Date.now() - new Date(iso + "T12:00:00").getTime()) / 86400000);
@@ -92,14 +102,16 @@ function useAction() {
   return { run, busy: pending ? busy : null };
 }
 
-export function OpsBoard({ overview }: { overview: AdminOverview }) {
+export function OpsBoard({ overview, menus }: { overview: AdminOverview; menus: MenuSubmissions }) {
   const hydrated = useHydrated();
   const pendingClaims = overview.claims.filter((c) => c.status === "pending").length;
   const openRemovals = overview.removals.filter((r) => r.status === "open").length;
-  const [view, setView] = useState<View>(pendingClaims ? "claims" : "pipeline");
+  const newMenus = menus.ok ? menus.rows.filter((m) => m.status === "new").length : 0;
+  const [view, setView] = useState<View>(newMenus ? "menus" : pendingClaims ? "claims" : "pipeline");
 
   const views: { id: View; label: string; count?: number }[] = [
     { id: "pipeline", label: "Pipeline" },
+    { id: "menus", label: "Menu submissions", count: newMenus },
     { id: "claims", label: "Claims", count: pendingClaims },
     { id: "removals", label: "Takedowns", count: openRemovals },
   ];
@@ -131,14 +143,14 @@ export function OpsBoard({ overview }: { overview: AdminOverview }) {
 
         <Tiles overview={overview} hydrated={hydrated} />
 
-        <div role="tablist" className="mt-6 inline-flex rounded-full bg-surface-2 p-1">
+        <div role="tablist" className="no-scrollbar mt-6 flex max-w-full overflow-x-auto rounded-full bg-surface-2 p-1 sm:inline-flex">
           {views.map((v) => (
             <button
               key={v.id}
               role="tab"
               aria-selected={view === v.id}
               onClick={() => setView(v.id)}
-              className={cn("relative rounded-full px-4 py-1.5 text-sm font-semibold transition-colors", view === v.id ? "text-ink" : "text-ink-3 hover:text-ink-2")}
+              className={cn("relative shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors", view === v.id ? "text-ink" : "text-ink-3 hover:text-ink-2")}
             >
               {view === v.id && <motion.span layoutId="ops-view" className="absolute inset-0 rounded-full bg-surface shadow-sm" />}
               <span className="relative flex items-center gap-1.5">
@@ -161,6 +173,7 @@ export function OpsBoard({ overview }: { overview: AdminOverview }) {
             {view === "pipeline" && <Pipeline rows={overview.restaurants} hydrated={hydrated} />}
             {view === "claims" && <Claims claims={overview.claims} hydrated={hydrated} />}
             {view === "removals" && <Removals removals={overview.removals} hydrated={hydrated} />}
+            {view === "menus" && <MenuSubmissionsView menus={menus} hydrated={hydrated} />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -437,6 +450,161 @@ function Removals({ removals, hydrated }: { removals: RemovalRow[]; hydrated: bo
         <p className="text-xs text-ink-3">{removals.length - open.length} resolved request(s).</p>
       )}
     </section>
+  );
+}
+
+const MENU_STATUSES: { id: MenuSubmissionStatus; label: string }[] = [
+  { id: "new", label: "New" },
+  { id: "in_progress", label: "In progress" },
+  { id: "done", label: "Done" },
+  { id: "rejected", label: "Rejected" },
+];
+
+function MenuSubmissionsView({ menus, hydrated }: { menus: MenuSubmissions; hydrated: boolean }) {
+  const { run, busy } = useAction();
+  const [showClosed, setShowClosed] = useState(false);
+  if (!menus.ok) {
+    return (
+      <section className="mt-5">
+        <div className="rounded-xl bg-surface p-6 ring-1 ring-line">
+          <p className="flex items-center gap-2 text-base font-semibold">
+            <AlertTriangle className="size-4 text-warning" strokeWidth={2.2} /> Menu submissions aren&apos;t set up yet
+          </p>
+          <p className="mt-1.5 text-sm text-ink-2">
+            Apply <code className="rounded bg-surface-2 px-1">supabase/migrations/20261112100000_menu_submissions.sql</code> to create the{" "}
+            <code className="rounded bg-surface-2 px-1">owner-menus</code> bucket, the table and the RPCs.
+          </p>
+          <p className="mt-2 text-xs text-ink-3">{menus.error}</p>
+        </div>
+      </section>
+    );
+  }
+  const open = menus.rows.filter((m) => m.status === "new" || m.status === "in_progress");
+  const closed = menus.rows.filter((m) => m.status === "done" || m.status === "rejected");
+  const list = showClosed ? menus.rows : open;
+
+  return (
+    <section className="mt-5 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xs font-semibold text-ink-3">{showClosed ? "All submissions" : "Waiting to be built"}</h2>
+        {closed.length > 0 && (
+          <button onClick={() => setShowClosed((v) => !v)} className="text-xs font-semibold text-ink-2 underline underline-offset-4 hover:text-ink">
+            {showClosed ? "Hide done and rejected" : `Show done and rejected (${closed.length})`}
+          </button>
+        )}
+      </div>
+      {list.length === 0 && <Empty text="No menus waiting. When an owner sends one, it shows up here." />}
+      {list.map((m) => {
+        const wa = whatsappDigits(m.phone);
+        return (
+          <article key={m.id} className={cn("rounded-xl bg-surface p-4 ring-1 ring-line", (m.status === "done" || m.status === "rejected") && "opacity-70")}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-base font-semibold">{m.restaurant_name}</p>
+                <p className="mt-0.5 text-sm text-ink-2">
+                  {m.contact_name ?? "No name given"} · {m.file_paths.length} file{m.file_paths.length === 1 ? "" : "s"} · from {m.source.replace(/_/g, " ")}
+                  {m.locale && ` · ${m.locale.toUpperCase()}`}
+                  {hydrated && <span className="text-ink-3"> · {timeAgo(m.created_at)}</span>}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {wa ? (
+                  <a
+                    href={`https://wa.me/${wa}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pressable flex h-9 items-center gap-1.5 rounded-full bg-whatsapp px-3.5 text-xs font-semibold text-white"
+                  >
+                    <MessageCircleMore className="size-3.5" strokeWidth={2.2} /> {formatPhone(m.phone)}
+                  </a>
+                ) : (
+                  <a href={`tel:${m.phone}`} className="pressable flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-xs font-semibold">
+                    <Phone className="size-3.5" strokeWidth={2.2} /> {m.phone}
+                  </a>
+                )}
+                <a
+                  href={m.maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pressable flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3.5 text-xs font-semibold"
+                >
+                  <MapPin className="size-3.5" strokeWidth={2.2} /> Maps
+                </a>
+              </div>
+            </div>
+
+            {m.files.some((file) => file.view) ? (
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {m.files.map((file, i) => (
+                  <SubmissionFile key={file.path} file={file} n={i + 1} />
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2 text-xs text-ink-3">
+                {m.status === "new" || m.status === "in_progress"
+                  ? "Couldn't sign links to the files. Check the owner-menus read policy."
+                  : "Files aren't linked for closed submissions."}{" "}
+                <span className="font-mono">{m.file_paths.join(", ")}</span>
+              </p>
+            )}
+
+            <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Status">
+              {MENU_STATUSES.map((st) => (
+                <button
+                  key={st.id}
+                  aria-pressed={m.status === st.id}
+                  onClick={() => m.status !== st.id && run(`ms:${m.id}`, () => setMenuSubmissionStatus(m.id, st.id), `${m.restaurant_name}: ${st.label.toLowerCase()}`)}
+                  disabled={!!busy}
+                  className={cn(
+                    "pressable flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold disabled:opacity-50",
+                    m.status === st.id ? "bg-ink text-bg" : "bg-surface-2 text-ink-2 hover:text-ink",
+                  )}
+                >
+                  {st.label}
+                </button>
+              ))}
+              {busy === `ms:${m.id}` && <Loader2 className="ml-1 size-4 animate-spin self-center text-ink-3" />}
+            </div>
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+
+function SubmissionFile({ file, n }: { file: { path: string; view: string | null; download: string | null }; n: number }) {
+  const ext = file.path.split(".").pop() ?? "";
+  const previewable = ["jpg", "png", "webp"].includes(ext);
+  return (
+    <li className="w-24">
+      <a
+        href={file.view ?? undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Open file ${n}`}
+        className="block aspect-square overflow-hidden rounded-xl bg-surface-2 ring-1 ring-line"
+      >
+        {previewable && file.view ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={file.view} alt="" loading="lazy" className="size-full object-cover" />
+        ) : (
+          <span className="flex size-full flex-col items-center justify-center gap-1 text-ink-3">
+            <FileText className="size-5" strokeWidth={1.75} />
+            <span className="text-2xs font-semibold uppercase">{ext}</span>
+          </span>
+        )}
+      </a>
+      <div className="mt-1 flex items-center justify-between text-xs">
+        <a href={file.view ?? undefined} target="_blank" rel="noopener noreferrer" className="font-medium text-ink-2 hover:text-ink">
+          Open
+        </a>
+        {file.download && (
+          <a href={file.download} aria-label={`Download file ${n}`} className="grid size-7 place-items-center rounded-full text-ink-3 hover:bg-surface-2 hover:text-ink">
+            <Download className="size-3.5" strokeWidth={2.2} />
+          </a>
+        )}
+      </div>
+    </li>
   );
 }
 

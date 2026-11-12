@@ -42,10 +42,9 @@ export const MenuItemRow = memo(function MenuItemRow({
     ) : null;
 
   return (
-    <li
-      id={`dish-row-${item.id}`}
-      className="group relative isolate flex gap-3 rounded-xl py-3 before:pointer-events-none before:absolute before:inset-y-0 before:-inset-x-3 before:-z-10 before:rounded-xl before:transition-colors before:duration-200 active:before:bg-soft sm:bg-surface sm:p-3 sm:ps-4 sm:shadow-card sm:ring-1 sm:ring-line/70 sm:transition-[box-shadow,transform] sm:duration-200 sm:ease-out sm:before:inset-x-0 sm:hover:-translate-y-0.5 sm:hover:shadow-float"
-    >
+    // The <li> stays put and takes the hover; only the card inside lifts, so a cursor at its bottom edge can't make it bounce.
+    <li id={`dish-row-${item.id}`} className="group/lift">
+      <div className="group relative isolate flex gap-3 rounded-xl py-3 before:pointer-events-none before:absolute before:inset-y-0 before:-inset-x-3 before:-z-10 before:rounded-xl before:transition-colors before:duration-200 active:before:bg-soft sm:bg-surface sm:p-3 sm:ps-4 sm:shadow-card sm:ring-1 sm:ring-line/70 sm:transition-[translate,box-shadow] sm:duration-300 sm:ease-[cubic-bezier(0.22,1,0.36,1)] sm:before:inset-x-0 sm:group-hover/lift:-translate-y-0.5 sm:group-hover/lift:shadow-float">
       <button
         type="button"
         onClick={() => onOpen(item)}
@@ -92,6 +91,7 @@ export const MenuItemRow = memo(function MenuItemRow({
       ) : (
         stepper && <div className="pointer-events-auto relative z-10 self-end">{stepper}</div>
       )}
+      </div>
     </li>
   );
 });

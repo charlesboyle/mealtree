@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminDb, requireAdmin } from "@/lib/admin/server";
 import { ADMIN_COOKIE, SESSION_DAYS, adminToken, createSessionValue, safeEqual } from "@/lib/admin/session";
-import type { RestaurantInput } from "@/lib/supabase/database";
+import type { MenuSubmissionStatus, RestaurantInput } from "@/lib/supabase/database";
 
 export type ActionResult = { ok: true; slug?: string } | { ok: false; error: string };
 
@@ -88,4 +88,13 @@ export async function saveRestaurant(data: RestaurantInput, previousSlug?: strin
   if (error) return fail(error, "Couldn't save the restaurant.");
   refresh(slug);
   return { ok: true, slug };
+}
+
+export async function setMenuSubmissionStatus(id: string, status: MenuSubmissionStatus): Promise<ActionResult> {
+  const token = await requireAdmin();
+  if (!["new", "in_progress", "done", "rejected"].includes(status)) return { ok: false, error: "Unknown status." };
+  const { error } = await adminDb().rpc("admin_set_menu_submission_status", { p_token: token, p_id: id, p_status: status });
+  if (error) return fail(error, "Couldn't update the submission.");
+  revalidatePath("/ops");
+  return { ok: true };
 }

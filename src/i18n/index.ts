@@ -28,6 +28,7 @@ export function makeI18n(locale: Locale) {
     date: (iso: string) => f.formatDate(iso, locale),
     compact: (n: number) => f.formatCompact(n, locale),
     number: f.formatNumber,
+    distance: (km: number, rough = false) => f.formatDistance(km, locale, rough),
     priceLevel: (level: number) => f.priceLevelLabel(level, locale),
     cuisine: (c: string) => f.cuisineLabel(c, locale),
     cuisines: (list: string[]) => list.map((c) => f.cuisineLabel(c, locale)).join(" · "),

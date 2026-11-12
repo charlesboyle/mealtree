@@ -38,8 +38,8 @@ export function MenuPopular({
         {items.map((item) => {
           const name = pick(item.name, item.nameAr);
           return (
-            <li key={item.id} className="flex w-44 shrink-0 snap-start sm:w-52">
-              <div className="group relative flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line/70 transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-float">
+            <li key={item.id} className="group/lift flex w-44 shrink-0 snap-start sm:w-52">
+              <div className="group relative flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line/70 transition-[translate,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/lift:-translate-y-0.5 group-hover/lift:shadow-float">
                 <Photo
                   id={item.image}
                   alt=""

@@ -17,6 +17,9 @@ export type RestaurantRow = {
   neighborhood_ar: string | null;
   address: string;
   address_ar: string | null;
+  /** Map pin (WGS84); null together when the restaurant is not on the map. */
+  lat: number | null;
+  lng: number | null;
   phone: string;
   timezone: string;
   currency: string;
@@ -67,6 +70,23 @@ export type AdminOverview = {
   restaurants: (Omit<RestaurantRow, "menus"> & { item_count: number; stats: RestaurantStats })[];
   claims: ClaimRow[];
   removals: RemovalRow[];
+};
+
+/** An owner's "get your digital menu" submission (menu_submissions); files sit in the private `owner-menus` bucket. */
+export type MenuSubmissionStatus = "new" | "in_progress" | "done" | "rejected";
+export type MenuSubmissionRow = {
+  id: string;
+  created_at: string;
+  updated_at: string | null;
+  restaurant_name: string;
+  maps_url: string;
+  phone: string;
+  contact_name: string | null;
+  file_paths: string[];
+  source: string;
+  locale: "en" | "ar" | null;
+  status: MenuSubmissionStatus;
+  note: string;
 };
 
 export type ItemOverrideRow = {
@@ -128,7 +148,25 @@ export type Database = {
         Args: { p_slug: string; p_name: string; p_contact: string; p_reason: string };
         Returns: undefined;
       };
+      submit_menu: {
+        Args: {
+          p_id: string;
+          p_restaurant_name: string;
+          p_maps_url: string;
+          p_phone: string;
+          p_contact_name: string | null;
+          p_file_paths: string[];
+          p_source: string;
+          p_locale: string;
+        };
+        Returns: string;
+      };
       admin_overview: { Args: { p_token: string }; Returns: AdminOverview };
+      admin_menu_submissions: { Args: { p_token: string }; Returns: MenuSubmissionRow[] };
+      admin_set_menu_submission_status: {
+        Args: { p_token: string; p_id: string; p_status: MenuSubmissionStatus; p_note?: string | null };
+        Returns: undefined;
+      };
       admin_get_restaurant: { Args: { p_token: string; p_slug: string }; Returns: RestaurantRow | null };
       admin_upsert_restaurant: { Args: { p_token: string; p_data: RestaurantInput }; Returns: string };
       admin_review_claim: { Args: { p_token: string; p_owner_id: string; p_approve: boolean }; Returns: undefined };
@@ -228,6 +266,11 @@ export function normalizeStats(stats: Partial<RestaurantStats> | null | undefine
 /** Zones ("Khalifa City - SE45", "Al Danah - Zone 1") are too fine for diners; keep the district. */
 const broadArea = (area: string) => area.split(" - ")[0].trim();
 
+/** The map pin when both coordinates are set; the DB keeps them null together. */
+function pin(row: Pick<RestaurantRow, "lat" | "lng">) {
+  return typeof row.lat === "number" && typeof row.lng === "number" ? { lat: row.lat, lng: row.lng } : {};
+}
+
 export function rowToRestaurant(row: RestaurantRow): Restaurant {
   return {
     slug: row.slug,
@@ -241,6 +284,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     neighborhoodAr: row.neighborhood_ar ? broadArea(row.neighborhood_ar) : undefined,
     address: row.address,
     addressAr: row.address_ar ?? undefined,
+    ...pin(row),
     phone: row.phone,
     timezone: row.timezone,
     currency: row.currency ?? "AED",

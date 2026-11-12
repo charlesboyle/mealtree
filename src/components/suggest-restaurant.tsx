@@ -3,6 +3,7 @@
 import { AlertTriangle, X } from "lucide-react";
 import { useCallback, useId, useRef, useState } from "react";
 import { CheckMark } from "@/components/check-mark";
+import { openMenuForm } from "@/components/menu-submission-form";
 import { Sheet } from "@/components/sheet";
 import { CONTACT_EMAIL } from "@/components/site-footer";
 import { Button } from "@/components/ui";
@@ -81,6 +82,10 @@ export function SuggestRestaurant({
           onSent={() => {
             sent.current = true;
           }}
+          onOwner={(v) => {
+            close();
+            openMenuForm({ source: "suggest", restaurant: v.name.trim() || undefined, maps: v.maps.trim() || undefined });
+          }}
         />
       </Sheet>
     </>
@@ -92,11 +97,14 @@ function Body({
   initialName,
   onClose,
   onSent,
+  onOwner,
 }: {
   source: SuggestionSource;
   initialName: string;
   onClose: () => void;
   onSent: () => void;
+  /** "I'm the owner": swap to the owner menu form, carrying over what was typed. */
+  onOwner: (values: { name: string; maps: string }) => void;
 }) {
   const { t, locale } = useI18n();
   const f = t.suggest;
@@ -187,7 +195,7 @@ function Body({
   return (
     <div>
       {header}
-      <form onSubmit={submit} noValidate className="space-y-4 px-5 pb-4 pt-3">
+      <form onSubmit={submit} noValidate className="space-y-4 px-5 pb-2 pt-3">
         <div>
           <label htmlFor={`${uid}-name`} className="text-[13px] font-medium text-plum">
             {f.name}
@@ -275,9 +283,20 @@ function Body({
             </p>
           )}
         </div>
-        <Button type="submit" variant="primary" className="w-full">
-          {f.submit}
-        </Button>
+        <div>
+          <Button type="submit" variant="primary" className="w-full">
+            {f.submit}
+          </Button>
+          <p className="mt-1 text-center text-sm text-muted">
+            <button
+              type="button"
+              onClick={() => onOwner(values)}
+              className="inline-flex min-h-11 items-center font-medium text-plum underline decoration-dashed decoration-1 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+            >
+              {t.menuForm.imOwner}
+            </button>
+          </p>
+        </div>
       </form>
     </div>
   );

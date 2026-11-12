@@ -53,7 +53,7 @@ export function toCard(r: Restaurant): Restaurant {
  * lists restaurants; use `findRestaurant` for a full menu.
  */
 export const listRestaurantCards = cache(
-  unstable_cache(async () => (await listRestaurants()).map(toCard), ["restaurant-cards-v1"], {
+  unstable_cache(async () => (await listRestaurants()).map(toCard), ["restaurant-cards-v2"], {
     revalidate: REVALIDATE_SECONDS,
     tags: ["mealtree"],
   }),

@@ -1,20 +1,25 @@
 "use client";
 
 import { Compass, Heart, LayoutList } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/client";
+import { EXIT, SPRING } from "@/lib/motion";
 import { countSaved, useSaved } from "@/lib/saved";
 import { useRoute } from "@/lib/use-route";
 
-/** Stable bottom navigation for phones; it shrinks to icons while scrolling down. */
+/**
+ * Stable bottom navigation for phones; it shrinks to icons while scrolling down. On pages that hide it
+ * (restaurant pages, the map) it fades out moving down, and fades back in moving up.
+ */
 export function TabBar({ hidden = false, knownSlugs }: { hidden?: boolean; knownSlugs: string[] }) {
   const { t, href } = useI18n();
   const route = useRoute();
   const { slugs } = useSaved();
   const savedCount = countSaved(slugs, knownSlugs);
   const [compact, setCompact] = useState(false);
+  const reduced = useReducedMotion();
   const tabs = [
     { to: "/", label: t.tabs.discover, icon: Compass },
     { to: "/restaurants", label: t.tabs.restaurants, icon: LayoutList },
@@ -51,9 +56,16 @@ export function TabBar({ hidden = false, knownSlugs }: { hidden?: boolean; known
   return (
     <nav
       aria-label={t.common.mainNav}
-      className={`pointer-events-none fixed inset-x-0 bottom-0 z-40 justify-center px-4 pb-[max(14px,env(safe-area-inset-bottom))] md:hidden ${hidden ? "hidden" : "flex"}`}
+      aria-hidden={hidden || undefined}
+      inert={hidden}
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(14px,env(safe-area-inset-bottom))] md:hidden"
     >
-      <div className="pointer-events-auto flex items-center rounded-full border border-surface/80 bg-surface/[0.98] p-1 shadow-tabs ring-1 ring-plum/[0.06] backdrop-blur-xl backdrop-saturate-150">
+      <motion.div
+        initial={false}
+        animate={hidden ? { opacity: 0, y: reduced ? 0 : 28 } : { opacity: 1, y: 0 }}
+        transition={hidden ? EXIT : { ...SPRING, delay: 0.08 }}
+        className={`flex items-center rounded-full border border-surface/80 bg-surface/[0.98] p-1 shadow-tabs ring-1 ring-plum/[0.06] backdrop-blur-xl backdrop-saturate-150 ${hidden ? "" : "pointer-events-auto"}`}
+      >
         {tabs.map(({ to, label, icon: Icon }) => {
           const active = route === to;
           return (
@@ -97,7 +109,7 @@ export function TabBar({ hidden = false, knownSlugs }: { hidden?: boolean; known
             </Link>
           );
         })}
-      </div>
+      </motion.div>
     </nav>
   );
 }

@@ -13,10 +13,11 @@ import type { MenuItem, Restaurant } from "@/lib/types";
 export function DishCard({ restaurant: r, item }: { restaurant: Restaurant; item: MenuItem }) {
   const { pick, href } = useI18n();
   return (
+    <div className="group/lift h-full">
     <motion.div
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.12 }}
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line/70 transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-float"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line/70 transition-[translate,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/lift:-translate-y-0.5 group-hover/lift:shadow-float"
     >
       <Photo
         id={item.image ?? r.cover}
@@ -41,5 +42,6 @@ export function DishCard({ restaurant: r, item }: { restaurant: Restaurant; item
         </div>
       </div>
     </motion.div>
+    </div>
   );
 }

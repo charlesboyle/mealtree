@@ -97,3 +97,15 @@ export function cuisineLabel(cuisine: string, locale: Locale) {
 export function listSeparator(locale: Locale) {
   return locale === "ar" ? "، " : ", ";
 }
+
+/**
+ * "850 m", "1.2 km", "14 km" · "850 م", "1.2 كم" (Western digits, like every number here).
+ * `rough` is for a poor position fix: whole kilometres with a "~", since anything finer would be false precision.
+ */
+export function formatDistance(km: number, locale: Locale, rough = false) {
+  const t = dictionaries[locale].map;
+  if (rough) return `~${Math.max(1, Math.round(km))} ${t.km}`;
+  if (km < 1) return `${Math.max(10, Math.round((km * 1000) / 10) * 10)} ${t.m}`;
+  if (km < 10) return `${km.toFixed(1)} ${t.km}`;
+  return `${Math.round(km)} ${t.km}`;
+}

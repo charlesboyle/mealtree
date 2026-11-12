@@ -9,7 +9,17 @@ import type { OwnerInterestSource } from "@/lib/surveys";
  * Pill button that opens the owner interest form, with the restaurant typed in by the visitor.
  * `autoOpen` (one per page) also opens it for `?claim=1`, which the old /claim route redirects here with.
  */
-export function OwnerInterestCta({ children, className, autoOpen }: { children: React.ReactNode; className?: string; autoOpen?: boolean }) {
+export function OwnerInterestCta({
+  children,
+  className,
+  autoOpen,
+  variant = "primary",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  autoOpen?: boolean;
+  variant?: "primary" | "secondary";
+}) {
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<OwnerInterestSource>("for_restaurants");
   const close = useCallback(() => setOpen(false), []);
@@ -36,7 +46,7 @@ export function OwnerInterestCta({ children, className, autoOpen }: { children: 
           setSource("for_restaurants");
           setOpen(true);
         }}
-        className={buttonStyles("primary", className)}
+        className={buttonStyles(variant, className)}
       >
         {children}
       </button>

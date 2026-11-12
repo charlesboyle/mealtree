@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAmount, formatPhone, formatPrice, formatRanges, formatTime, maskPhone } from "./format";
+import { formatAmount, formatDistance, formatPhone, formatPrice, formatRanges, formatTime, maskPhone } from "./format";
 
 describe("formatPrice", () => {
   it("puts AED before the number in English and the dirham sign after it in Arabic", () => {
@@ -48,5 +48,28 @@ describe("formatPhone / maskPhone", () => {
 
   it("masks all but the last four digits", () => {
     expect(maskPhone("+971501234567")).toBe("+971 50 ••• 4567");
+  });
+});
+
+describe("formatDistance", () => {
+  it("uses metres under a kilometre, one decimal under ten, whole kilometres beyond", () => {
+    expect(formatDistance(0.85, "en")).toBe("850 m");
+    expect(formatDistance(1.23, "en")).toBe("1.2 km");
+    expect(formatDistance(14.6, "en")).toBe("15 km");
+  });
+
+  it("never reports less than 10 m", () => {
+    expect(formatDistance(0.002, "en")).toBe("10 m");
+  });
+
+  it("keeps Western digits in Arabic", () => {
+    expect(formatDistance(1.23, "ar")).toBe("1.2 كم");
+    expect(formatDistance(0.85, "ar")).toBe("850 م");
+  });
+
+  it("rounds to whole kilometres with a tilde when the fix is rough", () => {
+    expect(formatDistance(1.23, "en", true)).toBe("~1 km");
+    expect(formatDistance(0.3, "en", true)).toBe("~1 km");
+    expect(formatDistance(7.6, "ar", true)).toBe("~8 كم");
   });
 });

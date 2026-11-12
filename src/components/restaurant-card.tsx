@@ -21,10 +21,11 @@ export function RestaurantCard({ restaurant: r, matchedDish, compact = false }: 
   const known = knownFor(r).map((i) => pick(i.name, i.nameAr));
   const meta = [cuisines(r.cuisine.slice(0, 1)), area, priceLevel(r.priceLevel)].filter(Boolean).join(" · ");
   return (
+    <div className="group/lift h-full">
     <motion.article
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.12 }}
-      className={`group relative flex h-full items-center rounded-2xl bg-surface p-2.5 shadow-card ring-1 ring-line/70 transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-float ${compact ? "gap-2" : "gap-3"}`}
+      className={`group relative flex h-full items-center rounded-2xl bg-surface p-2.5 shadow-card ring-1 ring-line/70 transition-[translate,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/lift:-translate-y-0.5 group-hover/lift:shadow-float ${compact ? "gap-2" : "gap-3"}`}
     >
       <div className={`relative shrink-0 overflow-hidden rounded-xl bg-soft ${compact ? "h-14 w-14" : "h-[72px] w-[72px]"}`}>
         <RestaurantImage restaurant={r} width={160} className="transition-transform duration-300 ease-out group-hover:scale-[1.06]" />
@@ -70,5 +71,6 @@ export function RestaurantCard({ restaurant: r, matchedDish, compact = false }: 
 
       <SaveButton variant="plain" slug={r.slug} name={name} className="relative z-10 self-start" />
     </motion.article>
+    </div>
   );
 }

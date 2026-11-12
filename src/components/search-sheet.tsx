@@ -1,11 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, Search, Star, X } from "lucide-react";
+import { ArrowUpRight, Map as MapIcon, Search, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AreaSelect } from "@/components/area-select";
+import { MenuFormButton } from "@/components/menu-submission-form";
 import { SuggestRestaurant } from "@/components/suggest-restaurant";
 import { useI18n } from "@/i18n/client";
 import { ALL_AREAS } from "@/lib/discover";
@@ -17,6 +18,8 @@ import { useRotatingPlaceholder } from "@/lib/use-rotating-placeholder";
 import { useSearchIndex } from "@/lib/use-search-index";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
+const OWNER_LINK =
+  "inline-flex min-h-11 items-center font-medium underline decoration-dashed decoration-1 underline-offset-4 transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink";
 
 /** Full-screen phone search with the field anchored at the bottom, near the thumb. */
 export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -161,11 +164,26 @@ export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => v
                       </Link>
                     </li>
                   ))}
+                  <li className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => go(withArea(`/map?q=${encodeURIComponent(query.trim())}`))}
+                      className="flex h-10 items-center gap-2 rounded-full bg-plum/[0.05] px-4 text-sm font-semibold text-plum active:bg-plum/[0.1]"
+                    >
+                      <MapIcon className="h-4 w-4" aria-hidden />
+                      {t.map.showOnMap}
+                    </button>
+                  </li>
                 </ul>
               ) : (
                 <div className="pb-6 text-center text-sm text-muted">
                   <p>{t.site.sheet.noMatches(query)}</p>
-                  <SuggestRestaurant source="search" initialName={query.trim()} className="mt-3 inline-flex min-h-11 items-center" />
+                  <div className="mt-3 flex flex-col items-center">
+                    <SuggestRestaurant source="search" initialName={query.trim()} className="inline-flex min-h-11 items-center" />
+                    <MenuFormButton source="search" restaurant={query} onBeforeOpen={onClose} className={OWNER_LINK}>
+                      {t.menuForm.isItYours}
+                    </MenuFormButton>
+                  </div>
                 </div>
               )}
             </div>
