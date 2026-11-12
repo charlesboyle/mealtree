@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionText } from "@/components/action-text";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Map as MapIcon, SearchX, X } from "lucide-react";
 import Link from "next/link";
@@ -148,9 +149,9 @@ export function RestaurantsPage({ restaurants }: { restaurants: Restaurant[] }) 
                   <MenuFormButton
                     source="listing"
                     restaurant={f.query}
-                    className="inline-flex min-h-11 items-center font-medium underline decoration-dashed decoration-1 underline-offset-4 transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                    className="inline-flex min-h-11 items-center font-medium transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
                   >
-                    {t.menuForm.isItYours}
+                    <ActionText text={t.menuForm.isItYours} />
                   </MenuFormButton>
                 </p>
               </EmptyState>

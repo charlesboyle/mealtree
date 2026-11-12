@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionText } from "@/components/action-text";
 import { AlertTriangle, X } from "lucide-react";
 import { useCallback, useId, useRef, useState } from "react";
 import { CheckMark } from "@/components/check-mark";
@@ -61,11 +62,11 @@ export function SuggestRestaurant({
         type="button"
         onClick={show}
         className={cn(
-          "font-medium underline decoration-dashed decoration-1 underline-offset-4 transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink",
+          "font-medium transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink",
           className,
         )}
       >
-        {t.suggest.cta}
+        <ActionText text={t.suggest.cta} />
       </button>
       <Sheet
         open={open}

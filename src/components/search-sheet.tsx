@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionText } from "@/components/action-text";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Map as MapIcon, Search, Star, X } from "lucide-react";
 import Link from "next/link";
@@ -19,7 +20,7 @@ import { useSearchIndex } from "@/lib/use-search-index";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 const OWNER_LINK =
-  "inline-flex min-h-11 items-center font-medium underline decoration-dashed decoration-1 underline-offset-4 transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink";
+  "inline-flex min-h-11 items-center font-medium transition-colors duration-150 hover:text-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink";
 
 /** Full-screen phone search with the field anchored at the bottom, near the thumb. */
 export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -181,7 +182,7 @@ export function SearchSheet({ open, onClose }: { open: boolean; onClose: () => v
                   <div className="mt-3 flex flex-col items-center">
                     <SuggestRestaurant source="search" initialName={query.trim()} className="inline-flex min-h-11 items-center" />
                     <MenuFormButton source="search" restaurant={query} onBeforeOpen={onClose} className={OWNER_LINK}>
-                      {t.menuForm.isItYours}
+                      <ActionText text={t.menuForm.isItYours} />
                     </MenuFormButton>
                   </div>
                 </div>
