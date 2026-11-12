@@ -377,7 +377,6 @@ export const en = {
     phone: "Your WhatsApp number",
     phoneHint: "We'll message you here when your page is ready.",
     phonePlaceholder: "05X XXX XXXX",
-    contact: "Your name",
     optional: "optional",
     files: "Menu photos or PDF",
     filesHint: "Up to 10 files, 10 MB each: photos (JPG, PNG, WebP, HEIC) or PDF.",
@@ -393,7 +392,6 @@ export const en = {
     submit: "Send my menu",
     uploading: (done: number, total: number) => `Uploading ${done} of ${total}…`,
     saving: "Sending…",
-    privacy: "Your files and number are kept private and used only to build your page.",
     errors: {
       restaurantRequired: "Enter your restaurant's name",
       mapsRequired: "Paste your restaurant's Google Maps link",

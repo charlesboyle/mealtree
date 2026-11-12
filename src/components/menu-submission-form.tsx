@@ -104,9 +104,41 @@ export function MenuSubmissionForm({
       look="modal"
       className="max-h-[90dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl bg-white pb-[max(16px,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-3xl"
     >
+      <ScrollEdge />
       <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-line sm:hidden" aria-hidden />
       <Body source={source} initial={initial} onClose={onClose} />
     </Sheet>
+  );
+}
+
+/**
+ * Soft blur at the top edge of the scrolling sheet (like iOS 26's scroll edge): content passing under the top
+ * fades and blurs instead of being cut off. Sticky inside the sheet's own scroll container; zero height in the flow,
+ * and only visible once the sheet has scrolled, so the title isn't blurred at rest.
+ */
+function ScrollEdge() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const scroller = ref.current?.parentElement;
+    if (!scroller) return;
+    const onScroll = () => setScrolled(scroller.scrollTop > 4);
+    onScroll();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <div ref={ref} aria-hidden className="pointer-events-none sticky top-0 z-20 -mb-14 h-14">
+      <div
+        className={cn(
+          "absolute inset-0 rounded-t-3xl transition-opacity duration-300 ease-out",
+          scrolled ? "opacity-100" : "opacity-0",
+        )}
+      >
+        <div className="absolute inset-0 rounded-t-3xl backdrop-blur-md [mask-image:linear-gradient(to_bottom,black_35%,transparent)]" />
+        <div className="absolute inset-0 rounded-t-3xl bg-gradient-to-b from-white/90 via-white/55 to-white/0" />
+      </div>
+    </div>
   );
 }
 
@@ -412,21 +444,8 @@ function Body({
             onChange={(e) => set("phone", e.target.value)}
             readOnly={busy}
             placeholder={f.phonePlaceholder}
-            enterKeyHint="next"
-            className={cn(FIELD, "h-12 rtl:text-right")}
-          />
-        </Field>
-
-        <Field id={`${uid}-contact`} label={f.contact} optional={f.optional}>
-          <input
-            id={`${uid}-contact`}
-            value={values.contact}
-            onChange={(e) => set("contact", e.target.value)}
-            readOnly={busy}
-            maxLength={120}
-            autoComplete="name"
             enterKeyHint="done"
-            className={cn(FIELD, "h-12")}
+            className={cn(FIELD, "h-12 rtl:text-right")}
           />
         </Field>
 
@@ -537,7 +556,6 @@ function Body({
             {phase === "uploading" ? f.uploading(Math.min(uploaded + 1, items.length), items.length) : phase === "saving" ? f.saving : failure ? f.retry : f.submit}
           </span>
         </Button>
-        <p className="pb-2 text-center text-xs leading-relaxed text-muted">{f.privacy}</p>
       </form>
     </div>
   );

@@ -12,8 +12,9 @@ export function OwnerMenuCard({ source = "home", className }: { source?: MenuSub
     <button
       type="button"
       onClick={() => openMenuForm({ source })}
-      className={`group flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-start shadow-card ring-1 ring-line/70 transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-float focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum sm:p-5 ${className ?? ""}`}
+      className={`group/lift group block w-full rounded-2xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum ${className ?? ""}`}
     >
+      <span className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-card ring-1 ring-line/70 transition-[translate,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/lift:-translate-y-0.5 group-hover/lift:shadow-float sm:p-5">
       <span className="grid size-11 shrink-0 place-items-center rounded-full bg-tomato-soft text-tomato sm:size-12" aria-hidden>
         <Store className="size-5" strokeWidth={1.9} />
       </span>
@@ -23,6 +24,7 @@ export function OwnerMenuCard({ source = "home", className }: { source?: MenuSub
       </span>
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-soft text-plum transition-[background-color,transform] duration-150 ease-out group-hover:translate-x-0.5 group-hover:bg-plum group-hover:text-white rtl:group-hover:-translate-x-0.5">
         <ArrowRight className="size-4 rtl:rotate-180" aria-hidden />
+      </span>
       </span>
     </button>
   );

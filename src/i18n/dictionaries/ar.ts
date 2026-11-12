@@ -427,7 +427,6 @@ export const ar: Dictionary = {
     phone: "رقم واتساب الخاص بك",
     phoneHint: "سنراسلك عليه عندما تصبح صفحتك جاهزة.",
     phonePlaceholder: "05X XXX XXXX",
-    contact: "اسمك",
     optional: "اختياري",
     files: "صور القائمة أو ملف PDF",
     filesHint: "حتى 10 ملفات، وبحد أقصى 10 ميغابايت للملف: صور (JPG أو PNG أو WebP أو HEIC) أو PDF.",
@@ -443,7 +442,6 @@ export const ar: Dictionary = {
     submit: "أرسل قائمتي",
     uploading: (done: number, total: number) => `جارٍ رفع ${done} من ${total}…`,
     saving: "جارٍ الإرسال…",
-    privacy: "نحفظ ملفاتك ورقمك بشكل خاص، ولا نستخدمها إلا لبناء صفحتك.",
     errors: {
       restaurantRequired: "أدخل اسم مطعمك",
       mapsRequired: "الصق رابط مطعمك من خرائط Google",

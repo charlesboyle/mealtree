@@ -49,7 +49,8 @@ export function MapPreviewCard({ restaurants }: { restaurants: Restaurant[] }) {
   const [ready, setReady] = useState(false);
   if (pinned.length < 3) return null;
   return (
-    <article className="group relative mt-6 overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line/70 transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-float active:scale-[0.98]">
+    <div className="group/lift mt-6">
+    <article className="group relative overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line/70 transition-[translate,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/lift:-translate-y-0.5 group-hover/lift:shadow-float active:scale-[0.98]">
       {/* Geography never mirrors: east stays on the right in Arabic too. */}
       <div ref={ref} dir="ltr" className="relative h-32 bg-soft sm:h-40">
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 size-full" aria-hidden>
@@ -85,5 +86,6 @@ export function MapPreviewCard({ restaurants }: { restaurants: Restaurant[] }) {
         </span>
       </div>
     </article>
+    </div>
   );
 }
